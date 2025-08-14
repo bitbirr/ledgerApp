@@ -1,0 +1,147 @@
+You are a senior frontend engineer. Ship a production‑ready Progressive Web App named Credit Debit that mirrors the provided screenshots (drawer + sort menu; Cash Book tabs Daily/Weekly/Monthly/Yearly; customer detail with balance toggle; invoice builder; add item/customer forms; Settings with date/time/currency/language/dark mode/fingerprint‑like lock).
+
+Stack & Architecture
+
+React + TypeScript (Vite or Next.js App Router; choose one and stick to it).
+
+UI: Material UI (MUI v5) with Material‑3 look; mobile‑first responsive layout; CSS variables for theming.
+
+State: Zustand (or Redux Toolkit—pick one).
+
+Data (offline‑first): IndexedDB via Dexie with migrations & typed models.
+
+Queries/caching: TanStack Query for async ops.
+
+PWA: Service worker with Workbox (precaching, runtime caching, background sync).
+
+Auth/backup (optional, no server required): Google Drive using OAuth (Google Identity Services) + Drive REST; store DB export files in user’s Drive.
+
+Files: File System Access API for local export/import; Web Share API to share PDFs; Web Share Target to receive images (receipts).
+
+PDF/Excel: pdfmake or jsPDF + autoTable; xlsx (SheetJS).
+
+Notifications/Reminders: Web Notifications + service worker; optional Web Push subscription for scheduled reminders (use Background Sync/Periodic Sync when available; graceful fallback to calendar/ICS download).
+
+App lock: Passcode stored in IndexedDB + WebAuthn for biometric unlock where supported.
+
+i18n: react-i18next.
+
+Data Model (IndexedDB – Dexie)
+
+Define tables and indices with migrations.
+
+accounts {id, name, phone, type: 'customer'|'supplier'|'other', categoryId, photoUrl, createdAt, archived}
+
+categories {id, name, color}
+
+txns {id, accountId, dateTime, kind: 'credit'|'debit', amount, note, imageUrl, dueDate, createdAt, updatedAt, deleted}
+
+cashbook {id, dateTime, direction: 'in'|'out', amount, note, attachmentUrl}
+
+items {id, name, rate, uom, categoryId, openingStock, lowStockAlert}
+
+invoices {id, number, accountId, kind: 'sale'|'purchase', issueDate, dueDate, subtotal, discount, addlCharges, total, pdfUrl, status: 'unpaid'|'paid'|'partial'}
+
+invoice_items {id, invoiceId, itemId, qty, rate, discountPct, total}
+
+prefs {id=1, dateFormat, timeFormat, currency, language, firstDayOfWeek, firstDayOfMonth, firstDayOfYear, showTimeInReports, showPreviousBalance, darkMode, biometricEnabled}
+
+Views/derived selectors in code: account balances, cashbook summaries.
+
+Core Features (match screenshots)
+
+Dashboard
+
+App bar with hamburger drawer and Sort menu: Name Asc/Desc, Amount Asc/Desc, Category, Last Transaction, Report, Your Name & Address.
+
+Card list of accounts showing Due (red) / Advance (green); FAB “+ Add Customer”.
+
+Summary chips: Total Advance, Total Due, Balance.
+
+Bottom action bar (sticky): Transfer, Cash Book, Cash Calculator, More Options.
+
+Accounts
+
+Add account (Name, Phone, Photo, Category; “More options” reveal later).
+
+Account detail: tabs All / Daily / Weekly / Monthly / Yearly, Balance toggle.
+
+Table columns: Date | Received(green) | Paid(red) | Balance; show Previous Balance line when enabled.
+
+Quick actions: You Received / You Paid inline forms; attach bill/receipt image; edit/delete; share entry via Web Share; highlight Due Date; call via tel: link.
+
+Cash Book
+
+Tabs All/Daily/Weekly/Monthly/Yearly with ← Today → pager.
+
+Columns: Date, Notes, Cash Out (red), Cash In (green).
+
+Totals row (Total Cash In/Out, Previous Balance, Balance).
+
+Buttons: Cash In, Cash Out quick entry.
+
+Inventory & Invoices
+
+Invoice screen: select Account, Issue/Due dates, toggle Sale/Purchase.
+
+Grid headers: Item | Quantity | Rate | Discount% | Total.
+
+Fields: Additional Charges, Discount/Payment, Total (auto), Notes.
+
+Buttons: Clear List, Add to List, Save, Generate Invoice (PDF) + share/download/print.
+
+Add Item: Name, Rate, UoM, Category, Opening Stock, Low Stock Alert.
+
+Stock rules: decrement on sale; increment on purchase; low‑stock toast + notification.
+
+Reports & Export
+
+Period filters (Daily/Weekly/Monthly/Custom) and statement generator.
+
+Export PDF and Excel; include “Show time in reports” and “Previous Balance” options.
+
+Print via native browser print.
+
+Reminders & Calls
+
+dueDate → schedule local notification via service worker; if scheduling not supported, offer Add to Calendar (.ics) or email reminder template.
+
+Backup/Restore (No server)
+
+Export DB + attachments as a single .zip (Dexie export → JSON + images); import to restore.
+
+Google Drive backup/restore: OAuth login → save/restore the same .zip to the app folder.
+
+Privacy & Security
+
+All data stays in IndexedDB or user’s Google Drive. No external server.
+
+App lock with PIN; WebAuthn biometric unlock when available.
+
+Installable PWA
+
+Manifest: name/icons, display: standalone, theme/background colors, app shortcuts (Quick Add Received/Paid/Cash In/Cash Out).
+
+Service worker: precache shell, runtime cache images/PDFs, background sync for Drive operations.
+
+Mobile UX details
+
+44px+ touch targets, bottom FABs, swipeable lists for edit/delete, sticky totals bars.
+
+Virtual keyboard safe‑area handling; numeric keypad for amounts.
+
+Skeleton loaders; optimistic updates with rollback.
+
+Business Rules
+
+Running balance
+
+credit = customer owes you (Due ↑).
+
+debit = customer paid you (Due ↓, Advance ↑).
+
+Transfers: create two linked entries (from → to); prevent same‑account transfers.
+
+Validation: positive amounts, required fields; undo toast on delete.
+
+Searching & sorting by name/amount/category/last transaction.
