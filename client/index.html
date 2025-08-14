@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Credit Debit - Financial Management</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Offline-first financial management app for tracking credit/debit accounts, invoices, and cash flow. Manage your business finances anywhere, anytime." />
+    <meta name="keywords" content="financial management, accounting, credit, debit, invoices, cash book, business finance, offline app" />
+    <meta name="author" content="Credit Debit App" />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Credit Debit - Financial Management" />
+    <meta property="og:description" content="Offline-first financial management app for tracking credit/debit accounts, invoices, and cash flow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
+    <meta property="og:site_name" content="Credit Debit" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Credit Debit - Financial Management" />
+    <meta name="twitter:description" content="Offline-first financial management app for tracking credit/debit accounts, invoices, and cash flow" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1976D2" />
+    <meta name="background-color" content="#FAFAFA" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Credit Debit" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Credit Debit" />
+    <meta name="msapplication-TileColor" content="#1976D2" />
+    <meta name="msapplication-navbutton-color" content="#1976D2" />
+    <meta name="msapplication-starturl" content="/" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%231976D2'/%3E%3Cstop offset='100%25' style='stop-color:%23303F9F'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='4' fill='url(%23a)'/%3E%3Cpath d='M8 24h16c1.5 0 2.667-1.194 2.667-2.667V10.667C26.667 9.194 25.5 8 24 8H8c-1.5 0-2.667 1.194-2.667 2.667v10.666C5.333 22.806 6.5 24 8 24z' fill='white' fill-opacity='0.9'/%3E%3Cpath d='M10.667 13.333h10.666v1.334H10.667zm0 2.667h8v1.333h-8zm0 2.667h9.333V20h-9.333z' fill='%231976D2'/%3E%3C/svg%3E" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='a' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' style='stop-color:%231976D2'/%3E%3Cstop offset='100%25' style='stop-color:%23303F9F'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='20' fill='url(%23a)'/%3E%3Cpath d='M45 135h90c7.5 0 13.333-5.97 13.333-13.333V58.333C148.333 50.97 142.5 45 135 45H45c-7.5 0-13.333 5.97-13.333 13.333v63.334C31.667 129.03 37.5 135 45 135z' fill='white' fill-opacity='0.9'/%3E%3Cpath d='M60 75h60v7.5H60zm0 15h45v7.5H45zm0 15h52.5v7.5H60z' fill='%231976D2'/%3E%3C/svg%3E" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Google Fonts - Material Design -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet" />
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    
+    <!-- DNS Prefetch for potential API calls -->
+    <link rel="dns-prefetch" href="//apis.google.com" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- Critical CSS inlined for performance -->
+    <style>
+      /* Critical path CSS for initial render */
+      :root {
+        --primary: #1976D2;
+        --primary-foreground: #FFFFFF;
+        --background: #FAFAFA;
+        --foreground: #1C1B1F;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --background: #121212;
+          --foreground: #E6E1E5;
+        }
+      }
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html {
+        font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      body {
+        background-color: var(--background);
+        color: var(--foreground);
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      
+      /* Loading spinner */
+      .loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--primary);
+        border-top: 4px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 9999;
+      }
+      
+      @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+      
+      /* Hide loading spinner once app loads */
+      #root:not(:empty) + .loading-spinner {
+        display: none;
+      }
+      
+      /* Safe area handling for mobile devices */
+      body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      
+      /* Prevent overscroll bounce on iOS */
+      body {
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Focus styles for accessibility */
+      :focus {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+      }
+      
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        :root {
+          --primary: #0056CC;
+        }
+      }
+      
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Main app container -->
+    <div id="root"></div>
+    
+    <!-- Loading spinner fallback -->
+    <div class="loading-spinner" aria-label="Loading application"></div>
+    
+    <!-- Offline indicator -->
+    <div id="offline-indicator" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #f44336; color: white; padding: 8px; text-align: center; z-index: 10000; font-size: 14px;">
+      You are currently offline. Some features may be limited.
+    </div>
+    
+    <!-- Update available indicator -->
+    <div id="update-indicator" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #4CAF50; color: white; padding: 8px; text-align: center; z-index: 10000; font-size: 14px; cursor: pointer;">
+      App update available. Tap to refresh.
+    </div>
+    
+    <!-- Main application script -->
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+              scope: '/'
+            });
+            
+            console.log('SW registered: ', registration);
+            
+            // Handle service worker updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New content is available
+                    showUpdateIndicator();
+                  }
+                });
+              }
+            });
+            
+            // Handle messages from service worker
+            navigator.serviceWorker.addEventListener('message', (event) => {
+              if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+                showUpdateIndicator();
+              }
+            });
+            
+          } catch (registrationError) {
+            console.log('SW registration failed: ', registrationError);
+          }
+        });
+      }
+      
+      // Handle online/offline status
+      function updateOnlineStatus() {
+        const indicator = document.getElementById('offline-indicator');
+        if (indicator) {
+          indicator.style.display = navigator.onLine ? 'none' : 'block';
+        }
+      }
+      
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      
+      // Show update indicator
+      function showUpdateIndicator() {
+        const indicator = document.getElementById('update-indicator');
+        if (indicator) {
+          indicator.style.display = 'block';
+          indicator.addEventListener('click', () => {
+            window.location.reload();
+          });
+        }
+      }
+      
+      // Handle PWA install prompt
+      let deferredPrompt;
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // You can show a custom install button here
+        console.log('PWA install prompt available');
+      });
+      
+      // Handle PWA installation
+      window.addEventListener('appinstalled', () => {
+        console.log('PWA was installed');
+        deferredPrompt = null;
+      });
+      
+      // Performance monitoring
+      if ('web-vital' in window) {
+        // Measure Core Web Vitals if library is available
+        // This could be extended with analytics integration
+      }
+      
+      // Initialize app theme from system preference or saved preference
+      function initializeTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+      }
+      
+      // Initialize theme immediately to prevent flash
+      initializeTheme();
+      
+      // Handle system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('theme')) {
+          if (e.matches) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      });
+      
+      // Error handling
+      window.addEventListener('error', (event) => {
+        console.error('Global error:', event.error);
+        // Could send to analytics service
+      });
+      
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled promise rejection:', event.reason);
+        // Could send to analytics service
+      });
+    </script>
+    
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>
