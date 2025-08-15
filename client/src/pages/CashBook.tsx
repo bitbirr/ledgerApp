@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { CashEntryModal } from '@/components/modals/CashEntryModal';
 import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 export function CashBook() {
   const { setCurrentScreen, timePeriod, setTimePeriod } = useAppStore();
@@ -34,12 +35,13 @@ export function CashBook() {
     },
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
+  // Remove the local formatCurrency function and use the imported one
+  // const formatCurrency = (amount: number) => {
+  //   return new Intl.NumberFormat('en-IN', {
+  //     style: 'currency',
+  //     currency: 'INR',
+  //   }).format(amount);
+  // };
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-IN', {

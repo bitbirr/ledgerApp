@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 export function Invoices() {
   const { setCurrentScreen } = useAppStore();
@@ -52,12 +53,13 @@ export function Invoices() {
     return subtotal + additionalCharges - discount;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
+  // Remove the local formatCurrency function and use the imported one
+  // const formatCurrency = (amount: number) => {
+  //   return new Intl.NumberFormat('en-IN', {
+  //     style: 'currency',
+  //     currency: 'INR',
+  //   }).format(amount);
+  // };
 
   const handleAddItem = () => {
     // TODO: Show add item modal

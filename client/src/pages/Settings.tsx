@@ -159,7 +159,6 @@ export function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ETB">Br Ethiopian Birr (ETB)</SelectItem>
-                  <SelectItem value="INR">₹ Indian Rupee (INR)</SelectItem>
                   <SelectItem value="USD">$ US Dollar (USD)</SelectItem>
                   <SelectItem value="EUR">€ Euro (EUR)</SelectItem>
                   <SelectItem value="GBP">£ British Pound (GBP)</SelectItem>

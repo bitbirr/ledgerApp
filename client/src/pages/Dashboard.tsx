@@ -44,12 +44,13 @@ export function Dashboard() {
 
   const sortedAccounts = sortAccounts(accounts);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
+  // Remove this local formatCurrency function that uses INR
+  // const formatCurrency = (amount: number) => {
+  //   return new Intl.NumberFormat('en-IN', {
+  //     style: 'currency',
+  //     currency: 'INR',
+  //   }).format(amount);
+  // };
 
   const handleAccountClick = (accountId: string) => {
     setSelectedAccountId(accountId);
@@ -148,12 +149,12 @@ function AccountCard({ account, onClick }: { account: any; onClick: () => void }
     loadBalance();
   }, [account.id]);
 
-  // Remove the local formatCurrency functions and use the imported one
+  // Remove the local formatCurrency function since it's already imported
   // const formatCurrency = (amount: number) => {
   //   return new Intl.NumberFormat('en-IN', {
   //     style: 'currency',
   //     currency: 'INR',
-  //   }).format(Math.abs(amount));
+  //   }).format(amount);
   // };
 
   const getInitials = (name: string) => {

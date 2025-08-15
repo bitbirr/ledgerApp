@@ -5,6 +5,30 @@ import path from "path";
 export default defineConfig({
   plugins: [
     react(),
+    // Custom plugin to handle Chrome DevTools files
+    {
+      name: 'chrome-devtools-filter',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          // Block Chrome DevTools specific requests
+          if (req.url?.includes('.well-known/appspecific/com.chrome.devtools') ||
+              req.url?.includes('chrome-extension://') ||
+              req.url?.includes('devtools://')) {
+            res.statusCode = 404;
+            res.end();
+            return;
+          }
+          next();
+        });
+      },
+      load(id) {
+        // Skip processing Chrome DevTools files
+        if (id.includes('.well-known/appspecific/com.chrome.devtools') ||
+            id.includes('chrome-extension://')) {
+          return 'export default {}';
+        }
+      }
+    }
   ],
   resolve: {
     alias: {
@@ -23,12 +47,16 @@ export default defineConfig({
     host: '0.0.0.0',
     fs: {
       strict: true,
-      deny: ["**/.*"],
+      deny: ["**/.*", "**/.well-known/**"],
     },
   },
-  // Fix Chrome DevTools interference by excluding problematic files
+  // Enhanced Chrome DevTools handling
   optimizeDeps: {
-    exclude: ['/.well-known/appspecific/com.chrome.devtools.json']
+    exclude: [
+      '/.well-known/appspecific/com.chrome.devtools.json',
+      'chrome-extension://*',
+      'devtools://*'
+    ]
   },
   // Add custom plugin to handle Chrome DevTools files
   define: {
