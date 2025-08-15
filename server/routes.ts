@@ -110,19 +110,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/cashbook', async (req, res) => {
     try {
       const database = await db;
-      const { direction, amount, note, dateTime } = req.body;
+      const { direction, amount, note, attachmentUrl, dateTime } = req.body;
       
       const newEntry = {
         id: randomUUID(),
         direction,
-        amount: amount.toString(), // Convert to string instead of parseFloat
+        amount: amount.toString(),
         note,
+        attachmentUrl,
         dateTime: new Date(dateTime)
       };
       
       await database.insert(cashbook).values(newEntry);
       
-      // Fetch the inserted record
       const insertedEntry = await database
         .select()
         .from(cashbook)

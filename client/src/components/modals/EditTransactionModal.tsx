@@ -1,7 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { insertTransactionSchema, type Transaction, type InsertTransaction } from '@shared/schema';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { db } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
 import { convertFileToBase64, compressImage, validateImageFile } from '@/lib/photo-utils';
 import {
@@ -10,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -21,52 +24,86 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Minus, X, Camera, Upload, Eye, Paperclip } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Paperclip, Camera, Upload, X, Eye } from 'lucide-react';
 
-const cashEntrySchema = z.object({
-  amount: z.number().min(0.01, 'Amount must be greater than 0'),
-  note: z.string().optional(),
-});
-
-type CashEntryForm = z.infer<typeof cashEntrySchema>;
-
-interface CashEntryModalProps {
+interface EditTransactionModalProps {
+  transaction: Transaction | null;
   open: boolean;
   onClose: () => void;
-  type: 'in' | 'out';
-  onSubmit: (amount: number, note: string, attachmentUrl?: string) => Promise<void>;
 }
 
-export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModalProps) {
+export function EditTransactionModal({ transaction, open, onClose }: EditTransactionModalProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const isIn = type === 'in';
-
-  const form = useForm<CashEntryForm>({
-    resolver: zodResolver(cashEntrySchema),
+  
+  const form = useForm<Omit<InsertTransaction, 'accountId'>>({
+    resolver: zodResolver(insertTransactionSchema.omit({ accountId: true })),
     defaultValues: {
       amount: 0,
       note: '',
+      kind: 'credit',
+      dateTime: new Date(),
+      imageUrl: undefined,
     },
   });
 
-  const handleSubmit = async (data: CashEntryForm) => {
-    try {
-      await onSubmit(data.amount, data.note || '', attachedImage || undefined);
-      form.reset();
-      setAttachedImage(null);
-      onClose();
-    } catch (error) {
+  // Update form when transaction changes
+  useEffect(() => {
+    if (transaction) {
+      form.reset({
+        amount: transaction.amount,
+        note: transaction.note || '',
+        kind: transaction.kind,
+        dateTime: new Date(transaction.dateTime),
+        imageUrl: transaction.imageUrl,
+      });
+      setAttachedImage(transaction.imageUrl || null);
+    }
+  }, [transaction, form]);
+
+  const updateTransactionMutation = useMutation({
+    mutationFn: async (data: Omit<InsertTransaction, 'accountId'>) => {
+      if (!transaction) throw new Error('No transaction to update');
+      
+      const updatedTransaction = {
+        ...data,
+        imageUrl: attachedImage || undefined,
+        id: transaction.id,
+        accountId: transaction.accountId,
+      };
+      
+      await db.transactions.update(transaction.id, updatedTransaction);
+      return updatedTransaction;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['account-balance'] });
+      toast({
+        title: 'Success',
+        description: 'Transaction updated successfully',
+      });
+      handleClose();
+    },
+    onError: () => {
       toast({
         title: 'Error',
-        description: `Failed to add cash ${type} entry`,
+        description: 'Failed to update transaction',
         variant: 'destructive',
       });
-    }
-  };
+    },
+  });
 
   const handleClose = () => {
     form.reset();
@@ -78,11 +115,10 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
+    if (!validateImageFile(file)) {
       toast({
         title: 'Invalid File',
-        description: validation.error,
+        description: 'Please select a valid image file (JPEG, PNG, WebP) under 5MB',
         variant: 'destructive',
       });
       return;
@@ -90,11 +126,12 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
 
     setIsProcessingImage(true);
     try {
-      const compressedImage = await compressImage(file);
-      setAttachedImage(compressedImage);
+      // compressImage already returns base64 string, no need for convertFileToBase64
+      const base64 = await compressImage(file);
+      setAttachedImage(base64);
       toast({
-        title: 'Success',
-        description: 'Image attached successfully',
+        title: 'Image Attached',
+        description: 'Receipt/bill has been attached successfully',
       });
     } catch (error) {
       toast({
@@ -104,9 +141,6 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
       });
     } finally {
       setIsProcessingImage(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
     }
   };
 
@@ -132,33 +166,46 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
     });
   };
 
+  const onSubmit = (data: Omit<InsertTransaction, 'accountId'>) => {
+    updateTransactionMutation.mutate(data);
+  };
+
+  if (!transaction) return null;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md mx-4">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle className={isIn ? 'text-green-600' : 'text-red-600'}>
-              <div className="flex items-center">
-                {isIn ? <Plus className="mr-2 h-5 w-5" /> : <Minus className="mr-2 h-5 w-5" />}
-                Cash {isIn ? 'In' : 'Out'}
-              </div>
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              data-testid="button-close-cash-modal"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>Edit Transaction</DialogTitle>
           <DialogDescription>
-            Add a cash {isIn ? 'in' : 'out'} entry to your cash book with optional receipt attachment.
+            Update the transaction details below.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="kind"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select transaction type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="credit">Received (Credit)</SelectItem>
+                      <SelectItem value="debit">Paid (Debit)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="amount"
@@ -172,7 +219,6 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
                       placeholder="0.00"
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      data-testid={`input-cash-${type}-amount`}
                     />
                   </FormControl>
                   <FormMessage />
@@ -187,10 +233,28 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
                 <FormItem>
                   <FormLabel>Note (Optional)</FormLabel>
                   <FormControl>
-                    <Input
+                    <Textarea
                       placeholder="Enter a note for this transaction"
                       {...field}
-                      data-testid={`input-cash-${type}-note`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="dateTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Date & Time *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="datetime-local"
+                      {...field}
+                      value={field.value instanceof Date ? field.value.toISOString().slice(0, 16) : ''}
+                      onChange={(e) => field.onChange(new Date(e.target.value))}
                     />
                   </FormControl>
                   <FormMessage />
@@ -226,30 +290,44 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCameraCapture}
-                    disabled={isProcessingImage}
-                    className="flex items-center justify-center space-x-1"
-                  >
-                    <Camera className="h-4 w-4" />
-                    <span>Camera</span>
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleFileUpload}
-                    disabled={isProcessingImage}
-                    className="flex items-center justify-center space-x-1"
-                  >
-                    <Upload className="h-4 w-4" />
-                    <span>Upload</span>
-                  </Button>
-                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      disabled={isProcessingImage}
+                    >
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      Attach Receipt/Bill
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Attach Receipt/Bill</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                      <Button
+                        variant="outline"
+                        className="h-20 flex-col"
+                        onClick={handleCameraCapture}
+                        disabled={isProcessingImage}
+                      >
+                        <Camera className="h-6 w-6 mb-2" />
+                        Take Photo
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="h-20 flex-col"
+                        onClick={handleFileUpload}
+                        disabled={isProcessingImage}
+                      >
+                        <Upload className="h-6 w-6 mb-2" />
+                        Upload File
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               )}
               
               {isProcessingImage && (
@@ -265,20 +343,15 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
                 variant="outline"
                 className="flex-1"
                 onClick={handleClose}
-                data-testid="button-cancel-cash-entry"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className={`flex-1 ${
-                  isIn 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
-                } text-white`}
-                data-testid={`button-submit-cash-${type}`}
+                className="flex-1"
+                disabled={updateTransactionMutation.isPending}
               >
-                Add Cash {isIn ? 'In' : 'Out'}
+                {updateTransactionMutation.isPending ? 'Updating...' : 'Update Transaction'}
               </Button>
             </div>
           </form>

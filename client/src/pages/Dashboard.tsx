@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Plus } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 export function Dashboard() {
   const { accounts, setAccounts, setAccountSummary, sortAccounts, setSelectedAccountId, setCurrentScreen } = useAppStore();
@@ -147,12 +148,13 @@ function AccountCard({ account, onClick }: { account: any; onClick: () => void }
     loadBalance();
   }, [account.id]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(Math.abs(amount));
-  };
+  // Remove the local formatCurrency functions and use the imported one
+  // const formatCurrency = (amount: number) => {
+  //   return new Intl.NumberFormat('en-IN', {
+  //     style: 'currency',
+  //     currency: 'INR',
+  //   }).format(Math.abs(amount));
+  // };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();

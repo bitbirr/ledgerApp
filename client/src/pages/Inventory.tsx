@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Plus, Package, AlertTriangle } from 'lucide-react';
+import { formatCurrency } from '@/lib/utils';
 
 export function Inventory() {
   const { setCurrentScreen } = useAppStore();
@@ -95,13 +96,6 @@ export function Inventory() {
 
   const onSubmit = (data: InsertItem) => {
     createItemMutation.mutate(data);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
   };
 
   const isLowStock = (item: any) => {

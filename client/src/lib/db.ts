@@ -31,7 +31,7 @@ export class CreditDebitDB extends Dexie {
         id: 1,
         dateFormat: 'DD/MM/YYYY',
         timeFormat: '12',
-        currency: 'INR',
+        currency: 'ETB',
         language: 'en',
         firstDayOfWeek: 1,
         firstDayOfMonth: 1,

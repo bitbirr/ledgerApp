@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Phone } from 'lucide-react';
 import type { Account, Transaction } from '@shared/schema';
+import { formatCurrency } from '@/lib/utils';
 
 export function CustomerDetail() {
   const { selectedAccountId, setCurrentScreen, timePeriod, setTimePeriod } = useAppStore();
@@ -51,13 +52,6 @@ export function CustomerDetail() {
       setAccount(accountData);
     }
   }, [accountData]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-IN', {

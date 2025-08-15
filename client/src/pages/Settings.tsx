@@ -23,6 +23,7 @@ import {
   FileText,
   Database
 } from 'lucide-react';
+import { Preferences } from '@shared/schema';
 
 export function Settings() {
   const { setCurrentScreen } = useAppStore();
@@ -37,7 +38,7 @@ export function Settings() {
   });
 
   const updatePreferencesMutation = useMutation({
-    mutationFn: async (updates: Partial<typeof preferences>) => {
+    mutationFn: async (updates: Partial<Preferences>) => {
       await db.preferences.update(1, updates);
       return updates;
     },
@@ -150,13 +151,14 @@ export function Settings() {
             <div>
               <Label htmlFor="currency">Currency</Label>
               <Select 
-                value={preferences?.currency || 'INR'}
+                value={preferences?.currency || 'ETB'}
                 onValueChange={(value) => updatePreferencesMutation.mutate({ currency: value })}
               >
                 <SelectTrigger data-testid="select-currency">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="ETB">Br Ethiopian Birr (ETB)</SelectItem>
                   <SelectItem value="INR">₹ Indian Rupee (INR)</SelectItem>
                   <SelectItem value="USD">$ US Dollar (USD)</SelectItem>
                   <SelectItem value="EUR">€ Euro (EUR)</SelectItem>

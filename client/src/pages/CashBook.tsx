@@ -78,7 +78,7 @@ export function CashBook() {
     setCurrentDate(newDate);
   };
 
-  const handleCashIn = async (amount: number, note: string) => {
+  const handleCashIn = async (amount: number, note: string, attachmentUrl?: string) => {
     try {
       const response = await fetch('/api/cashbook', {
         method: 'POST',
@@ -89,12 +89,12 @@ export function CashBook() {
           direction: 'in',
           amount,
           note,
+          attachmentUrl,
           dateTime: new Date().toISOString(),
         }),
       });
       
       if (response.ok) {
-        // Refresh the cashbook data
         queryClient.invalidateQueries({ queryKey: ['cashbook'] });
         queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
         toast({
@@ -114,7 +114,7 @@ export function CashBook() {
     }
   };
 
-  const handleCashOut = async (amount: number, note: string) => {
+  const handleCashOut = async (amount: number, note: string, attachmentUrl?: string) => {
     try {
       const response = await fetch('/api/cashbook', {
         method: 'POST',
@@ -125,12 +125,12 @@ export function CashBook() {
           direction: 'out',
           amount,
           note,
+          attachmentUrl,
           dateTime: new Date().toISOString(),
         }),
       });
       
       if (response.ok) {
-        // Refresh the cashbook data
         queryClient.invalidateQueries({ queryKey: ['cashbook'] });
         queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
         toast({
@@ -160,11 +160,11 @@ export function CashBook() {
     setShowCashModal(true);
   };
 
-  const handleCashModalSubmit = async (amount: number, note: string) => {
+  const handleCashModalSubmit = async (amount: number, note: string, attachmentUrl?: string) => {
     if (cashModalType === 'in') {
-      await handleCashIn(amount, note);
+      await handleCashIn(amount, note, attachmentUrl);
     } else {
-      await handleCashOut(amount, note);
+      await handleCashOut(amount, note, attachmentUrl);
     }
   };
 

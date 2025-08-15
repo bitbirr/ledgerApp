@@ -81,7 +81,7 @@ export const preferences = mysqlTable('preferences', {
   id: int('id').primaryKey().autoincrement(),
   dateFormat: varchar('date_format', { length: 20 }).default('DD/MM/YYYY'),
   timeFormat: varchar('time_format', { length: 5 }).default('12'),
-  currency: varchar('currency', { length: 10 }).default('INR'),
+  currency: varchar('currency', { length: 10 }).default('ETB'),
   language: varchar('language', { length: 10 }).default('en'),
   firstDayOfWeek: int('first_day_of_week').default(1),
   firstDayOfMonth: int('first_day_of_month').default(1),
