@@ -4,12 +4,23 @@ import { z } from "zod";
 // No backend storage needed - this is for TypeScript types only
 // Data will be stored in IndexedDB via Dexie
 
+// Add shop schema
+export const shopSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  isDefault: z.boolean().default(false),
+  createdAt: z.date(),
+});
+
 export const accountSchema = z.object({
   id: z.string(),
   name: z.string(),
   phone: z.string().optional(),
   type: z.enum(['customer', 'supplier', 'other']),
   categoryId: z.string().optional(),
+  shopId: z.string().optional(), // Add shop association
   photoUrl: z.string().optional(),
   createdAt: z.date(),
   archived: z.boolean().default(false),
@@ -83,7 +94,7 @@ export const preferencesSchema = z.object({
   id: z.number().default(1),
   dateFormat: z.string().default('DD/MM/YYYY'),
   timeFormat: z.string().default('12'),
-  currency: z.string().default('INR'),
+  currency: z.string().default('ETB'), // Updated to ETB
   language: z.string().default('en'),
   firstDayOfWeek: z.number().default(1),
   firstDayOfMonth: z.number().default(1),
@@ -95,6 +106,7 @@ export const preferencesSchema = z.object({
 });
 
 // Export types
+export type Shop = z.infer<typeof shopSchema>;
 export type Account = z.infer<typeof accountSchema>;
 export type Category = z.infer<typeof categorySchema>;
 export type Transaction = z.infer<typeof transactionSchema>;
@@ -105,6 +117,7 @@ export type InvoiceItem = z.infer<typeof invoiceItemSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
 
 // Insert schemas (omit auto-generated fields)
+export const insertShopSchema = shopSchema.omit({ id: true, createdAt: true });
 export const insertAccountSchema = accountSchema.omit({ id: true, createdAt: true });
 export const insertCategorySchema = categorySchema.omit({ id: true });
 export const insertTransactionSchema = transactionSchema.omit({ id: true, createdAt: true, updatedAt: true });
@@ -120,3 +133,4 @@ export type InsertCashbookEntry = z.infer<typeof insertCashbookSchema>;
 export type InsertItem = z.infer<typeof insertItemSchema>;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
+export type InsertShop = z.infer<typeof insertShopSchema>;

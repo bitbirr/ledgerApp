@@ -1,11 +1,21 @@
 import { mysqlTable, varchar, timestamp, decimal, boolean, int, text } from 'drizzle-orm/mysql-core';
 
+// Add shops table
+export const shops = mysqlTable('shops', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  isDefault: boolean('is_default').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Update accounts table to include shopId
 export const accounts = mysqlTable('accounts', {
   id: varchar('id', { length: 255 }).primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 50 }),
   type: varchar('type', { length: 50 }).notNull(),
   categoryId: varchar('category_id', { length: 255 }),
+  shopId: varchar('shop_id', { length: 255 }), // Add shopId field
   photoUrl: text('photo_url'),
   createdAt: timestamp('created_at').defaultNow(),
   archived: boolean('archived').default(false),

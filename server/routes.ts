@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "./db";
-import { accounts, transactions, cashbook } from "./db/schema";
+import { accounts, transactions, cashbook, categories } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { SettingsService } from './services/settings.js';
@@ -236,6 +236,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error creating cashbook entry:', error);
       res.status(500).json({ error: 'Failed to create cashbook entry' });
+    }
+  });
+
+  // Add missing endpoints for categories
+  app.get('/api/categories', async (req, res) => {
+    try {
+      const database = await db;
+      const allCategories = await database.select().from(categories);
+      res.json(allCategories);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+  });
+
+  app.post('/api/categories', async (req, res) => {
+    try {
+      const database = await db;
+      const categoryData = {
+        ...req.body,
+        id: randomUUID()
+      };
+      
+      await database.insert(categories).values(categoryData);
+      
+      const newCategory = await database.select().from(categories)
+        .where(eq(categories.id, categoryData.id))
+        .limit(1);
+      
+      res.json(newCategory[0]);
+    } catch (error) {
+      console.error('Error creating category:', error);
+      res.status(500).json({ error: 'Failed to create category' });
+    }
+  });
+
+  // Add missing PUT and DELETE endpoints for accounts
+  app.put('/api/accounts/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.headers['user-id'] as string;
+      const database = await db;
+      
+      await database.update(accounts)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+      
+      const updatedAccount = await database.select().from(accounts)
+        .where(eq(accounts.id, id))
+        .limit(1);
+      
+      res.json(updatedAccount[0]);
+    } catch (error) {
+      console.error('Error updating account:', error);
+      res.status(500).json({ error: 'Failed to update account' });
+    }
+  });
+
+  app.delete('/api/accounts/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.headers['user-id'] as string;
+      const database = await db;
+      
+      // Soft delete by setting archived to true
+      await database.update(accounts)
+        .set({ archived: true })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      res.status(500).json({ error: 'Failed to delete account' });
+    }
+  });
+
+  // Add missing PUT and DELETE endpoints for transactions
+  app.put('/api/transactions/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.headers['user-id'] as string;
+      const database = await db;
+      
+      await database.update(transactions)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+      
+      const updatedTransaction = await database.select().from(transactions)
+        .where(eq(transactions.id, id))
+        .limit(1);
+      
+      res.json(updatedTransaction[0]);
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      res.status(500).json({ error: 'Failed to update transaction' });
+    }
+  });
+
+  app.delete('/api/transactions/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.headers['user-id'] as string;
+      const database = await db;
+      
+      // Soft delete by setting deleted to true
+      await database.update(transactions)
+        .set({ deleted: true })
+        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      res.status(500).json({ error: 'Failed to delete transaction' });
     }
   });
 
