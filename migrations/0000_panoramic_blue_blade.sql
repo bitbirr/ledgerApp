@@ -4,11 +4,28 @@ CREATE TABLE `accounts` (
 	`phone` varchar(50),
 	`type` varchar(50) NOT NULL,
 	`category_id` varchar(255),
+	`shop_id` varchar(255),
 	`photo_url` text,
 	`created_at` timestamp DEFAULT (now()),
 	`archived` boolean DEFAULT false,
 	`user_id` varchar(255) NOT NULL,
 	CONSTRAINT `accounts_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `app_settings` (
+	`setting_id` int AUTO_INCREMENT NOT NULL,
+	`setting_key` varchar(100) NOT NULL,
+	`setting_value` text,
+	`setting_type` varchar(20) DEFAULT 'string',
+	`category` varchar(50) NOT NULL,
+	`description` text,
+	`is_system` boolean DEFAULT false,
+	`created_at` timestamp DEFAULT (now()),
+	`updated_at` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	`created_by` varchar(100),
+	`updated_by` varchar(100),
+	CONSTRAINT `app_settings_setting_id` PRIMARY KEY(`setting_id`),
+	CONSTRAINT `app_settings_setting_key_unique` UNIQUE(`setting_key`)
 );
 --> statement-breakpoint
 CREATE TABLE `cashbook` (
@@ -70,7 +87,7 @@ CREATE TABLE `preferences` (
 	`id` int AUTO_INCREMENT NOT NULL,
 	`date_format` varchar(20) DEFAULT 'DD/MM/YYYY',
 	`time_format` varchar(5) DEFAULT '12',
-	`currency` varchar(10) DEFAULT 'INR',
+	`currency` varchar(10) DEFAULT 'ETB',
 	`language` varchar(10) DEFAULT 'en',
 	`first_day_of_week` int DEFAULT 1,
 	`first_day_of_month` int DEFAULT 1,
@@ -80,6 +97,14 @@ CREATE TABLE `preferences` (
 	`dark_mode` boolean DEFAULT false,
 	`biometric_enabled` boolean DEFAULT false,
 	CONSTRAINT `preferences_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `shops` (
+	`id` varchar(255) NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`is_default` boolean DEFAULT false,
+	`created_at` timestamp DEFAULT (now()),
+	CONSTRAINT `shops_id` PRIMARY KEY(`id`)
 );
 --> statement-breakpoint
 CREATE TABLE `transactions` (
