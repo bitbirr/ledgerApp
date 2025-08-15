@@ -1,20 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-        ]
-      : []),
   ],
   resolve: {
     alias: {
@@ -29,9 +19,19 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: parseInt(process.env.PORT || '3099', 10),
+    host: '0.0.0.0',
     fs: {
       strict: true,
       deny: ["**/.*"],
     },
   },
+  // Fix Chrome DevTools interference by excluding problematic files
+  optimizeDeps: {
+    exclude: ['/.well-known/appspecific/com.chrome.devtools.json']
+  },
+  // Add custom plugin to handle Chrome DevTools files
+  define: {
+    __CHROME_DEVTOOLS_FIX__: 'true'
+  }
 });

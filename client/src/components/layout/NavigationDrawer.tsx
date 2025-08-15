@@ -1,6 +1,12 @@
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription, // Add this import
+} from '@/components/ui/sheet';
 import { 
   Home, 
   Wallet, 
@@ -35,6 +41,9 @@ export function NavigationDrawer() {
             <SheetTitle className="text-xl font-medium text-primary">
               Credit Debit
             </SheetTitle>
+            <SheetDescription className="sr-only">
+              Navigation menu for the Credit Debit application
+            </SheetDescription>
             <Button
               variant="ghost"
               size="sm"
@@ -77,3 +86,10 @@ export function NavigationDrawer() {
     </Sheet>
   );
 }
+
+<SheetHeader>
+  <SheetTitle>Navigation</SheetTitle>
+  <SheetDescription>
+    Navigate to different sections of the app
+  </SheetDescription>
+</SheetHeader>

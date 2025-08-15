@@ -65,7 +65,8 @@ export class CreditDebitDB extends Dexie {
   }
 
   async getAccountSummary() {
-    const accounts = await this.accounts.where('archived').equals(false).toArray();
+    // Fix: Handle undefined/null archived values properly
+    const accounts = await this.accounts.filter(account => account.archived !== true).toArray();
     let totalAdvance = 0;
     let totalDue = 0;
 
@@ -114,8 +115,8 @@ export class CreditDebitDB extends Dexie {
   async searchAccounts(query: string) {
     return this.accounts
       .filter(account => 
-        account.name.toLowerCase().includes(query.toLowerCase()) ||
-        (account.phone && account.phone.includes(query))
+        (account.name?.toLowerCase() || '').includes(query.toLowerCase()) ||
+        (account.phone !== undefined && account.phone.includes(query))
       )
       .toArray();
   }

@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Add this to suppress the color-adjust warning */
+@layer base {
+  * {
+    print-color-adjust: exact;
+  }
+}
+
 :root {
   --background: hsl(250, 20%, 98%);
   --foreground: hsl(220, 13%, 9%);

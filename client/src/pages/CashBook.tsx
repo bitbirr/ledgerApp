@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/lib/store';
+import { useToast } from '@/hooks/use-toast';
 import { AppBar } from '@/components/layout/AppBar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
+import { CashEntryModal } from '@/components/modals/CashEntryModal';
 import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
 
 export function CashBook() {
   const { setCurrentScreen, timePeriod, setTimePeriod } = useAppStore();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showCashModal, setShowCashModal] = useState(false);
+  const [cashModalType, setCashModalType] = useState<'in' | 'out'>('in');
 
   const { data: cashEntries } = useQuery({
     queryKey: ['cashbook', timePeriod, currentDate],
@@ -72,14 +78,94 @@ export function CashBook() {
     setCurrentDate(newDate);
   };
 
-  const handleCashIn = () => {
-    // TODO: Show cash in modal
-    console.log('Cash In');
+  const handleCashIn = async (amount: number, note: string) => {
+    try {
+      const response = await fetch('/api/cashbook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          direction: 'in',
+          amount,
+          note,
+          dateTime: new Date().toISOString(),
+        }),
+      });
+      
+      if (response.ok) {
+        // Refresh the cashbook data
+        queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+        queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
+        toast({
+          title: 'Success',
+          description: 'Cash in entry added successfully',
+        });
+      } else {
+        throw new Error('Failed to add cash in entry');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add cash in entry',
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
-  const handleCashOut = () => {
-    // TODO: Show cash out modal
-    console.log('Cash Out');
+  const handleCashOut = async (amount: number, note: string) => {
+    try {
+      const response = await fetch('/api/cashbook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          direction: 'out',
+          amount,
+          note,
+          dateTime: new Date().toISOString(),
+        }),
+      });
+      
+      if (response.ok) {
+        // Refresh the cashbook data
+        queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+        queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
+        toast({
+          title: 'Success',
+          description: 'Cash out entry added successfully',
+        });
+      } else {
+        throw new Error('Failed to add cash out entry');
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add cash out entry',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  };
+
+  const onCashInClick = () => {
+    setCashModalType('in');
+    setShowCashModal(true);
+  };
+  
+  const onCashOutClick = () => {
+    setCashModalType('out');
+    setShowCashModal(true);
+  };
+
+  const handleCashModalSubmit = async (amount: number, note: string) => {
+    if (cashModalType === 'in') {
+      await handleCashIn(amount, note);
+    } else {
+      await handleCashOut(amount, note);
+    }
   };
 
   return (
@@ -207,7 +293,7 @@ export function CashBook() {
       <div className="fixed bottom-4 left-4 right-4 flex space-x-3 z-30">
         <Button
           className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center shadow-lg"
-          onClick={handleCashIn}
+          onClick={onCashInClick}
           data-testid="button-cash-in"
         >
           <Plus className="mr-2 h-5 w-5" />
@@ -215,13 +301,21 @@ export function CashBook() {
         </Button>
         <Button
           className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center shadow-lg"
-          onClick={handleCashOut}
+          onClick={onCashOutClick}
           data-testid="button-cash-out"
         >
           <Minus className="mr-2 h-5 w-5" />
           Cash Out
         </Button>
       </div>
+
+      {/* Cash Entry Modal */}
+      <CashEntryModal
+        open={showCashModal}
+        onClose={() => setShowCashModal(false)}
+        type={cashModalType}
+        onSubmit={handleCashModalSubmit}
+      />
     </div>
   );
 }

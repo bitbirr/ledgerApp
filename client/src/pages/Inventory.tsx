@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -186,6 +187,9 @@ export function Inventory() {
         <DialogContent className="max-w-md mx-4">
           <DialogHeader>
             <DialogTitle>Add Item</DialogTitle>
+            <DialogDescription>
+              Add a new item to your inventory with pricing and stock information.
+            </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>

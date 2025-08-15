@@ -91,3 +91,18 @@ export const preferences = mysqlTable('preferences', {
   darkMode: boolean('dark_mode').default(false),
   biometricEnabled: boolean('biometric_enabled').default(false),
 });
+
+// Add the new app_settings table
+export const appSettings = mysqlTable('app_settings', {
+  settingId: int('setting_id').primaryKey().autoincrement(),
+  settingKey: varchar('setting_key', { length: 100 }).notNull().unique(),
+  settingValue: text('setting_value'), // JSON stored as text with CHECK constraint in MySQL
+  settingType: varchar('setting_type', { length: 20 }).default('string'), // enum: string, number, boolean, json, object
+  category: varchar('category', { length: 50 }).notNull(),
+  description: text('description'),
+  isSystem: boolean('is_system').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+});

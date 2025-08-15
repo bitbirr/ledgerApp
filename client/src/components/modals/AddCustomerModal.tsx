@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -100,6 +101,9 @@ export function AddCustomerModal({ open, onClose }: AddCustomerModalProps) {
               <X className="h-4 w-4" />
             </Button>
           </div>
+          <DialogDescription>
+            Add a new customer to your ledger with their contact information.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

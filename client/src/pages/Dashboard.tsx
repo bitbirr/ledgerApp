@@ -17,7 +17,8 @@ export function Dashboard() {
   const { data: accountsData } = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
-      return await db.accounts.where('archived').equals(false).toArray();
+      // Fix: Handle undefined/null archived values properly
+      return await db.accounts.filter(account => account.archived !== true).toArray();
     },
   });
 
