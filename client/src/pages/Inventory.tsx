@@ -196,167 +196,192 @@ export function Inventory() {
 
       {/* Add Item Modal */}
       <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
-        <DialogContent className="max-w-md mx-4">
+        <DialogContent className="dialog-form">
           <DialogHeader>
-            <DialogTitle>Add Item</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="heading-financial">Add Item</DialogTitle>
+            <DialogDescription className="body-financial text-muted-foreground">
               Add a new item to your inventory with pricing and stock information.
             </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Name *</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="Item name"
-                        {...field}
-                        data-testid="input-item-name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
+            <form 
+              onSubmit={form.handleSubmit(onSubmit)} 
+              className="form-enhanced financial-form form-animate-in"
+            >
+              <div className="form-section">
                 <FormField
                   control={form.control}
-                  name="rate"
+                  name="name"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rate *</FormLabel>
+                    <FormItem className="form-field-enhanced">
+                      <FormLabel className="form-label required">Item Name</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={field.value ?? 0}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                          data-testid="input-item-rate"
+                          placeholder="Enter item name"
+                          className="form-input"
+                          {...field}
+                          data-testid="input-item-name"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="form-message error" />
                     </FormItem>
                   )}
                 />
 
+                <div className="form-row-2">
+                  <FormField
+                    control={form.control}
+                    name="rate"
+                    render={({ field }) => (
+                      <FormItem className="form-field-enhanced">
+                        <FormLabel className="form-label required">Rate</FormLabel>
+                        <div className="amount-field">
+                          <span className="currency-symbol">₹</span>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="form-input amount-input"
+                              value={field.value ?? 0}
+                              onChange={(e) =>
+                                field.onChange(parseFloat(e.target.value) || 0)
+                              }
+                              data-testid="input-item-rate"
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage className="form-message error" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="uom"
+                    render={({ field }) => (
+                      <FormItem className="form-field-enhanced">
+                        <FormLabel className="form-label">Unit of Measure</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="pcs, kg, ltr"
+                            className="form-input"
+                            value={field.value ?? ''}
+                            onChange={field.onChange}
+                            data-testid="input-item-uom"
+                          />
+                        </FormControl>
+                        <FormMessage className="form-message error" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={form.control}
-                  name="uom"
+                  name="categoryId"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="pcs, kg, ltr"
-                          value={field.value ?? ''}
-                          onChange={field.onChange}
-                          data-testid="input-item-uom"
-                        />
-                      </FormControl>
-                      <FormMessage />
+                    <FormItem className="form-field-enhanced">
+                      <FormLabel className="form-label">Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value ?? ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger 
+                            className="form-select"
+                            data-testid="select-item-category"
+                          >
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories?.map((category: Category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="form-message error" />
                     </FormItem>
                   )}
                 />
+
+                <div className="form-row-2">
+                  <FormField
+                    control={form.control}
+                    name="openingStock"
+                    render={({ field }) => (
+                      <FormItem className="form-field-enhanced">
+                        <FormLabel className="form-label">Opening Stock</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0"
+                            className="form-input"
+                            value={field.value ?? 0}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                            data-testid="input-opening-stock"
+                          />
+                        </FormControl>
+                        <FormMessage className="form-message error" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="lowStockAlert"
+                    render={({ field }) => (
+                      <FormItem className="form-field-enhanced">
+                        <FormLabel className="form-label">Low Stock Alert</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="0"
+                            className="form-input"
+                            value={field.value ?? 0}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                            data-testid="input-low-stock-alert"
+                          />
+                        </FormControl>
+                        <FormMessage className="form-message error" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value ?? ''}
-                    >
-                      <FormControl>
-                        <SelectTrigger data-testid="select-item-category">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories?.map((category: Category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="openingStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Opening Stock</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={field.value ?? 0}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                          data-testid="input-opening-stock"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="lowStockAlert"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Low Stock Alert</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          value={field.value ?? 0}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                          data-testid="input-low-stock-alert"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
+              <div className="form-actions">
                 <Button
                   type="button"
                   variant="outline"
+                  className="btn-secondary"
                   onClick={() => setShowAddItem(false)}
-                  data-testid="button-cancel-add-item"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1"
+                  className="btn-primary"
                   disabled={createItemMutation.isPending}
-                  data-testid="button-save-item"
                 >
-                  {createItemMutation.isPending ? 'Saving...' : 'Save Item'}
+                  {createItemMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Item'
+                  )}
                 </Button>
               </div>
             </form>

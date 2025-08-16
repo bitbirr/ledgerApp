@@ -374,3 +374,494 @@
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* Enhanced Form Styles */
+.form-enhanced {
+  @apply space-y-6;
+}
+
+.form-enhanced .form-section {
+  @apply space-y-4;
+}
+
+.form-enhanced .form-row {
+  @apply grid gap-4;
+}
+
+.form-enhanced .form-row-2 {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+}
+
+.form-enhanced .form-row-3 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+/* Enhanced Form Fields */
+.form-field-enhanced {
+  @apply space-y-2;
+}
+
+.form-field-enhanced .form-label {
+  @apply text-sm font-medium text-foreground;
+  @apply flex items-center gap-1;
+}
+
+.form-field-enhanced .form-label.required::after {
+  content: '*';
+  @apply text-destructive;
+}
+
+.form-field-enhanced .form-input {
+  @apply w-full px-3 py-2.5 text-sm;
+  @apply bg-background border border-input rounded-md;
+  @apply transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+  @apply placeholder:text-muted-foreground;
+}
+
+.form-field-enhanced .form-input:hover {
+  @apply border-ring/50;
+}
+
+.form-field-enhanced .form-input.error {
+  @apply border-destructive focus:ring-destructive;
+}
+
+.form-field-enhanced .form-input.success {
+  @apply border-success focus:ring-success;
+}
+
+/* Enhanced Select Styles */
+.form-field-enhanced .form-select {
+  @apply w-full px-3 py-2.5 text-sm;
+  @apply bg-background border border-input rounded-md;
+  @apply transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+}
+
+/* Enhanced Textarea Styles */
+.form-field-enhanced .form-textarea {
+  @apply w-full px-3 py-2.5 text-sm;
+  @apply bg-background border border-input rounded-md;
+  @apply transition-all duration-200;
+  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+  @apply placeholder:text-muted-foreground;
+  @apply resize-none;
+}
+
+/* Form Validation States */
+.form-message {
+  @apply text-xs font-medium;
+  @apply flex items-center gap-1;
+  @apply animate-fade-in;
+}
+
+.form-message.error {
+  @apply text-destructive;
+}
+
+.form-message.success {
+  @apply text-success;
+}
+
+.form-message.warning {
+  @apply text-warning;
+}
+
+/* Form Buttons */
+.form-actions {
+  @apply flex flex-col sm:flex-row gap-3 pt-6;
+}
+
+.form-actions .btn-primary {
+  @apply flex-1 sm:flex-none sm:min-w-[120px];
+  @apply bg-primary text-primary-foreground;
+  @apply hover:bg-primary/90;
+  @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply transition-all duration-200;
+}
+
+.form-actions .btn-secondary {
+  @apply flex-1 sm:flex-none sm:min-w-[120px];
+  @apply bg-secondary text-secondary-foreground;
+  @apply hover:bg-secondary/80;
+  @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  @apply transition-all duration-200;
+}
+
+/* Mobile Form Optimizations */
+@media (max-width: 640px) {
+  .form-enhanced {
+    @apply space-y-4;
+  }
+  
+  .form-enhanced .form-section {
+    @apply space-y-3;
+  }
+  
+  .form-field-enhanced .form-input,
+  .form-field-enhanced .form-select,
+  .form-field-enhanced .form-textarea {
+    @apply py-3 text-base; /* Larger touch targets on mobile */
+  }
+  
+  .form-actions {
+    @apply pt-4;
+  }
+  
+  .form-actions button {
+    @apply py-3 text-base; /* Larger buttons on mobile */
+  }
+}
+
+/* Form Loading States */
+.form-loading {
+  @apply opacity-50 pointer-events-none;
+}
+
+.form-loading .form-input,
+.form-loading .form-select,
+.form-loading .form-textarea {
+  @apply bg-muted;
+}
+
+/* Form Focus Management */
+.form-enhanced .form-input:focus-visible,
+.form-enhanced .form-select:focus-visible,
+.form-enhanced .form-textarea:focus-visible {
+  @apply outline-2 outline-offset-2 outline-ring;
+}
+
+/* Enhanced Dialog Forms */
+.dialog-form {
+  @apply max-w-md mx-4;
+}
+
+.dialog-form .dialog-content {
+  @apply max-h-[90vh] overflow-y-auto;
+}
+
+@media (max-width: 640px) {
+  .dialog-form {
+    @apply max-w-[95vw] mx-2;
+  }
+  
+  .dialog-form .dialog-content {
+    @apply max-h-[85vh];
+  }
+}
+
+/* Financial Form Specific Styles */
+.financial-form .amount-input {
+  @apply font-mono text-right;
+}
+
+.financial-form .currency-symbol {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2;
+  @apply text-muted-foreground pointer-events-none;
+}
+
+.financial-form .amount-field {
+  @apply relative;
+}
+
+.financial-form .amount-field .form-input {
+  @apply pl-8; /* Space for currency symbol */
+}
+
+/* Form Animations */
+@keyframes formSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-animate-in {
+  animation: formSlideIn 0.3s ease-out;
+}
+
+/* Form Error Shake Animation */
+@keyframes formShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.form-error-shake {
+  animation: formShake 0.4s ease-in-out;
+}
+
+/* ===== RESPONSIVE TABLE SYSTEM ===== */
+
+/* Base Table Container */
+.table-responsive {
+  @apply relative w-full;
+}
+
+.table-responsive .table-wrapper {
+  @apply overflow-x-auto;
+  @apply border border-border rounded-lg;
+  @apply bg-card;
+}
+
+/* Enhanced Table Styling */
+.table-enhanced {
+  @apply w-full border-collapse;
+  @apply text-sm;
+}
+
+.table-enhanced thead {
+  @apply bg-muted/50;
+  @apply sticky top-0 z-10;
+}
+
+.table-enhanced th {
+  @apply px-4 py-3;
+  @apply text-left font-semibold;
+  @apply text-muted-foreground;
+  @apply border-b border-border;
+  @apply whitespace-nowrap;
+}
+
+.table-enhanced td {
+  @apply px-4 py-3;
+  @apply border-b border-border/50;
+  @apply align-middle;
+}
+
+.table-enhanced tbody tr {
+  @apply transition-colors;
+  @apply hover:bg-muted/30;
+}
+
+.table-enhanced tbody tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Mobile Table Adaptations */
+@media (max-width: 768px) {
+  .table-responsive .table-wrapper {
+    @apply -mx-4; /* Extend to screen edges on mobile */
+    @apply rounded-none border-x-0;
+  }
+  
+  .table-enhanced th,
+  .table-enhanced td {
+    @apply px-3 py-2; /* Tighter spacing on mobile */
+    @apply text-xs; /* Smaller text on mobile */
+  }
+  
+  .table-enhanced th {
+    @apply py-3; /* Keep header height */
+  }
+}
+
+/* Table Action Buttons */
+.table-actions {
+  @apply flex items-center gap-1;
+}
+
+.table-actions .btn-action {
+  @apply p-2 rounded-md;
+  @apply text-muted-foreground;
+  @apply hover:text-foreground hover:bg-muted;
+  @apply transition-colors;
+  @apply touch-manipulation; /* Better touch response */
+}
+
+@media (max-width: 640px) {
+  .table-actions {
+    @apply gap-0.5;
+  }
+  
+  .table-actions .btn-action {
+    @apply p-1.5; /* Smaller buttons on mobile */
+  }
+}
+
+/* Financial Table Specific */
+.table-financial .amount-cell {
+  @apply font-mono text-right;
+  @apply tabular-nums; /* Better number alignment */
+}
+
+.table-financial .amount-positive {
+  @apply text-profit;
+}
+
+.table-financial .amount-negative {
+  @apply text-loss;
+}
+
+.table-financial .amount-neutral {
+  @apply text-muted-foreground;
+}
+
+/* Table Loading States */
+.table-loading {
+  @apply opacity-60 pointer-events-none;
+}
+
+.table-skeleton {
+  @apply animate-pulse;
+}
+
+.table-skeleton td {
+  @apply py-4;
+}
+
+.table-skeleton .skeleton-text {
+  @apply h-4 bg-muted rounded;
+}
+
+.table-skeleton .skeleton-text.short {
+  @apply w-16;
+}
+
+.table-skeleton .skeleton-text.medium {
+  @apply w-24;
+}
+
+.table-skeleton .skeleton-text.long {
+  @apply w-32;
+}
+
+/* Empty Table States */
+.table-empty {
+  @apply text-center py-12;
+  @apply text-muted-foreground;
+}
+
+.table-empty .empty-icon {
+  @apply w-12 h-12 mx-auto mb-4;
+  @apply text-muted-foreground/50;
+}
+
+.table-empty .empty-title {
+  @apply text-lg font-medium mb-2;
+  @apply text-foreground;
+}
+
+.table-empty .empty-description {
+  @apply text-sm mb-4;
+}
+
+/* Table Filters and Search */
+.table-filters {
+  @apply flex flex-col sm:flex-row gap-4 mb-4;
+  @apply p-4 bg-muted/30 rounded-lg;
+}
+
+.table-search {
+  @apply relative flex-1;
+}
+
+.table-search .search-icon {
+  @apply absolute left-3 top-1/2 transform -translate-y-1/2;
+  @apply w-4 h-4 text-muted-foreground;
+}
+
+.table-search input {
+  @apply pl-10;
+}
+
+/* Table Pagination */
+.table-pagination {
+  @apply flex items-center justify-between;
+  @apply pt-4 border-t border-border;
+}
+
+.table-pagination .pagination-info {
+  @apply text-sm text-muted-foreground;
+}
+
+.table-pagination .pagination-controls {
+  @apply flex items-center gap-2;
+}
+
+@media (max-width: 640px) {
+  .table-pagination {
+    @apply flex-col gap-3;
+  }
+  
+  .table-pagination .pagination-controls {
+    @apply w-full justify-center;
+  }
+}
+
+/* Card-based Table Alternative for Mobile */
+.table-cards {
+  @apply space-y-3;
+}
+
+.table-card {
+  @apply p-4 border border-border rounded-lg;
+  @apply bg-card;
+  @apply transition-colors hover:bg-muted/30;
+}
+
+.table-card-header {
+  @apply flex items-center justify-between mb-3;
+}
+
+.table-card-title {
+  @apply font-semibold;
+}
+
+.table-card-actions {
+  @apply flex items-center gap-2;
+}
+
+.table-card-content {
+  @apply space-y-2;
+}
+
+.table-card-row {
+  @apply flex justify-between;
+  @apply text-sm;
+}
+
+.table-card-label {
+  @apply text-muted-foreground;
+}
+
+.table-card-value {
+  @apply font-medium;
+}
+
+/* Responsive Table Toggle */
+@media (max-width: 768px) {
+  .table-responsive.mobile-cards .table-wrapper {
+    @apply hidden;
+  }
+  
+  .table-responsive.mobile-cards .table-cards {
+    @apply block;
+  }
+}
+
+@media (min-width: 769px) {
+  .table-responsive .table-cards {
+    @apply hidden;
+  }
+}
+
+/* Table Export Actions */
+.table-export {
+  @apply flex items-center gap-2;
+}
+
+.table-export button {
+  @apply text-xs;
+}
+
+@media (max-width: 640px) {
+  .table-export {
+    @apply w-full justify-center;
+  }
+}

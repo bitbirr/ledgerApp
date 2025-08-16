@@ -107,110 +107,122 @@ const createAccountMutation = useMutation({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-4">
+      <DialogContent className="dialog-form">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <DialogTitle>Add Customer</DialogTitle>
+            <DialogTitle className="heading-financial">Add Customer</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
+              className="h-8 w-8 p-0"
               onClick={onClose}
               data-testid="button-close-modal"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <DialogDescription>
+          <DialogDescription className="body-financial text-muted-foreground">
             Add a new customer to your ledger with their contact information.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name *</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Customer name"
-                      {...field}
-                      data-testid="input-customer-name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            className="form-enhanced form-animate-in"
+          >
+            <div className="form-section">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="form-field-enhanced">
+                    <FormLabel className="form-label required">Customer Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter customer name"
+                        className="form-input"
+                        {...field}
+                        data-testid="input-customer-name"
+                      />
+                    </FormControl>
+                    <FormMessage className="form-message error" />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="tel"
-                      placeholder="+1 234 567 8900"
-                      {...field}
-                      data-testid="input-customer-phone"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="form-field-enhanced">
+                    <FormLabel className="form-label">Phone Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        className="form-input"
+                        {...field}
+                        data-testid="input-customer-phone"
+                      />
+                    </FormControl>
+                    <FormMessage className="form-message error" />
+                  </FormItem>
+                )}
+              />
 
-            <div>
-              <FormLabel>Photo</FormLabel>
-              <div className="flex items-center space-x-4 mt-2">
-                <Avatar className="w-16 h-16">
-                  <AvatarFallback>
-                    <User className="h-6 w-6" />
-                  </AvatarFallback>
-                </Avatar>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  data-testid="button-choose-photo"
-                >
-                  Choose Photo
-                </Button>
+              <div className="form-field-enhanced">
+                <FormLabel className="form-label">Profile Photo</FormLabel>
+                <div className="flex items-center space-x-4 mt-2">
+                  <Avatar className="w-16 h-16 border-2 border-border">
+                    <AvatarFallback className="bg-muted">
+                      <User className="h-6 w-6 text-muted-foreground" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="btn-secondary"
+                    data-testid="button-choose-photo"
+                  >
+                    Choose Photo
+                  </Button>
+                </div>
               </div>
+
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="form-field-enhanced">
+                    <FormLabel className="form-label">Account Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger 
+                          className="form-select"
+                          data-testid="select-customer-type"
+                        >
+                          <SelectValue placeholder="Select account type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="customer">Customer</SelectItem>
+                        <SelectItem value="supplier">Supplier</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="form-message error" />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-customer-type">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="supplier">Supplier</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex space-x-3 pt-4">
+            <div className="form-actions">
               <Button
                 type="button"
                 variant="outline"
-                className="flex-1"
+                className="btn-secondary"
                 onClick={onClose}
                 data-testid="button-cancel"
               >
@@ -218,11 +230,18 @@ const createAccountMutation = useMutation({
               </Button>
               <Button
                 type="submit"
-                className="flex-1"
+                className="btn-primary"
                 disabled={createAccountMutation.isPending}
                 data-testid="button-save-customer"
               >
-                {createAccountMutation.isPending ? 'Saving...' : 'Save Customer'}
+                {createAccountMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  'Save Customer'
+                )}
               </Button>
             </div>
           </form>

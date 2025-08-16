@@ -236,7 +236,7 @@ export function ChartOfAccounts() {
               {!isSystemAccount && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="btn-action">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -303,9 +303,46 @@ export function ChartOfAccounts() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading accounts...</div>
-            ) : (
               <Table>
+                <TableHeader>
+                  <TableRow>
+                    {Array(6).fill(0).map((_, i) => (
+                      <TableHead key={i}>
+                        <div className="h-4 w-24 animate-pulse rounded bg-muted"></div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array(8).fill(0).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array(6).fill(0).map((_, j) => (
+                        <TableCell key={j}>
+                          <div className="h-4 w-full animate-pulse rounded bg-muted"></div>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : rootAccounts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center"></div>
+                icon={<Trees />}
+                title="No accounts found"
+                description="Create your first GL account to get started"
+                action={
+                  <Button onClick={() => {
+                    setShowAddAccount(true);
+                    setEditingAccount(null);
+                    form.reset();
+                  }}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Account
+                  </Button>
+                }
+              />
+            ) : (
+              <Table financial responsive>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Code</TableHead>

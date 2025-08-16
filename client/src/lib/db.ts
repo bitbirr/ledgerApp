@@ -1,6 +1,6 @@
 // src/lib/db.ts
 // Dexie-free compat shim that provides Dexie-like collections backed by REST + localStorage.
-// Now with balance caching to avoid N-per-card requests.
+// Adds in-memory caches to avoid N-per-card and redundant fetches across components.
 
 const DEFAULT_BUSINESS_ID = 'default-business';
 const DEFAULT_USER_ID = 'default-user';
@@ -104,7 +104,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 const toDate = (v: any) => (v ? new Date(v) : undefined);
 
-// ---------- localStorage buckets for items & categories (until you add /api/items, /api/categories) ----------
+// ---------- localStorage (items & categories only for now) ----------
 const ls = {
   read<T>(key: string, fallback: T): T {
     if (typeof window === 'undefined') return fallback;
@@ -127,19 +127,25 @@ const writeItems = (arr: Item[]) => ls.write(LS_ITEMS_KEY, arr);
 const readCategories = () => ls.read<Category[]>(LS_CATS_KEY, []);
 const writeCategories = (arr: Category[]) => ls.write(LS_CATS_KEY, arr);
 
-// ---------- Balance cache (prevents N-per-card calls) ----------
-type BalanceCache = {
-  balances: Record<string, number>;
-  at: number; // timestamp for debugging/invalidation if you want TTL later
-};
+// ---------- In-memory caches ----------
+let accountsCache: Account[] | null = null;
+let accountsCachePromise: Promise<Account[]> | null = null;
 
+// Balances + per-account transactions
+type BalanceCache = { balances: Record<string, number>; at: number };
 let balanceCache: BalanceCache | null = null;
-// If a summary build is already in-flight, let others await it
 let balanceBuildPromise: Promise<void> | null = null;
+let txCache: Record<string, Transaction[]> = {};
 
-function invalidateBalanceCache() {
+function invalidateAccountsCache() {
+  accountsCache = null;
+  accountsCachePromise = null;
+}
+
+function invalidateBalancesAndTx() {
   balanceCache = null;
   balanceBuildPromise = null;
+  txCache = {};
 }
 
 function calcBalanceFromTxns(txns: Transaction[]): number {
@@ -152,68 +158,36 @@ function calcBalanceFromTxns(txns: Transaction[]): number {
   return credits - debits;
 }
 
-// Build cache by fetching transactions for each account ONCE.
-// Still O(N) calls (one per account) but avoids duplicating them per card.
-// If you add a server endpoint to batch balances, switch to that here.
-async function buildBalanceCacheOnce(): Promise<void> {
-  if (balanceCache) return; // already built
-  if (balanceBuildPromise) {
-    await balanceBuildPromise; // re-use in-flight build
-    return;
-  }
-
-  balanceBuildPromise = (async () => {
-    const balances: Record<string, number> = {};
-    const accts = await accountsCollection.toArray();
-
-    // Fetch per-account transactions in parallel once
-    await Promise.all(
-      accts.map(async (a) => {
-        const rows = await fetchJson<any[]>(`/api/transactions/${a.id}`);
-        const txns: Transaction[] = rows.map((r) => ({
-          id: r.id,
-          businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
-          userId: r.userId ?? DEFAULT_USER_ID,
-          accountId: r.accountId,
-          dateTime: toDate(r.dateTime)!,
-          kind: r.kind,
-          amount: Number(r.amount),
-          note: r.note ?? undefined,
-          imageUrl: r.imageUrl ?? undefined,
-          dueDate: toDate(r.dueDate),
-          createdAt: toDate(r.createdAt)!,
-          updatedAt: toDate(r.updatedAt)!,
-          deleted: !!r.deleted,
-        }));
-        balances[a.id] = calcBalanceFromTxns(txns);
-      })
-    );
-
-    balanceCache = { balances, at: Date.now() };
-    balanceBuildPromise = null;
-  })();
-
-  await balanceBuildPromise;
+// ---------- Accounts ----------
+async function fetchAccountsRaw(): Promise<Account[]> {
+  const rows = await fetchJson<any[]>('/api/accounts');
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    type: (r.type as AccountType) ?? 'other',
+    businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+    createdAt: toDate(r.createdAt) ?? new Date(),
+    archived: !!r.archived,
+    phone: r.phone ?? undefined,
+    categoryId: r.categoryId ?? undefined,
+    photoUrl: r.photoUrl ?? undefined,
+  }));
 }
 
-// ---------- Accounts ----------
 const accountsCollection = {
   async toArray(): Promise<Account[]> {
-    const rows = await fetchJson<any[]>('/api/accounts');
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      type: (r.type as AccountType) ?? 'other',
-      businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
-      createdAt: toDate(r.createdAt) ?? new Date(),
-      archived: !!r.archived,
-      phone: r.phone ?? undefined,
-      categoryId: r.categoryId ?? undefined,
-      photoUrl: r.photoUrl ?? undefined,
-    }));
+    if (accountsCache) return accountsCache;
+    if (accountsCachePromise) return accountsCachePromise;
+
+    accountsCachePromise = fetchAccountsRaw().then((list) => {
+      accountsCache = list;
+      accountsCachePromise = null;
+      return list;
+    });
+
+    return accountsCachePromise;
   },
 
-  // Accepts anything your UI sends; we pick the fields the API expects.
   async add(a: {
     id?: string;
     name: string;
@@ -235,8 +209,8 @@ const accountsCollection = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    // Adding an account could change balances next time (new customer starts at 0, but be safe)
-    invalidateBalanceCache();
+    invalidateAccountsCache();
+    invalidateBalancesAndTx(); // new account may affect summary flow
     return created.id as string;
   },
 
@@ -258,19 +232,64 @@ const accountsCollection = {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
-    // Archiving/unarchiving etc could change summary cards
-    invalidateBalanceCache();
+    invalidateAccountsCache();
+    invalidateBalancesAndTx();
   },
 };
 
-// ---------- Transactions (supports where(...).equals(...).and(...).reverse().toArray()) ----------
+// ---------- Balance build (once), also warms txCache ----------
+async function buildBalanceCacheOnce(): Promise<void> {
+  if (balanceCache) return;
+  if (balanceBuildPromise) {
+    await balanceBuildPromise;
+    return;
+  }
+
+  balanceBuildPromise = (async () => {
+    const balances: Record<string, number> = {};
+    const accts = await accountsCollection.toArray();
+
+    await Promise.all(
+      accts.map(async (a) => {
+        // Use cached tx if present
+        let txns = txCache[a.id];
+        if (!txns) {
+          const rows = await fetchJson<any[]>(`/api/transactions/${a.id}`);
+          txns = rows.map((r) => ({
+            id: r.id,
+            businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+            userId: r.userId ?? DEFAULT_USER_ID,
+            accountId: r.accountId,
+            dateTime: toDate(r.dateTime)!,
+            kind: r.kind,
+            amount: Number(r.amount),
+            note: r.note ?? undefined,
+            imageUrl: r.imageUrl ?? undefined,
+            dueDate: toDate(r.dueDate),
+            createdAt: toDate(r.createdAt)!,
+            updatedAt: toDate(r.updatedAt)!,
+            deleted: !!r.deleted,
+          }));
+          txCache[a.id] = txns;
+        }
+        balances[a.id] = calcBalanceFromTxns(txns);
+      })
+    );
+
+    balanceCache = { balances, at: Date.now() };
+    balanceBuildPromise = null;
+  })();
+
+  await balanceBuildPromise;
+}
+
+// ---------- Transactions (Dexie-like where(...)) ----------
 function transactionsWhere(accountId: string) {
   type Pred = (t: Transaction) => boolean;
   let predicates: Pred[] = [(t) => t.accountId === accountId];
 
   const api = {
     equals(_value: string) {
-      // accountId captured above for Dexie-like shape
       return api;
     },
     and(fn: Pred) {
@@ -282,24 +301,28 @@ function transactionsWhere(accountId: string) {
       return api;
     },
     async toArray(): Promise<Transaction[]> {
-      const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
-      let list: Transaction[] = rows.map((r) => ({
-        id: r.id,
-        businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
-        userId: r.userId ?? DEFAULT_USER_ID,
-        accountId: r.accountId,
-        dateTime: toDate(r.dateTime)!,
-        kind: r.kind,
-        amount: Number(r.amount),
-        note: r.note ?? undefined,
-        imageUrl: r.imageUrl ?? undefined,
-        dueDate: toDate(r.dueDate),
-        createdAt: toDate(r.createdAt)!,
-        updatedAt: toDate(r.updatedAt)!,
-        deleted: !!r.deleted,
-      }));
+      let list = txCache[accountId];
+      if (!list) {
+        const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
+        list = rows.map((r) => ({
+          id: r.id,
+          businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+          userId: r.userId ?? DEFAULT_USER_ID,
+          accountId: r.accountId,
+          dateTime: toDate(r.dateTime)!,
+          kind: r.kind,
+          amount: Number(r.amount),
+          note: r.note ?? undefined,
+          imageUrl: r.imageUrl ?? undefined,
+          dueDate: toDate(r.dueDate),
+          createdAt: toDate(r.createdAt)!,
+          updatedAt: toDate(r.updatedAt)!,
+          deleted: !!r.deleted,
+        }));
+        txCache[accountId] = list;
+      }
       for (const p of predicates) list = list.filter(p);
-      list.sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+      list = [...list].sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
       if ((api as any)._reverse) list.reverse();
       return list;
     },
@@ -314,7 +337,6 @@ const transactionsCollection = {
     };
   },
 
-  // NOTE: no userId/businessId required; the server fills from headers.
   async add(t: {
     accountId: string;
     dateTime: Date;
@@ -337,8 +359,7 @@ const transactionsCollection = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    // Transactions change balances immediately
-    invalidateBalanceCache();
+    invalidateBalancesAndTx();
     return created.id as string;
   },
 
@@ -359,12 +380,11 @@ const transactionsCollection = {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
-    // Updates also affect balances
-    invalidateBalanceCache();
+    invalidateBalancesAndTx();
   },
 };
 
-// ---------- Cashbook (supports orderBy('dateTime').toArray()) ----------
+// ---------- Cashbook ----------
 const cashbookCollection = {
   orderBy(field: 'dateTime') {
     return {
@@ -391,13 +411,12 @@ const cashbookCollection = {
       method: 'POST',
       body: JSON.stringify({ ...e, dateTime: e.dateTime.toISOString() }),
     });
-    // If cashbook entries eventually post to GL affecting per-account balances,
-    // you may want to invalidate here as well. For now, keep cache intact.
+    // If/when cashbook affects account balances, call invalidateBalancesAndTx() here.
     return created.id as string;
   },
 };
 
-// ---------- Items & Categories (localStorage-backed for now) ----------
+// ---------- Items & Categories (local-only) ----------
 const itemsCollection = {
   async toArray(): Promise<Item[]> {
     return readItems();
@@ -442,33 +461,32 @@ const preferencesCollection = {
 
 // ---------- helpers used by pages ----------
 async function getAccountBalance(accountId: string): Promise<number> {
-  // If a summary build is running, wait and read from cache (prevents duplicate fetches)
-  if (balanceBuildPromise) {
-    await balanceBuildPromise;
-  }
-  // Use cache if present
+  if (balanceBuildPromise) await balanceBuildPromise;
   if (balanceCache && accountId in balanceCache.balances) {
     return balanceCache.balances[accountId];
   }
-  // Fallback: fetch just this account (won't duplicate if summary already built)
-  const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
-  const txns: Transaction[] = rows.map((r) => ({
-    id: r.id,
-    businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
-    userId: r.userId ?? DEFAULT_USER_ID,
-    accountId: r.accountId,
-    dateTime: toDate(r.dateTime)!,
-    kind: r.kind,
-    amount: Number(r.amount),
-    note: r.note ?? undefined,
-    imageUrl: r.imageUrl ?? undefined,
-    dueDate: toDate(r.dueDate),
-    createdAt: toDate(r.createdAt)!,
-    updatedAt: toDate(r.updatedAt)!,
-    deleted: !!r.deleted,
-  }));
-  const bal = calcBalanceFromTxns(txns);
-  // Memoize into cache map
+  // Fallback: fetch just this account (and remember)
+  let list = txCache[accountId];
+  if (!list) {
+    const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
+    list = rows.map((r) => ({
+      id: r.id,
+      businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+      userId: r.userId ?? DEFAULT_USER_ID,
+      accountId: r.accountId,
+      dateTime: toDate(r.dateTime)!,
+      kind: r.kind,
+      amount: Number(r.amount),
+      note: r.note ?? undefined,
+      imageUrl: r.imageUrl ?? undefined,
+      dueDate: toDate(r.dueDate),
+      createdAt: toDate(r.createdAt)!,
+      updatedAt: toDate(r.updatedAt)!,
+      deleted: !!r.deleted,
+    }));
+    txCache[accountId] = list;
+  }
+  const bal = calcBalanceFromTxns(list);
   if (!balanceCache) balanceCache = { balances: {}, at: Date.now() };
   balanceCache.balances[accountId] = bal;
   return bal;
@@ -479,8 +497,7 @@ async function getAccountSummary(): Promise<{
   totalDue: number;
   netBalance: number;
 }> {
-  // Build (or reuse) the cache once; cards will read from it via getAccountBalance
-  await buildBalanceCacheOnce();
+  await buildBalanceCacheOnce(); // warms txCache + balances
 
   const accts = await accountsCollection.toArray();
   let totalAdvance = 0;

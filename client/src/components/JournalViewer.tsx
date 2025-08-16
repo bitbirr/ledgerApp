@@ -179,10 +179,10 @@ export function JournalViewer() {
 
         {/* Journal Entries Table */}
         {isLoading ? (
-          <div className="text-center py-8">Loading journal entries...</div>
-        ) : (
+          <TableSkeleton rows={6} cols={4} />
+        ) : journalEntries && journalEntries.length > 0 ? (
           <div className="space-y-4">
-            {journalEntries?.map(entry => (
+            {journalEntries.map(entry => (
               <Card key={entry.id} className="border-l-4 border-l-primary">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -200,59 +200,55 @@ export function JournalViewer() {
                         <Badge variant="secondary">Locked</Badge>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Posted by: {entry.postedBy}
+                    <div className="table-actions">
+                      <Button variant="ghost" size="sm" className="btn-action">
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                   {entry.memo && (
-                    <div className="text-sm text-muted-foreground mt-2">
-                      {entry.memo}
-                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">{entry.memo}</p>
                   )}
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  <Table financial responsive className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Account</TableHead>
-                        <TableHead className="text-right">Debit</TableHead>
-                        <TableHead className="text-right">Credit</TableHead>
-                        <TableHead>Notes</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Debit</TableHead>
+                        <TableHead>Credit</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {entry.lines.map(line => (
                         <TableRow key={line.id}>
-                          <TableCell className="font-medium">
-                            {getAccountName(line.accountId)}
+                          <TableCell className="font-mono text-xs">
+                            {line.accountCode}
                           </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {line.debit > 0 ? formatCurrency(line.debit) : '-'}
+                          <TableCell className="text-xs">
+                            {line.description || '-'}
                           </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {line.credit > 0 ? formatCurrency(line.credit) : '-'}
+                          <TableCell amount positive={line.debitAmount > 0}>
+                            {line.debitAmount > 0 ? formatCurrency(line.debitAmount) : '-'}
                           </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {line.notes || '-'}
+                          <TableCell amount positive={line.creditAmount > 0}>
+                            {line.creditAmount > 0 ? formatCurrency(line.creditAmount) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                  <div className="mt-2 pt-2 border-t flex justify-end">
-                    <div className="text-sm font-medium">
-                      Total: {formatCurrency(entry.lines.reduce((sum, line) => sum + (line.debit || 0), 0))}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             ))}
-            {journalEntries?.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No journal entries found matching your criteria.
-              </div>
-            )}
           </div>
+        ) : (
+          <TableEmpty 
+            icon={BookOpen}
+            title="No journal entries found"
+            description="No entries match your current filters"
+          />
         )}
       </CardContent>
     </Card>

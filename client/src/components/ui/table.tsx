@@ -4,14 +4,29 @@ import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
+  React.HTMLAttributes<HTMLTableElement> & {
+    responsive?: boolean;
+    financial?: boolean;
+    loading?: boolean;
+  }
+>(({ className, responsive = true, financial = false, loading = false, ...props }, ref) => (
+  <div className={cn(
+    "table-responsive",
+    responsive && "table-responsive",
+    className
+  )}>
+    <div className="table-wrapper">
+      <table
+        ref={ref}
+        className={cn(
+          "table-enhanced",
+          financial && "table-financial",
+          loading && "table-loading",
+          "w-full caption-bottom text-sm"
+        )}
+        {...props}
+      />
+    </div>
   </div>
 ))
 Table.displayName = "Table"
@@ -83,11 +98,21 @@ TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.TdHTMLAttributes<HTMLTableCellElement> & {
+    amount?: boolean;
+    positive?: boolean;
+    negative?: boolean;
+  }
+>(({ className, amount = false, positive = false, negative = false, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn(
+      "p-4 align-middle [&:has([role=checkbox])]:pr-0",
+      amount && "amount-cell",
+      positive && "amount-positive",
+      negative && "amount-negative",
+      className
+    )}
     {...props}
   />
 ))
@@ -105,6 +130,54 @@ const TableCaption = React.forwardRef<
 ))
 TableCaption.displayName = "TableCaption"
 
+// New components for responsive tables
+const TableSkeleton = ({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) => (
+  <Table className="table-skeleton">
+    <TableHeader>
+      <TableRow>
+        {Array.from({ length: cols }).map((_, i) => (
+          <TableHead key={i}>
+            <div className="skeleton-text medium" />
+          </TableHead>
+        ))}
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {Array.from({ length: rows }).map((_, i) => (
+        <TableRow key={i}>
+          {Array.from({ length: cols }).map((_, j) => (
+            <TableCell key={j}>
+              <div className={cn(
+                "skeleton-text",
+                j === 0 ? "long" : j === cols - 1 ? "short" : "medium"
+              )} />
+            </TableCell>
+          ))}
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+)
+
+const TableEmpty = ({ 
+  icon: Icon, 
+  title, 
+  description, 
+  action 
+}: { 
+  icon?: React.ComponentType<{ className?: string }>;
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) => (
+  <div className="table-empty">
+    {Icon && <Icon className="empty-icon" />}
+    <div className="empty-title">{title}</div>
+    {description && <div className="empty-description">{description}</div>}
+    {action}
+  </div>
+)
+
 export {
   Table,
   TableHeader,
@@ -114,4 +187,6 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  TableSkeleton,
+  TableEmpty,
 }

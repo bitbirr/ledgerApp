@@ -117,7 +117,7 @@ export function TrialBalance() {
 
         {/* Trial Balance Table */}
         {isLoading ? (
-          <div className="text-center py-8">Loading trial balance...</div>
+          <TableSkeleton rows={10} cols={5} />
         ) : trialBalance ? (
           <div className="space-y-4">
             {!trialBalance.isBalanced && (
@@ -130,14 +130,14 @@ export function TrialBalance() {
               </div>
             )}
             
-            <Table>
+            <Table financial responsive>
               <TableHeader>
                 <TableRow>
                   <TableHead>Account Code</TableHead>
                   <TableHead>Account Name</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Debit Balance</TableHead>
-                  <TableHead className="text-right">Credit Balance</TableHead>
+                  <TableHead>Debit Balance</TableHead>
+                  <TableHead>Credit Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,34 +153,33 @@ export function TrialBalance() {
                         {item.accountType.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell amount positive={item.debitBalance > 0}>
                       {item.debitBalance > 0 ? formatCurrency(item.debitBalance) : '-'}
                     </TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell amount positive={item.creditBalance > 0}>
                       {item.creditBalance > 0 ? formatCurrency(item.creditBalance) : '-'}
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="border-t-2 font-semibold bg-muted/50">
+                {/* Totals Row */}
+                <TableRow className="font-semibold bg-muted/30">
                   <TableCell colSpan={3}>TOTALS</TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell amount className="font-bold">
                     {formatCurrency(trialBalance.totalDebits)}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell amount className="font-bold">
                     {formatCurrency(trialBalance.totalCredits)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
-            
-            <div className="text-sm text-muted-foreground text-center">
-              Trial Balance as of {new Date(trialBalance.asOfDate).toLocaleDateString()}
-            </div>
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No data available for the selected date.
-          </div>
+          <TableEmpty 
+            icon={Scale}
+            title="No trial balance data"
+            description="No account balances found for the selected date"
+          />
         )}
       </CardContent>
     </Card>

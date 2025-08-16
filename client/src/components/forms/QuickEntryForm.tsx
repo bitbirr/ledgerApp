@@ -151,56 +151,70 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
   const isReceived = type === 'received';
 
   return (
-    <Card>
+    <Card className="financial-card">
       <CardHeader>
-        <CardTitle className={isReceived ? 'text-green-600' : 'text-red-600'}>
+        <CardTitle className={`heading-financial ${
+          isReceived ? 'text-profit' : 'text-loss'
+        }`}>
           You {isReceived ? 'Received' : 'Paid'}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="Amount"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      data-testid={`input-${type}-amount`}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <form 
+            onSubmit={form.handleSubmit(onSubmit)} 
+            className="form-enhanced financial-form"
+          >
+            <div className="form-section">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem className="form-field-enhanced">
+                    <FormControl className="form-label required">Amount</FormControl>
+                    <div className="amount-field">
+                      <span className="currency-symbol">₹</span>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="form-input amount-input"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          data-testid={`input-${type}-amount`}
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage className="form-message error" />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="note"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      placeholder="Note (optional)"
-                      {...field}
-                      data-testid={`input-${type}-note`}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="note"
+                render={({ field }) => (
+                  <FormItem className="form-field-enhanced">
+                    <FormControl className="form-label">Note</FormControl>
+                    <FormControl>
+                      <Input
+                        placeholder="Add a note (optional)"
+                        className="form-input"
+                        {...field}
+                        data-testid={`input-${type}-note`}
+                      />
+                    </FormControl>
+                    <FormMessage className="form-message error" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             {/* Image Attachment Preview */}
             {attachedImage && (
-              <div className="relative">
-                <div className="flex items-center justify-between p-2 bg-muted rounded-md">
+              <div className="form-section">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-dashed">
                   <div className="flex items-center space-x-2">
                     <Paperclip className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Image attached</span>
@@ -208,6 +222,7 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
                       type="button"
                       variant="ghost"
                       size="sm"
+                      className="h-8 w-8 p-0"
                       onClick={() => setShowImagePreview(true)}
                       data-testid={`button-preview-${type}`}
                     >
@@ -218,6 +233,7 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     onClick={removeAttachedImage}
                     data-testid={`button-remove-image-${type}`}
                   >
@@ -227,16 +243,23 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
               </div>
             )}
 
-            <div className="flex space-x-2">
+            <div className="form-actions">
               <Button
                 type="submit"
-                className={`flex-1 ${
-                  isReceived ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
+                className={`btn-primary ${
+                  isReceived ? 'bg-profit hover:bg-profit/90' : 'bg-loss hover:bg-loss/90'
                 }`}
                 disabled={addTransactionMutation.isPending}
                 data-testid={`button-add-${type}`}
               >
-                {addTransactionMutation.isPending ? 'Adding...' : 'Add Entry'}
+                {addTransactionMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Adding...
+                  </>
+                ) : (
+                  'Add Entry'
+                )}
               </Button>
 
               {/* Attachment Options */}
@@ -245,75 +268,78 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    size="icon"
+                    className="btn-secondary"
                     disabled={isProcessingImage}
                     data-testid={`button-attach-${type}`}
                   >
-                    <Paperclip className="h-4 w-4" />
+                    {isProcessingImage ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      <Paperclip className="h-4 w-4" />
+                    )}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-sm">
+                <DialogContent className="dialog-form">
                   <DialogHeader>
-                    <DialogTitle>Attach Receipt/Bill</DialogTitle>
+                    <DialogTitle>Attach Receipt</DialogTitle>
                   </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4 py-4">
-                    <Button
-                      variant="outline"
-                      className="h-20 flex-col"
-                      onClick={handleCameraCapture}
-                      disabled={isProcessingImage}
-                    >
-                      <Camera className="h-6 w-6 mb-2" />
-                      Take Photo
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="h-20 flex-col"
-                      onClick={handleFileUpload}
-                      disabled={isProcessingImage}
-                    >
-                      <Upload className="h-6 w-6 mb-2" />
-                      Upload Image
-                    </Button>
-                  </div>
-                  {isProcessingImage && (
-                    <div className="text-center text-sm text-muted-foreground">
-                      Processing image...
+                  <div className="form-section">
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex flex-col items-center gap-2 h-20"
+                        onClick={handleCameraCapture}
+                        data-testid={`button-camera-${type}`}
+                      >
+                        <Camera className="h-5 w-5" />
+                        <span className="text-xs">Camera</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex flex-col items-center gap-2 h-20"
+                        onClick={handleFileUpload}
+                        data-testid={`button-upload-${type}`}
+                      >
+                        <Upload className="h-5 w-5" />
+                        <span className="text-xs">Upload</span>
+                      </Button>
                     </div>
-                  )}
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
           </form>
         </Form>
-
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
-        {/* Image Preview Dialog */}
-        <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Attached Receipt/Bill</DialogTitle>
-            </DialogHeader>
-            {attachedImage && (
-              <div className="flex justify-center">
-                <img
-                  src={attachedImage}
-                  alt="Attached receipt"
-                  className="max-w-full max-h-96 object-contain rounded-md"
-                />
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </CardContent>
     </Card>
   );
+
+  {/* Image Preview Dialog */}
+  <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Attached Receipt/Bill</DialogTitle>
+      </DialogHeader>
+      {attachedImage && (
+        <div className="flex justify-center">
+          <img
+            src={attachedImage || undefined}
+            alt="Attached receipt"
+            className="max-w-full max-h-96 object-contain rounded-md"
+          />
+        </div>
+      )}
+    </DialogContent>
+  </Dialog>
 }
