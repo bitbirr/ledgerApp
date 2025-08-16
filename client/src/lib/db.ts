@@ -1,9 +1,13 @@
 import Dexie, { Table } from 'dexie';
-import { Account, Category, Transaction, CashbookEntry, Item, Invoice, InvoiceItem, Preferences, Shop } from '@shared/schema';
+import {
+  Account, Category, Transaction, CashbookEntry, Item, Invoice, InvoiceItem, Preferences, Business,
+  GLAccount, GLJournalEntry, GLJournalLine, InventoryMovement, TaxRate, TaxCode, PostingRule, OpeningBalance
+} from '@shared/schema';
 import { mariaDBAdapter } from './dexie-mariadb-adapter';
 
 // Keep the original Dexie class for offline fallback
 export class CreditDebitDB extends Dexie {
+  // Core tables
   accounts!: Table<Account>;
   categories!: Table<Category>;
   transactions!: Table<Transaction>;
@@ -12,22 +16,44 @@ export class CreditDebitDB extends Dexie {
   invoices!: Table<Invoice>;
   invoiceItems!: Table<InvoiceItem>;
   preferences!: Table<Preferences>;
-  shops!: Table<Shop>;
+  businesses!: Table<Business>;
+
+  // General Ledger & Tax
+  glAccounts!: Table<GLAccount>;
+  glJournalEntries!: Table<GLJournalEntry>;
+  glJournalLines!: Table<GLJournalLine>;
+  inventoryMovements!: Table<InventoryMovement>;
+  taxRates!: Table<TaxRate>;
+  taxCodes!: Table<TaxCode>;
+  postingRules!: Table<PostingRule>;
+  openingBalances!: Table<OpeningBalance>;
 
   constructor() {
     super('CreditDebitDB');
     
     // Keep existing schema for offline fallback
-    this.version(2).stores({
-      accounts: 'id, name, type, categoryId, shopId, createdAt, archived',
-      categories: 'id, name',
-      transactions: 'id, accountId, dateTime, kind, amount, createdAt, deleted',
-      cashbook: 'id, dateTime, direction, amount',
-      items: 'id, name, categoryId',
-      invoices: 'id, number, accountId, kind, issueDate, status',
+    // Bump schema for Business + GL/Tax/Inventory
+    this.version(3).stores({
+      // Core domain
+      accounts: 'id, name, type, categoryId, businessId, createdAt, archived',
+      categories: 'id, name, businessId',
+      transactions: 'id, accountId, businessId, dateTime, kind, amount, createdAt, deleted',
+      cashbook: 'id, businessId, dateTime, direction, amount',
+      items: 'id, name, categoryId, businessId',
+      invoices: 'id, number, accountId, businessId, kind, issueDate, status',
       invoiceItems: 'id, invoiceId, itemId',
-      preferences: 'id',
-      shops: 'id, name, createdAt'
+      preferences: 'id, businessId',
+      businesses: 'id, name, createdAt',
+
+      // General Ledger & Tax
+      glAccounts: 'id, businessId, code, type, isActive',
+      glJournalEntries: 'id, businessId, entryDate, sourceModule',
+      glJournalLines: 'id, entryId, businessId, accountId, partyId, itemId',
+      inventoryMovements: 'id, businessId, date, itemId, sourceModule',
+      taxRates: 'id, businessId, isActive',
+      taxCodes: 'id, businessId, scope, direction',
+      postingRules: 'id, businessId, module, action',
+      openingBalances: 'id, businessId, periodStart',
     });
   }
 

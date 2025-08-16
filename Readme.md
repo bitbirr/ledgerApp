@@ -1,6 +1,6 @@
 # Credit Debit Financial Management App  
 ## Overview  
-Credit Debit is an offline-first Progressive Web App designed for comprehensive financial management. The application enables users to track credit/debit accounts, manage invoices, maintain cash flow records, and generate financial reports. Built with modern web technologies, it provides a mobile-first experience with robust offline capabilities and optional cloud backup integration.  
+Credit Debit is Progressive Web App designed for comprehensive financial management. The application enables users to track credit/debit accounts, manage invoices, maintain cash flow records, and generate financial reports. Built with modern web technologies, it provides a mobile-first experience with robust offline capabilities and optional cloud backup integration.  
 
 The application follows a client-centric architecture where all data is stored locally in IndexedDB using Dexie, ensuring full offline functionality. 
 

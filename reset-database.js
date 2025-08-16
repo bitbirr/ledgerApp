@@ -16,11 +16,11 @@ async function resetDatabase() {
     
     console.log('🔄 Resetting database...');
     
-    // Drop all tables
+    // Drop all tables (including new multi-tenant tables)
     const tables = [
-      'invoice_items', 'invoices', 'transactions', 'cashbook', 
-      'accounts', 'categories', 'items', 'preferences', 
-      'app_settings', 'shops'
+      'business_users', 'invoice_items', 'invoices', 'transactions', 
+      'cashbook', 'accounts', 'categories', 'items', 'preferences', 
+      'app_settings', 'businesses', 'users', 'shops'
     ];
     
     for (const table of tables) {

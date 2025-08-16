@@ -1,12 +1,17 @@
-import { Account, Category, Transaction, CashbookEntry, Item, Invoice, InvoiceItem, Preferences, Shop } from '@shared/schema';
+import {
+  Account, Category, Transaction, CashbookEntry, Item, Invoice, InvoiceItem, Preferences,
+  GLAccount, GLJournalEntry, GLJournalLine, InsertGLJournalEntry, InsertGLJournalLine
+} from '@shared/schema';
 
 const API_BASE = '/api';
 const USER_ID = 'default-user'; // You can implement proper user management later
+const BUSINESS_ID = 'default-business'; // Multi-business support; replace via auth/selection later
 
 class DexieMariaDBAdapter {
   private headers = {
     'Content-Type': 'application/json',
-    'user-id': USER_ID
+    'user-id': USER_ID,
+    'business-id': BUSINESS_ID,
   };
 
   // Account operations
@@ -155,11 +160,78 @@ class DexieMariaDBAdapter {
 
   async searchAccounts(query: string): Promise<Account[]> {
     const accounts = await this.getAccounts();
-    return accounts.filter(account => 
+    return accounts.filter(account =>
       (account.name?.toLowerCase() || '').includes(query.toLowerCase()) ||
       (account.phone !== undefined && account.phone.includes(query))
     );
   }
-}
 
+  // ======================
+  // GL: Chart of Accounts
+  // ======================
+  async getGLAccounts(): Promise<GLAccount[]> {
+    const response = await fetch(`${API_BASE}/gl/accounts`, {
+      headers: this.headers
+    });
+    if (!response.ok) throw new Error('Failed to fetch GL accounts');
+    return response.json();
+  }
+
+  async createGLAccount(account: Omit<GLAccount, 'id' | 'createdAt' | 'updatedAt' | 'systemFlag'>): Promise<GLAccount> {
+    const response = await fetch(`${API_BASE}/gl/accounts`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(account)
+    });
+    if (!response.ok) throw new Error('Failed to create GL account');
+    return response.json();
+  }
+
+  async updateGLAccount(id: string, updates: Partial<GLAccount>): Promise<GLAccount> {
+    const response = await fetch(`${API_BASE}/gl/accounts/${id}`, {
+      method: 'PUT',
+      headers: this.headers,
+      body: JSON.stringify(updates)
+    });
+    if (!response.ok) throw new Error('Failed to update GL account');
+    return response.json();
+  }
+
+  // ======================
+  // GL: Journal
+  // ======================
+  async postJournal(entry: InsertGLJournalEntry, lines: InsertGLJournalLine[]): Promise<GLJournalEntry> {
+    const response = await fetch(`${API_BASE}/gl/journal`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ entry, lines })
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create journal entry');
+    }
+    return response.json();
+  }
+
+  async listJournal(): Promise<GLJournalEntry[]> {
+    const response = await fetch(`${API_BASE}/gl/journal`, {
+      headers: this.headers
+    });
+    if (!response.ok) throw new Error('Failed to fetch journal entries');
+    return response.json();
+  }
+
+  // ======================
+  // Bootstrap: seed CoA
+  // ======================
+  async bootstrap(): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE}/bootstrap`, {
+      method: 'POST',
+      headers: this.headers
+    });
+    if (!response.ok) throw new Error('Failed to bootstrap business defaults');
+    return response.json();
+  }
+}
+ 
 export const mariaDBAdapter = new DexieMariaDBAdapter();
