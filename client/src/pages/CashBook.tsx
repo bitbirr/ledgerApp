@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/lib/store';
@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { CashEntryModal } from '@/components/modals/CashEntryModal';
 import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import type { CashbookEntry } from '@shared/schema';
 
 export function CashBook() {
   const { setCurrentScreen, timePeriod, setTimePeriod } = useAppStore();
@@ -19,21 +20,30 @@ export function CashBook() {
   const [showCashModal, setShowCashModal] = useState(false);
   const [cashModalType, setCashModalType] = useState<'in' | 'out'>('in');
 
-  const { data: cashEntries } = useQuery({
+  const { data: cashEntries } = useQuery<CashbookEntry[]>({
     queryKey: ['cashbook', timePeriod, currentDate],
     queryFn: async () => {
       // TODO: Apply date filtering based on timePeriod and currentDate
-      return await db.cashbook.orderBy('dateTime').reverse().toArray();
+      const list = await db.cashbook.orderBy('dateTime').toArray();
+      // Sort newest first
+      return list.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
     },
   });
 
-  const { data: summary } = useQuery({
-    queryKey: ['cashbook-summary', timePeriod, currentDate],
-    queryFn: async () => {
-      // TODO: Apply date filtering
-      return await db.getCashbookSummary();
-    },
-  });
+  const summary = useMemo(() => {
+    const entries = cashEntries || [];
+    const totalIn = entries
+      .filter(e => e.direction === 'in')
+      .reduce((s, e) => s + Number(e.amount), 0);
+    const totalOut = entries
+      .filter(e => e.direction === 'out')
+      .reduce((s, e) => s + Number(e.amount), 0);
+    return {
+      totalIn,
+      totalOut,
+      balance: totalIn - totalOut,
+    };
+  }, [cashEntries]);
 
   // Remove the local formatCurrency function and use the imported one
   // const formatCurrency = (amount: number) => {
@@ -80,77 +90,57 @@ export function CashBook() {
     setCurrentDate(newDate);
   };
 
-  const handleCashIn = async (amount: number, note: string, attachmentUrl?: string) => {
+  const postCashWithJournal = async (
+    direction: 'in' | 'out',
+    amount: number,
+    note: string,
+    attachmentUrl: string | undefined,
+    cashAccountId: string,
+    offsetAccountId: string,
+    partyId?: string
+  ) => {
     try {
-      const response = await fetch('/api/cashbook', {
+      const response = await fetch('/api/post/cashbook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'user-id': 'default-user',
+          'business-id': 'default-business',
         },
         body: JSON.stringify({
-          direction: 'in',
+          dateTime: new Date().toISOString(),
+          direction,
           amount,
           note,
           attachmentUrl,
-          dateTime: new Date().toISOString(),
+          cashAccountId,
+          offsetAccountId,
+          partyId,
         }),
       });
-      
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ['cashbook'] });
-        queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
-        toast({
-          title: 'Success',
-          description: 'Cash in entry added successfully',
-        });
-      } else {
-        throw new Error('Failed to add cash in entry');
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to post cash entry');
       }
+
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+      queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
+      toast({
+        title: 'Success',
+        description: `Cash ${direction} entry posted`,
+      });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to add cash in entry',
+        description: `Failed to post cash ${direction} entry`,
         variant: 'destructive',
       });
       throw error;
     }
   };
 
-  const handleCashOut = async (amount: number, note: string, attachmentUrl?: string) => {
-    try {
-      const response = await fetch('/api/cashbook', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          direction: 'out',
-          amount,
-          note,
-          attachmentUrl,
-          dateTime: new Date().toISOString(),
-        }),
-      });
-      
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ['cashbook'] });
-        queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
-        toast({
-          title: 'Success',
-          description: 'Cash out entry added successfully',
-        });
-      } else {
-        throw new Error('Failed to add cash out entry');
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to add cash out entry',
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
+  // removed handleCashOut in favor of unified postCashWithJournal
 
   const onCashInClick = () => {
     setCashModalType('in');
@@ -162,12 +152,15 @@ export function CashBook() {
     setShowCashModal(true);
   };
 
-  const handleCashModalSubmit = async (amount: number, note: string, attachmentUrl?: string) => {
-    if (cashModalType === 'in') {
-      await handleCashIn(amount, note, attachmentUrl);
-    } else {
-      await handleCashOut(amount, note, attachmentUrl);
-    }
+  const handleCashModalSubmit = async (
+    amount: number,
+    note: string,
+    attachmentUrl: string | undefined,
+    cashAccountId: string,
+    offsetAccountId: string,
+    partyId?: string
+  ) => {
+    await postCashWithJournal(cashModalType, amount, note, attachmentUrl, cashAccountId, offsetAccountId, partyId);
   };
 
   return (

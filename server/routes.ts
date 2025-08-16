@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "./db";
-import { accounts, transactions, cashbook, categories, glAccounts, glJournalEntries, glJournalLines } from "./db/schema";
+import { accounts, transactions, cashbook, categories, glAccounts, glJournalEntries, glJournalLines, taxRates, taxCodes } from "./db/schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { SettingsService } from './services/settings.js';
+import { postCashbookWithJournal } from './services/posting.js';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Accounts API
@@ -374,6 +375,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   /**
+   * Posting: Cashbook with balanced GL journal
+   * Body: { dateTime, direction, amount, note?, attachmentUrl?, cashAccountId, offsetAccountId, partyId? }
+   * Headers: user-id, business-id
+   */
+  app.post('/api/post/cashbook', async (req, res) => {
+    try {
+      const userId = (req.headers['user-id'] as string) || 'system';
+      const businessId = (req.headers['business-id'] as string) || 'default-business';
+      const { dateTime, direction, amount, note, attachmentUrl, cashAccountId, offsetAccountId, partyId } = req.body;
+
+      const result = await postCashbookWithJournal({
+        businessId,
+        userId,
+        dateTime: new Date(dateTime),
+        direction,
+        amount: Number(amount),
+        note,
+        attachmentUrl,
+        cashAccountId,
+        offsetAccountId,
+        partyId,
+      });
+
+      res.status(201).json({ success: true, ...result });
+    } catch (error: any) {
+      console.error('Error posting cashbook with journal:', error);
+      res.status(400).json({ error: error?.message || 'Failed to post cashbook with journal' });
+    }
+  });
+
+  /**
    * Bootstrap route: seed default CoA and VAT 15% for a business
    */
   app.post('/api/bootstrap', async (req, res) => {
@@ -419,7 +451,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Done (tax seeding can be added later as needed)
+      // Seed VAT 15% (exclusive) tax rate and codes if missing
+      const existingRates = await database.select().from(taxRates).where(eq(taxRates.businessId, businessId));
+      if (existingRates.length === 0) {
+        const now = new Date();
+        const rateId = randomUUID();
+        await database.insert(taxRates).values({
+          id: rateId,
+          businessId,
+          name: 'VAT 15%',
+          rate: '0.1500',
+          effectiveFrom: now,
+          isActive: true,
+          kind: 'VAT',
+        });
+
+        // Output VAT for Sales
+        await database.insert(taxCodes).values({
+          id: randomUUID(),
+          businessId,
+          code: 'VAT-OUT-15',
+          name: 'VAT Output 15%',
+          rateId,
+          scope: 'sales',
+          direction: 'output',
+          isDefault: true,
+        });
+
+        // Input VAT for Purchases
+        await database.insert(taxCodes).values({
+          id: randomUUID(),
+          businessId,
+          code: 'VAT-IN-15',
+          name: 'VAT Input 15%',
+          rateId,
+          scope: 'purchases',
+          direction: 'input',
+          isDefault: true,
+        });
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error('Error during bootstrap:', error);

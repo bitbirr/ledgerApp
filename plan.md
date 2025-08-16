@@ -161,3 +161,121 @@ Notable implementation details to watch
 Request for approval
 - This plan maps each requested capability to concrete data structures, flows, and deliverables, and is scoped for Config C.
 - Once approved, implementation will proceed in the sequence captured in the project todo list.
+
+
+Deliverable: Complete plan, design, and initial implementation for a double-entry, multi-business ledger (Config C)
+
+Plan and architecture (high level)
+- Target: Multi-business, ETB-only, VAT 15% exclusive, weighted-average inventory costing, monthly periods starting day 1, opening balances as of 2025-01-01 per business.
+- Core modules:
+  - General Ledger: Chart of Accounts; Journal Entries and Lines; balanced posting engine; period locks; multi-business scoping.
+  - Inventory: Movements table (weighted-average cost); GL postings for COGS/Inventory.
+  - Tax: Tax rates/codes (VAT Output/Input); VAT return reports.
+  - Subsidiary ledgers: AR/AP linkage via partyId on journal lines.
+  - Documents: Invoices (sales/purchases), Payments/Receipts, Cashbook.
+  - Reports: Trial Balance, General Ledger, AR/AP Aging, Inventory Valuation, Income Statement, Balance Sheet, VAT return.
+- Offline-first: Dexie (IndexedDB) is primary; server endpoints optional. Hybrid data layer retains offline capability.
+
+Data model additions (implemented in shared schema)
+- Files:
+  - [shared/schema.ts](shared/schema.ts)
+- Added schemas:
+  - GL: gl_accounts, gl_journal_entries, gl_journal_lines
+  - Inventory: inventory_movements
+  - Tax: tax_rates, tax_codes
+  - Config: posting_rules
+  - Control: opening_balances
+- All records include businessId and are scoped per business.
+
+Server implementation summary
+- Files:
+  - [server/db/schema.ts](server/db/schema.ts)
+  - [migrations/0001_add_gl.sql](migrations/0001_add_gl.sql)
+  - [server/routes.ts](server/routes.ts)
+  - [server/services/posting.ts](server/services/posting.ts)
+- Drizzle schema:
+  - Added tables for GL Accounts, Journal Entries/Lines, Inventory Movements, Tax Rates/Codes, Posting Rules, Opening Balances.
+- Migration:
+  - 0001_add_gl.sql creates all new tables with indices and constraints suited for reporting filters and integrity.
+- Endpoints:
+  - GL Accounts:
+    - GET /api/gl/accounts (scoped by business-id header)
+    - POST /api/gl/accounts
+    - PUT /api/gl/accounts/:id (system accounts partially locked)
+  - Journal:
+    - GET /api/gl/journal
+    - POST /api/gl/journal (validates leaf accounts/active and balanced lines before persisting)
+  - Cashbook:
+    - GET /api/cashbook (now scoped by business-id)
+    - POST /api/cashbook (normalized payload includes businessId)
+  - Posting:
+    - POST /api/post/cashbook (atomic: inserts cashbook row and a balanced journal entry based on selected GL accounts)
+  - Bootstrap:
+    - POST /api/bootstrap seeds default Chart of Accounts and VAT 15% tax rate/codes for the business.
+- Posting service:
+  - postCashbookWithJournal: validates accounts, inserts cashbook entry, creates balanced GL lines; used by /api/post/cashbook.
+
+Client implementation summary
+- Files:
+  - [client/src/lib/db.ts](client/src/lib/db.ts)
+  - [client/src/lib/dexie-mariadb-adapter.ts](client/src/lib/dexie-mariadb-adapter.ts)
+  - [client/src/components/modals/CashEntryModal.tsx](client/src/components/modals/CashEntryModal.tsx)
+  - [client/src/pages/CashBook.tsx](client/src/pages/CashBook.tsx)
+- Dexie/Hybrid DB:
+  - Bumped schema version to include GL and Tax tables; replaced Shop with Business types; added stores for gl_accounts, gl_journal_entries, gl_journal_lines, inventory_movements, tax_rates, tax_codes, posting_rules, opening_balances.
+- MariaDB adapter:
+  - Added getGLAccounts, createGLAccount, updateGLAccount, postJournal, listJournal, bootstrap; headers now include business-id.
+- Cash UI flow:
+  - CashEntryModal now requires selecting:
+    - Cash/Bank GL account
+    - Offset GL account
+    - Optional partyId (AR/AP), plus receipt attachment
+    - Modal fetches GL accounts; if empty, it automatically calls /api/bootstrap and refetches.
+  - CashBook page posts via /api/post/cashbook, invalidates queries, and computes summary in-memory (total in/out and balance). It no longer uses the removed getCashbookSummary or Dexie reverse chaining (now sorts in code).
+- Result:
+  - Every cashbook entry now produces a balanced journal entry (double-entry), with explicit accounts chosen at entry time and multi-business scoping via headers.
+
+How to use (local test flow)
+- Ensure DB connection configured in .env for the server. Then:
+  - Start the server and client as previously done in this repo (scripts unchanged).
+- First-run bootstrap:
+  - Open the Cash Book page and click “Cash In” (or “Cash Out”).
+  - The modal loads GL accounts. If none exist, it triggers /api/bootstrap automatically and then reloads accounts.
+- Post a cash entry:
+  - Select Cash/Bank account (e.g., 1000 Cash on Hand).
+  - Select offset account (e.g., 3000 Owner Equity for capital injection, 4000 Sales Revenue for a direct sale, 2000 Accounts Payable for supplier repayment).
+  - Optionally specify partyId for AR/AP linkage, and attach a receipt image.
+  - Submit to create both the cashbook row and balanced journal entry atomically.
+- Inspect results:
+  - Use GET /api/gl/journal to verify entries created and balanced.
+  - Cash Book UI lists entries and shows totals.
+
+What remains (tracked in TODO)
+- Posting engine:
+  - Implement posting for Invoice Sale, Invoice Purchase, Payment Receipt, Supplier Payment, Opening Balances, Inventory COGS with weighted average.
+- VAT handling:
+  - End-to-end VAT calculations on invoices/purchases; GL lines for VAT Output/Input; VAT return report.
+- Inventory:
+  - Movements on purchase/sale; weighted-average unit cost update; use cost for COGS.
+- UI/UX:
+  - Chart of Accounts manager and Journal viewer pages.
+  - Opening Balance wizard (as of 2025-01-01).
+  - Reports: TB, GL, AR/AP Aging, Inventory Valuation, P&amp;L, Balance Sheet, VAT return.
+- Hardening:
+  - Period locks; tests for posting invariants/costing/VAT; docs; performance and offline UX polish.
+
+Files changed (for quick review)
+- Shared/domain:
+  - [shared/schema.ts](shared/schema.ts)
+- Server:
+  - [server/db/schema.ts](server/db/schema.ts)
+  - [migrations/0001_add_gl.sql](migrations/0001_add_gl.sql)
+  - [server/routes.ts](server/routes.ts)
+  - [server/services/posting.ts](server/services/posting.ts)
+- Client:
+  - [client/src/lib/db.ts](client/src/lib/db.ts)
+  - [client/src/lib/dexie-mariadb-adapter.ts](client/src/lib/dexie-mariadb-adapter.ts)
+  - [client/src/components/modals/CashEntryModal.tsx](client/src/components/modals/CashEntryModal.tsx)
+  - [client/src/pages/CashBook.tsx](client/src/pages/CashBook.tsx)
+
+This delivers a working double-entry foundation (GL, posting of cashbook with balanced journals, multi-business scoping, seeded default CoA and VAT 15%) and a clear path to implement invoices, inventory costing, VAT postings, and financial reports as defined in the plan.

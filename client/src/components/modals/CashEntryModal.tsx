@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,10 +22,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus, X, Camera, Upload, Eye, Paperclip } from 'lucide-react';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue, SelectLabel } from '@/components/ui/select';
 
 const cashEntrySchema = z.object({
   amount: z.number().min(0.01, 'Amount must be greater than 0'),
   note: z.string().optional(),
+  cashAccountId: z.string().min(1, 'Select cash/bank account'),
+  offsetAccountId: z.string().min(1, 'Select offset account'),
+  partyId: z.string().optional(),
 });
 
 type CashEntryForm = z.infer<typeof cashEntrySchema>;
@@ -34,7 +38,7 @@ interface CashEntryModalProps {
   open: boolean;
   onClose: () => void;
   type: 'in' | 'out';
-  onSubmit: (amount: number, note: string, attachmentUrl?: string) => Promise<void>;
+  onSubmit: (amount: number, note: string, attachmentUrl: string | undefined, cashAccountId: string, offsetAccountId: string, partyId?: string) => Promise<void>;
 }
 
 export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModalProps) {
@@ -43,6 +47,7 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [glAccounts, setGlAccounts] = useState<Array<{ id: string; code: string; name: string; type: string }>>([]);
   const isIn = type === 'in';
 
   const form = useForm<CashEntryForm>({
@@ -50,12 +55,65 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
     defaultValues: {
       amount: 0,
       note: '',
+      cashAccountId: '',
+      offsetAccountId: '',
+      partyId: '',
     },
   });
 
+  useEffect(() => {
+    const ensureGLAccounts = async () => {
+      try {
+        // Try to fetch GL accounts for current business
+        let res = await fetch('/api/gl/accounts', {
+          headers: {
+            'Content-Type': 'application/json',
+            'business-id': 'default-business',
+          }
+        });
+        if (!res.ok) return;
+        let list = await res.json();
+        // If empty, try bootstrap then refetch
+        if (Array.isArray(list) && list.length === 0) {
+          const boot = await fetch('/api/bootstrap', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'business-id': 'default-business',
+            }
+          });
+          if (boot.ok) {
+            res = await fetch('/api/gl/accounts', {
+              headers: {
+                'Content-Type': 'application/json',
+                'business-id': 'default-business',
+              }
+            });
+            if (res.ok) {
+              list = await res.json();
+            }
+          }
+        }
+        if (Array.isArray(list)) {
+          setGlAccounts(list);
+        }
+      } catch (e) {
+        // ignore for offline; user can still enter but posting will require network/GL
+      }
+    };
+    if (open) ensureGLAccounts();
+  }, [open]);
+
   const handleSubmit = async (data: CashEntryForm) => {
     try {
-      await onSubmit(data.amount, data.note || '', attachedImage || undefined);
+      await onSubmit(
+        data.amount,
+        data.note || '',
+        attachedImage || undefined,
+        data.cashAccountId,
+        data.offsetAccountId,
+        data.partyId || undefined
+      );
       form.reset();
       setAttachedImage(null);
       onClose();
@@ -159,6 +217,59 @@ export function CashEntryModal({ open, onClose, type, onSubmit }: CashEntryModal
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            {/* Cash/Bank Account */}
+            <FormField
+              control={form.control}
+              name="cashAccountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cash/Bank Account *</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select cash/bank account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectLabel>Accounts</SelectLabel>
+                        {glAccounts
+                          .filter(a => a.type === 'asset') // simple heuristic
+                          .map(acc => (
+                            <SelectItem key={acc.id} value={acc.id}>{`${acc.code} - ${acc.name}`}</SelectItem>
+                          ))
+                        }
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Offset Account */}
+            <FormField
+              control={form.control}
+              name="offsetAccountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Offset Account *</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select offset account" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectLabel>Accounts</SelectLabel>
+                        {glAccounts.map(acc => (
+                          <SelectItem key={acc.id} value={acc.id}>{`${acc.code} - ${acc.name}`}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="amount"
