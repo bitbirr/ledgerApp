@@ -1,5 +1,6 @@
 // src/lib/db.ts
 // Dexie-free compat shim that provides Dexie-like collections backed by REST + localStorage.
+// Now with balance caching to avoid N-per-card requests.
 
 const DEFAULT_BUSINESS_ID = 'default-business';
 const DEFAULT_USER_ID = 'default-user';
@@ -126,6 +127,75 @@ const writeItems = (arr: Item[]) => ls.write(LS_ITEMS_KEY, arr);
 const readCategories = () => ls.read<Category[]>(LS_CATS_KEY, []);
 const writeCategories = (arr: Category[]) => ls.write(LS_CATS_KEY, arr);
 
+// ---------- Balance cache (prevents N-per-card calls) ----------
+type BalanceCache = {
+  balances: Record<string, number>;
+  at: number; // timestamp for debugging/invalidation if you want TTL later
+};
+
+let balanceCache: BalanceCache | null = null;
+// If a summary build is already in-flight, let others await it
+let balanceBuildPromise: Promise<void> | null = null;
+
+function invalidateBalanceCache() {
+  balanceCache = null;
+  balanceBuildPromise = null;
+}
+
+function calcBalanceFromTxns(txns: Transaction[]): number {
+  const credits = txns
+    .filter((t) => t.kind === 'credit' && !t.deleted)
+    .reduce((s, t) => s + t.amount, 0);
+  const debits = txns
+    .filter((t) => t.kind === 'debit' && !t.deleted)
+    .reduce((s, t) => s + t.amount, 0);
+  return credits - debits;
+}
+
+// Build cache by fetching transactions for each account ONCE.
+// Still O(N) calls (one per account) but avoids duplicating them per card.
+// If you add a server endpoint to batch balances, switch to that here.
+async function buildBalanceCacheOnce(): Promise<void> {
+  if (balanceCache) return; // already built
+  if (balanceBuildPromise) {
+    await balanceBuildPromise; // re-use in-flight build
+    return;
+  }
+
+  balanceBuildPromise = (async () => {
+    const balances: Record<string, number> = {};
+    const accts = await accountsCollection.toArray();
+
+    // Fetch per-account transactions in parallel once
+    await Promise.all(
+      accts.map(async (a) => {
+        const rows = await fetchJson<any[]>(`/api/transactions/${a.id}`);
+        const txns: Transaction[] = rows.map((r) => ({
+          id: r.id,
+          businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+          userId: r.userId ?? DEFAULT_USER_ID,
+          accountId: r.accountId,
+          dateTime: toDate(r.dateTime)!,
+          kind: r.kind,
+          amount: Number(r.amount),
+          note: r.note ?? undefined,
+          imageUrl: r.imageUrl ?? undefined,
+          dueDate: toDate(r.dueDate),
+          createdAt: toDate(r.createdAt)!,
+          updatedAt: toDate(r.updatedAt)!,
+          deleted: !!r.deleted,
+        }));
+        balances[a.id] = calcBalanceFromTxns(txns);
+      })
+    );
+
+    balanceCache = { balances, at: Date.now() };
+    balanceBuildPromise = null;
+  })();
+
+  await balanceBuildPromise;
+}
+
 // ---------- Accounts ----------
 const accountsCollection = {
   async toArray(): Promise<Account[]> {
@@ -165,6 +235,8 @@ const accountsCollection = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    // Adding an account could change balances next time (new customer starts at 0, but be safe)
+    invalidateBalanceCache();
     return created.id as string;
   },
 
@@ -186,6 +258,8 @@ const accountsCollection = {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
+    // Archiving/unarchiving etc could change summary cards
+    invalidateBalanceCache();
   },
 };
 
@@ -263,6 +337,8 @@ const transactionsCollection = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    // Transactions change balances immediately
+    invalidateBalanceCache();
     return created.id as string;
   },
 
@@ -283,6 +359,8 @@ const transactionsCollection = {
       method: 'PUT',
       body: JSON.stringify(payload),
     });
+    // Updates also affect balances
+    invalidateBalanceCache();
   },
 };
 
@@ -313,6 +391,8 @@ const cashbookCollection = {
       method: 'POST',
       body: JSON.stringify({ ...e, dateTime: e.dateTime.toISOString() }),
     });
+    // If cashbook entries eventually post to GL affecting per-account balances,
+    // you may want to invalidate here as well. For now, keep cache intact.
     return created.id as string;
   },
 };
@@ -362,10 +442,36 @@ const preferencesCollection = {
 
 // ---------- helpers used by pages ----------
 async function getAccountBalance(accountId: string): Promise<number> {
-  const txns = await transactionsWhere(accountId).toArray();
-  const credits = txns.filter((t) => t.kind === 'credit' && !t.deleted).reduce((s, t) => s + t.amount, 0);
-  const debits  = txns.filter((t) => t.kind === 'debit'  && !t.deleted).reduce((s, t) => s + t.amount, 0);
-  return credits - debits;
+  // If a summary build is running, wait and read from cache (prevents duplicate fetches)
+  if (balanceBuildPromise) {
+    await balanceBuildPromise;
+  }
+  // Use cache if present
+  if (balanceCache && accountId in balanceCache.balances) {
+    return balanceCache.balances[accountId];
+  }
+  // Fallback: fetch just this account (won't duplicate if summary already built)
+  const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
+  const txns: Transaction[] = rows.map((r) => ({
+    id: r.id,
+    businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+    userId: r.userId ?? DEFAULT_USER_ID,
+    accountId: r.accountId,
+    dateTime: toDate(r.dateTime)!,
+    kind: r.kind,
+    amount: Number(r.amount),
+    note: r.note ?? undefined,
+    imageUrl: r.imageUrl ?? undefined,
+    dueDate: toDate(r.dueDate),
+    createdAt: toDate(r.createdAt)!,
+    updatedAt: toDate(r.updatedAt)!,
+    deleted: !!r.deleted,
+  }));
+  const bal = calcBalanceFromTxns(txns);
+  // Memoize into cache map
+  if (!balanceCache) balanceCache = { balances: {}, at: Date.now() };
+  balanceCache.balances[accountId] = bal;
+  return bal;
 }
 
 async function getAccountSummary(): Promise<{
@@ -373,11 +479,18 @@ async function getAccountSummary(): Promise<{
   totalDue: number;
   netBalance: number;
 }> {
+  // Build (or reuse) the cache once; cards will read from it via getAccountBalance
+  await buildBalanceCacheOnce();
+
   const accts = await accountsCollection.toArray();
-  let totalAdvance = 0; // positive (credits)
-  let totalDue = 0;     // positive (debits)
+  let totalAdvance = 0;
+  let totalDue = 0;
+
   for (const a of accts) {
-    const bal = await getAccountBalance(a.id);
+    const bal =
+      balanceCache?.balances[a.id] !== undefined
+        ? balanceCache!.balances[a.id]
+        : 0;
     if (bal >= 0) totalAdvance += bal;
     else totalDue += -bal;
   }

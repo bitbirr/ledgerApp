@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+// src/pages/Dashboard.tsx
+
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { db } from '@/lib/db';
+import { db, type Account } from '@/lib/db'; // ← use UI facade types, not @shared/schema
 import { useAppStore } from '@/lib/store';
 import { AppBar } from '@/components/layout/AppBar';
 import { BottomActionBar } from '@/components/layout/BottomActionBar';
@@ -10,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import type { Account } from '@shared/schema';
 
 type NormalizedSummary = {
   totalAdvance: number;
@@ -49,8 +50,9 @@ export function Dashboard() {
     setCurrentScreen,
   } = useAppStore();
   const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  // ✅ Use Dexie table, not db.getAccounts()
+  // Fetch accounts via facade (REST-backed)
   const { data: accountsData } = useQuery<Account[]>({
     queryKey: ['accounts'],
     queryFn: async () => {
@@ -59,16 +61,16 @@ export function Dashboard() {
     },
   });
 
+  // Fetch summary (can return either shape; normalize below)
   const { data: rawSummary } = useQuery<any>({
     queryKey: ['account-summary'],
-    queryFn: async () => db.getAccountSummary(),
+    queryFn: () => db.getAccountSummary(),
+    staleTime: 30_000,
   });
 
-  const summaryData = useMemo<NormalizedSummary>(
-    () => normalizeSummary(rawSummary),
-    [rawSummary]
-  );
+  const summaryData = useMemo<NormalizedSummary>(() => normalizeSummary(rawSummary), [rawSummary]);
 
+  // Keep store in sync
   useEffect(() => {
     if (accountsData) setAccounts(accountsData);
   }, [accountsData, setAccounts]);
@@ -77,11 +79,29 @@ export function Dashboard() {
     if (summaryData) setAccountSummary(summaryData);
   }, [summaryData, setAccountSummary]);
 
+  // Batch fetch balances once (fast + avoids N requests/work)
+  const accountIds = useMemo(() => (accountsData ?? []).map((a) => a.id), [accountsData]);
+  const { data: balances } = useQuery<Record<string, number>>({
+    queryKey: ['account-balances', accountIds],
+    enabled: accountIds.length > 0,
+    staleTime: 30_000,
+    queryFn: async () => {
+      // Prefer facade helper if available; otherwise fall back to Promise.all
+      if ('getAccountBalancesMap' in db && typeof (db as any).getAccountBalancesMap === 'function') {
+        return (db as any).getAccountBalancesMap(accountIds) as Promise<Record<string, number>>;
+      }
+      const vals = await Promise.all(accountIds.map((id) => db.getAccountBalance(id)));
+      return Object.fromEntries(accountIds.map((id, i) => [id, vals[i]]));
+    },
+  });
+
   const sortedAccounts = sortAccounts(accounts);
 
   const handleAccountClick = (accountId: string) => {
-    setSelectedAccountId(accountId);
-    setCurrentScreen('customer-detail');
+    startTransition(() => {
+      setSelectedAccountId(accountId);
+      setCurrentScreen('customer-detail');
+    });
   };
 
   return (
@@ -94,19 +114,19 @@ export function Dashboard() {
           <Card className="p-3 text-center">
             <div className="text-green-600 text-sm font-medium">Total Advance</div>
             <div className="text-lg font-bold text-green-600" data-testid="text-total-advance">
-              {formatCurrency(summaryData?.totalAdvance || 0)}
+              {formatCurrency(summaryData.totalAdvance)}
             </div>
           </Card>
           <Card className="p-3 text-center">
             <div className="text-red-600 text-sm font-medium">Total Due</div>
             <div className="text-lg font-bold text-red-600" data-testid="text-total-due">
-              {formatCurrency(summaryData?.totalDue || 0)}
+              {formatCurrency(summaryData.totalDue)}
             </div>
           </Card>
           <Card className="p-3 text-center">
             <div className="text-primary text-sm font-medium">Net Balance</div>
             <div className="text-lg font-bold text-primary" data-testid="text-net-balance">
-              {formatCurrency(summaryData?.netBalance || 0)}
+              {formatCurrency(summaryData.netBalance)}
             </div>
           </Card>
         </div>
@@ -131,6 +151,7 @@ export function Dashboard() {
               <AccountCard
                 key={account.id}
                 account={account}
+                balance={balances?.[account.id] ?? 0}
                 onClick={() => handleAccountClick(account.id)}
               />
             ))
@@ -145,6 +166,7 @@ export function Dashboard() {
         className="fixed bottom-24 right-4 w-14 h-14 rounded-full shadow-lg"
         onClick={() => setShowAddCustomer(true)}
         data-testid="button-add-customer-fab"
+        aria-label="Add customer"
       >
         <Plus className="h-6 w-6" />
       </Button>
@@ -154,25 +176,20 @@ export function Dashboard() {
   );
 }
 
-function AccountCard({ account, onClick }: { account: Account; onClick: () => void }) {
-  const [balance, setBalance] = useState(0);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      const b = await db.getAccountBalance(account.id);
-      if (mounted) setBalance(b);
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [account.id]);
-
+function AccountCard({
+  account,
+  balance,
+  onClick,
+}: {
+  account: Account;
+  balance: number;
+  onClick: () => void;
+}) {
   const getInitials = (name: string) =>
     name
       .split(' ')
       .filter(Boolean)
-      .map((n) => n[0])
+      .map((n) => n[0]!)
       .join('')
       .toUpperCase();
 
@@ -185,6 +202,8 @@ function AccountCard({ account, onClick }: { account: Account; onClick: () => vo
       className="p-4 cursor-pointer hover:shadow-md transition-shadow"
       onClick={onClick}
       data-testid={`card-account-${account.id}`}
+      role="button"
+      tabIndex={0}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -209,7 +228,7 @@ function AccountCard({ account, onClick }: { account: Account; onClick: () => vo
               </div>
             )}
             <div className="text-xs text-muted-foreground">
-              Last: 2 days ago {/* TODO: derive from last txn */}
+              Last: 2 days ago {/* TODO: derive from last transaction */}
             </div>
           </div>
         </div>
