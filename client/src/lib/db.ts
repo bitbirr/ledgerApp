@@ -142,13 +142,24 @@ const accountsCollection = {
       photoUrl: r.photoUrl ?? undefined,
     }));
   },
-  async add(a: Omit<Account, 'createdAt' | 'businessId'>): Promise<string> {
+
+  // Accepts anything your UI sends; we pick the fields the API expects.
+  async add(a: {
+    id?: string;
+    name: string;
+    type: AccountType;
+    phone?: string;
+    categoryId?: string;
+    photoUrl?: string;
+    archived?: boolean;
+  }): Promise<string> {
     const payload = {
       name: a.name,
       phone: a.phone ?? null,
       type: a.type,
       categoryId: a.categoryId ?? null,
       photoUrl: a.photoUrl ?? null,
+      archived: a.archived ?? false,
     };
     const created = await fetchJson<any>('/api/accounts', {
       method: 'POST',
@@ -156,10 +167,12 @@ const accountsCollection = {
     });
     return created.id as string;
   },
+
   async get(id: string): Promise<Account | undefined> {
     const all = await accountsCollection.toArray();
     return all.find((x) => x.id === id);
   },
+
   async update(id: string, updates: Partial<Account>): Promise<void> {
     const payload: any = {
       ...(updates.name !== undefined && { name: updates.name }),
@@ -226,14 +239,33 @@ const transactionsCollection = {
       equals: (accountId: string) => transactionsWhere(accountId),
     };
   },
-  async add(t: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'deleted'>): Promise<string> {
-    const payload = { ...t, dateTime: t.dateTime.toISOString() };
+
+  // NOTE: no userId/businessId required; the server fills from headers.
+  async add(t: {
+    accountId: string;
+    dateTime: Date;
+    kind: 'credit' | 'debit';
+    amount: number;
+    note?: string;
+    imageUrl?: string;
+    dueDate?: Date;
+  }): Promise<string> {
+    const payload = {
+      accountId: t.accountId,
+      dateTime: t.dateTime.toISOString(),
+      kind: t.kind,
+      amount: t.amount,
+      note: t.note ?? null,
+      imageUrl: t.imageUrl ?? null,
+      dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+    };
     const created = await fetchJson<any>('/api/transactions', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
     return created.id as string;
   },
+
   async update(id: string, updates: Partial<Transaction>): Promise<void> {
     const payload: any = {
       ...(updates.accountId !== undefined && { accountId: updates.accountId }),
@@ -336,19 +368,21 @@ async function getAccountBalance(accountId: string): Promise<number> {
   return credits - debits;
 }
 
-async function getAccountSummary(): Promise<
-  | { totalAdvance: number; totalDue: number; netBalance: number }
-  | { totalCredit: number; totalDebit: number; accountCount: number }
-> {
+async function getAccountSummary(): Promise<{
+  totalAdvance: number;
+  totalDue: number;
+  netBalance: number;
+}> {
   const accts = await accountsCollection.toArray();
-  let totalCredit = 0;
-  let totalDebit = 0;
+  let totalAdvance = 0; // positive (credits)
+  let totalDue = 0;     // positive (debits)
   for (const a of accts) {
     const bal = await getAccountBalance(a.id);
-    if (bal >= 0) totalCredit += bal;
-    else totalDebit += -bal;
+    if (bal >= 0) totalAdvance += bal;
+    else totalDue += -bal;
   }
-  return { totalCredit, totalDebit, accountCount: accts.length };
+  const netBalance = totalAdvance - totalDue;
+  return { totalAdvance, totalDue, netBalance };
 }
 
 // ---------- exported db ----------

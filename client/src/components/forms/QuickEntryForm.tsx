@@ -64,8 +64,8 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
         note: data.note || undefined,
         dateTime: data.dateTime,
         imageUrl: attachedImage ?? undefined,
-        businessId: '', // Will be injected by adapter
-        userId: '', // Will be injected by adapter
+        // businessId will be injected by adapter
+        // userId will be injected by adapter
         // dueDate: data.dueDate, // include if present in your schema
       });
     },

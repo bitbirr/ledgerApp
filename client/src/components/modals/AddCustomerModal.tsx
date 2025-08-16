@@ -53,34 +53,53 @@ export function AddCustomerModal({ open, onClose }: AddCustomerModalProps) {
     },
   });
 
-  const createAccountMutation = useMutation({
-    mutationFn: async (data: InsertAccount) => {
-      const id = crypto.randomUUID();
-      const account = {
-        ...data,
-        id,
-        createdAt: new Date(),
-      };
-      await db.accounts.add(account);
-      return account;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-      toast({
-        title: 'Success',
-        description: 'Customer added successfully',
-      });
-      form.reset();
-      onClose();
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Failed to add customer',
-        variant: 'destructive',
-      });
-    },
-  });
+const createAccountMutation = useMutation({
+  mutationFn: async (data: InsertAccount) => {
+    // Build only fields the API expects
+    const payload = {
+      name: data.name.trim(),
+      phone: data.phone?.trim() || undefined,
+      type: data.type, // 'customer' | 'supplier' | 'other'
+      // send a category id only if it's a real id, not your placeholder
+      categoryId: data.categoryId && data.categoryId !== 'general' ? data.categoryId : undefined,
+      photoUrl: data.photoUrl || undefined,
+    };
+
+    const res = await fetch('/api/accounts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // your server relies on these headers
+        'user-id': 'default-user',
+        'business-id': 'default-business',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create account');
+    }
+
+    const created = await res.json();
+    return created; // shape is whatever your API returns
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    // If you also cache summaries, invalidate those too:
+    queryClient.invalidateQueries({ queryKey: ['account-summary'] });
+    toast({ title: 'Success', description: 'Customer added successfully' });
+    form.reset();
+    onClose();
+  },
+  onError: () => {
+    toast({
+      title: 'Error',
+      description: 'Failed to add customer',
+      variant: 'destructive',
+    });
+  },
+});
 
   const onSubmit = (data: InsertAccount) => {
     createAccountMutation.mutate(data);
