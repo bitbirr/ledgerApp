@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isBalanced } from './posting';
+import { isBalanced } from './ledger-utils';
 
 describe('isBalanced()', () => {
   it('returns true for equal debits and credits (2 decimals)', () => {
