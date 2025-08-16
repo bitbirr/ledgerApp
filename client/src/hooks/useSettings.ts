@@ -26,7 +26,7 @@ export function useSettings() {
       queryFn: async () => {
         const response = await fetch(`${API_BASE}/category/${category}`);
         if (!response.ok) throw new Error('Failed to fetch settings');
-        return response.json();
+        return await response.json();
       },
     });
   };
@@ -45,7 +45,7 @@ export function useSettings() {
         body: JSON.stringify({ value, type, category, description }),
       });
       if (!response.ok) throw new Error('Failed to update setting');
-      return response.json();
+      return await response.json();
     },
     onSuccess: (_, { key }) => {
       queryClient.invalidateQueries({ queryKey: ['setting', key] });

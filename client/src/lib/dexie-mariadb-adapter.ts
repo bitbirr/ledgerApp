@@ -20,7 +20,7 @@ class DexieMariaDBAdapter {
       headers: this.headers
     });
     if (!response.ok) throw new Error('Failed to fetch accounts');
-    return response.json();
+    return await response.json();
   }
 
   async createAccount(account: Omit<Account, 'id' | 'createdAt'>): Promise<Account> {
@@ -30,7 +30,7 @@ class DexieMariaDBAdapter {
       body: JSON.stringify(account)
     });
     if (!response.ok) throw new Error('Failed to create account');
-    return response.json();
+    return await response.json();
   }
 
   async updateAccount(id: string, updates: Partial<Account>): Promise<Account> {
@@ -40,7 +40,7 @@ class DexieMariaDBAdapter {
       body: JSON.stringify(updates)
     });
     if (!response.ok) throw new Error('Failed to update account');
-    return response.json();
+    return await response.json();
   }
 
   async deleteAccount(id: string): Promise<void> {
@@ -234,4 +234,36 @@ class DexieMariaDBAdapter {
   }
 }
  
-export const mariaDBAdapter = new DexieMariaDBAdapter();
+export const mariaDBAdapter = {
+  async getItems(): Promise<Item[]> {
+    const response = await fetch('/api/items');
+    if (!response.ok) throw new Error('Failed to fetch items');
+    return await response.json();
+  },
+
+  async createItem(item: Omit<Item, 'id'>): Promise<string> {
+    const response = await fetch('/api/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    if (!response.ok) throw new Error('Failed to create item');
+    return await response.json();
+  },
+
+  async getPreferences(id: number): Promise<Preferences | undefined> {
+    const response = await fetch(`/api/preferences/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch preferences');
+    return await response.json();
+  },
+
+  async updatePreferences(id: number, updates: Partial<Preferences>): Promise<number> {
+    const response = await fetch(`/api/preferences/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!response.ok) throw new Error('Failed to update preferences');
+    return await response.json();
+  }
+};

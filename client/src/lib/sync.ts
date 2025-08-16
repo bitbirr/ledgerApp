@@ -24,6 +24,12 @@ export class SyncManager {
     }
   }
 
+  private getCurrentUserId(): string {
+    // TODO: Implement proper user authentication
+    // For now, return a default user ID
+    return 'default-user';
+  }
+
   private async getLocalChanges() {
     // Get changes since last sync from IndexedDB
   }

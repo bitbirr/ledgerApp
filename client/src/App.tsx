@@ -15,7 +15,7 @@ import { Invoices } from "@/pages/Invoices";
 import { Inventory } from "@/pages/Inventory";
 import { Reports } from "@/pages/Reports";
 import { Settings } from "@/pages/Settings";
-import { NotFound } from "@/pages/not-found";
+import NotFound from "@/pages/not-found";
 
 function AppRouter() {
   const { currentScreen } = useAppStore();

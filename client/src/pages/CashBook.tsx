@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/lib/store';
@@ -12,66 +12,58 @@ import { ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { CashbookEntry } from '@shared/schema';
 
+// Helper: normalize input into a Date
+const toDate = (d: Date | string): Date => (d instanceof Date ? d : new Date(d));
+
+// Formatters accept Date or string safely
+const formatDate = (date: Date | string) =>
+  new Intl.DateTimeFormat('en-IN', { month: 'short', day: 'numeric' }).format(toDate(date));
+
+const formatCurrentDate = (date: Date | string) =>
+  new Intl.DateTimeFormat('en-IN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(toDate(date));
+
+// If your schema sometimes returns amount as string, coerce to number for math/formatting
+const toNumber = (v: number | string): number => (typeof v === 'number' ? v : Number(v || 0));
+
 export function CashBook() {
   const { setCurrentScreen, timePeriod, setTimePeriod } = useAppStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [showCashModal, setShowCashModal] = useState(false);
   const [cashModalType, setCashModalType] = useState<'in' | 'out'>('in');
 
   const { data: cashEntries } = useQuery<CashbookEntry[]>({
-    queryKey: ['cashbook', timePeriod, currentDate],
+    queryKey: ['cashbook', timePeriod, currentDate.toISOString()],
     queryFn: async () => {
-      // TODO: Apply date filtering based on timePeriod and currentDate
+      // NOTE: If db.cashbook is Dexie, ensure the table exists & is indexed by 'dateTime'
       const list = await db.cashbook.orderBy('dateTime').toArray();
-      // Sort newest first
-      return list.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+      // Sort newest first (explicitly typed params)
+      return list.sort(
+        (a: CashbookEntry, b: CashbookEntry) =>
+          toDate(b.dateTime).getTime() - toDate(a.dateTime).getTime()
+      );
     },
   });
 
   const summary = useMemo(() => {
-    const entries = cashEntries || [];
+    const entries = cashEntries ?? [];
     const totalIn = entries
-      .filter(e => e.direction === 'in')
-      .reduce((s, e) => s + Number(e.amount), 0);
+      .filter((e) => e.direction === 'in')
+      .reduce((s, e) => s + toNumber(e.amount), 0);
     const totalOut = entries
-      .filter(e => e.direction === 'out')
-      .reduce((s, e) => s + Number(e.amount), 0);
-    return {
-      totalIn,
-      totalOut,
-      balance: totalIn - totalOut,
-    };
+      .filter((e) => e.direction === 'out')
+      .reduce((s, e) => s + toNumber(e.amount), 0);
+    return { totalIn, totalOut, balance: totalIn - totalOut };
   }, [cashEntries]);
-
-  // Remove the local formatCurrency function and use the imported one
-  // const formatCurrency = (amount: number) => {
-  //   return new Intl.NumberFormat('en-IN', {
-  //     style: 'currency',
-  //     currency: 'INR',
-  //   }).format(amount);
-  // };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-IN', {
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
-
-  const formatCurrentDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-IN', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
-  };
 
   const navigateDate = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
-    
     switch (timePeriod) {
       case 'daily':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
@@ -85,8 +77,9 @@ export function CashBook() {
       case 'yearly':
         newDate.setFullYear(newDate.getFullYear() + (direction === 'next' ? 1 : -1));
         break;
+      default:
+        break;
     }
-    
     setCurrentDate(newDate);
   };
 
@@ -126,10 +119,7 @@ export function CashBook() {
 
       queryClient.invalidateQueries({ queryKey: ['cashbook'] });
       queryClient.invalidateQueries({ queryKey: ['cashbook-summary'] });
-      toast({
-        title: 'Success',
-        description: `Cash ${direction} entry posted`,
-      });
+      toast({ title: 'Success', description: `Cash ${direction} entry posted` });
     } catch (error) {
       toast({
         title: 'Error',
@@ -140,13 +130,11 @@ export function CashBook() {
     }
   };
 
-  // removed handleCashOut in favor of unified postCashWithJournal
-
   const onCashInClick = () => {
     setCashModalType('in');
     setShowCashModal(true);
   };
-  
+
   const onCashOutClick = () => {
     setCashModalType('out');
     setShowCashModal(true);
@@ -160,35 +148,58 @@ export function CashBook() {
     offsetAccountId: string,
     partyId?: string
   ) => {
-    await postCashWithJournal(cashModalType, amount, note, attachmentUrl, cashAccountId, offsetAccountId, partyId);
+    await postCashWithJournal(
+      cashModalType,
+      amount,
+      note,
+      attachmentUrl,
+      cashAccountId,
+      offsetAccountId,
+      partyId
+    );
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <AppBar 
+      <AppBar
         title="Cash Book"
-        showBack={true}
-        showMore={true}
+        showBack
+        showMore
         onBack={() => setCurrentScreen('dashboard')}
       />
 
       {/* Time Period Tabs */}
       <div className="bg-background border-b sticky top-14 z-20">
-        <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as any)}>
+        <Tabs value={timePeriod} onValueChange={(v) => setTimePeriod(v as any)}>
           <TabsList className="w-full h-auto p-0 bg-transparent">
-            <TabsTrigger value="all" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="all"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               All
             </TabsTrigger>
-            <TabsTrigger value="daily" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="daily"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Daily
             </TabsTrigger>
-            <TabsTrigger value="weekly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="weekly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Weekly
             </TabsTrigger>
-            <TabsTrigger value="monthly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="monthly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Monthly
             </TabsTrigger>
-            <TabsTrigger value="yearly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="yearly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Yearly
             </TabsTrigger>
           </TabsList>
@@ -197,26 +208,19 @@ export function CashBook() {
         {/* Date Navigation */}
         {timePeriod !== 'all' && (
           <div className="flex items-center justify-between px-4 py-2 bg-muted">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateDate('prev')}
-              data-testid="button-prev-date"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigateDate('prev')} data-testid="button-prev-date">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="font-medium text-sm" data-testid="text-current-date">
-              {timePeriod === 'daily' ? formatCurrentDate(currentDate) : 
-               timePeriod === 'weekly' ? `Week of ${formatCurrentDate(currentDate)}` :
-               timePeriod === 'monthly' ? currentDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) :
-               currentDate.getFullYear()}
+              {timePeriod === 'daily'
+                ? formatCurrentDate(currentDate)
+                : timePeriod === 'weekly'
+                ? `Week of ${formatCurrentDate(currentDate)}`
+                : timePeriod === 'monthly'
+                ? currentDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+                : currentDate.getFullYear()}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigateDate('next')}
-              data-testid="button-next-date"
-            >
+            <Button variant="ghost" size="sm" onClick={() => navigateDate('next')} data-testid="button-next-date">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -236,19 +240,19 @@ export function CashBook() {
 
           {/* Cash Entries */}
           {cashEntries && cashEntries.length > 0 ? (
-            cashEntries.map((entry) => (
-              <div 
-                key={entry.id} 
+            cashEntries.map((entry: CashbookEntry) => (
+              <div
+                key={entry.id}
                 className="grid grid-cols-4 gap-4 px-4 py-3 border-b text-sm"
                 data-testid={`row-cashbook-${entry.id}`}
               >
                 <div>{formatDate(entry.dateTime)}</div>
                 <div className="truncate">{entry.note || '-'}</div>
                 <div className="text-red-600 font-medium">
-                  {entry.direction === 'out' ? formatCurrency(entry.amount) : '-'}
+                  {entry.direction === 'out' ? formatCurrency(toNumber(entry.amount)) : '-'}
                 </div>
                 <div className="text-green-600 font-medium">
-                  {entry.direction === 'in' ? formatCurrency(entry.amount) : '-'}
+                  {entry.direction === 'in' ? formatCurrency(toNumber(entry.amount)) : '-'}
                 </div>
               </div>
             ))
@@ -265,20 +269,20 @@ export function CashBook() {
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Total Cash In</div>
               <div className="text-lg font-bold text-green-600" data-testid="text-total-cash-in">
-                {formatCurrency(summary?.totalIn || 0)}
+                {formatCurrency(summary.totalIn)}
               </div>
             </div>
             <div className="text-center">
               <div className="text-sm text-muted-foreground">Total Cash Out</div>
               <div className="text-lg font-bold text-red-600" data-testid="text-total-cash-out">
-                {formatCurrency(summary?.totalOut || 0)}
+                {formatCurrency(summary.totalOut)}
               </div>
             </div>
           </div>
           <div className="text-center">
             <div className="text-sm text-muted-foreground">Cash Balance</div>
             <div className="text-xl font-bold text-primary" data-testid="text-cash-balance">
-              {formatCurrency(summary?.balance || 0)}
+              {formatCurrency(summary.balance)}
             </div>
           </div>
         </Card>

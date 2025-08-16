@@ -5,7 +5,7 @@ import { useAppStore } from '@/lib/store';
 import { AppBar } from '@/components/layout/AppBar';
 import { QuickEntryForm } from '@/components/forms/QuickEntryForm';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Phone } from 'lucide-react';
 import type { Account, Transaction } from '@shared/schema';
 import { formatCurrency } from '@/lib/utils';
@@ -15,66 +15,72 @@ export function CustomerDetail() {
   const [account, setAccount] = useState<Account | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const { data: accountData } = useQuery({
+  // Fetch the account (via adapter, no direct Dexie table)
+  const { data: accountData } = useQuery<Account | null>({
     queryKey: ['account', selectedAccountId],
+    enabled: !!selectedAccountId,
     queryFn: async () => {
       if (!selectedAccountId) return null;
-      return await db.accounts.get(selectedAccountId);
+      const all = await db.accounts.toArray(); // get all accounts
+      return all.find(a => a.id === selectedAccountId) ?? null;
     },
-    enabled: !!selectedAccountId,
   });
 
-  const { data: transactions } = useQuery({
+  // Fetch transactions for the account (adapter handles server fetch)
+  const { data: transactions } = useQuery<Transaction[]>({
     queryKey: ['transactions', selectedAccountId],
+    enabled: !!selectedAccountId,
     queryFn: async () => {
       if (!selectedAccountId) return [];
-      return await db.transactions
-        .where('accountId')
-        .equals(selectedAccountId)
-        .and(txn => !txn.deleted)
-        .reverse()
-        .sortBy('dateTime');
+      const list = await db.transactions.where('accountId').equals(selectedAccountId).toArray();
+      // Ensure not-deleted and sort ASC by date for proper running balance
+      const filtered = list.filter(t => !t.deleted);
+      filtered.sort(
+        (a, b) =>
+          new Date(a.dateTime as unknown as Date).getTime() -
+          new Date(b.dateTime as unknown as Date).getTime()
+      );
+      return filtered;
     },
-    enabled: !!selectedAccountId,
   });
 
-  const { data: balance } = useQuery({
+  // Current account balance
+  const { data: balance } = useQuery<number>({
     queryKey: ['account-balance', selectedAccountId],
+    enabled: !!selectedAccountId,
     queryFn: async () => {
       if (!selectedAccountId) return 0;
-      return await db.getAccountBalance(selectedAccountId);
+      return db.getAccountBalance(selectedAccountId);
     },
-    enabled: !!selectedAccountId,
   });
 
   useEffect(() => {
-    if (accountData) {
-      setAccount(accountData);
-    }
+    if (accountData) setAccount(accountData);
   }, [accountData]);
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | string) => {
+    const d = new Date(date);
     return new Intl.DateTimeFormat('en-IN', {
       month: 'short',
       day: 'numeric',
-    }).format(date);
+    }).format(d);
   };
 
-  const calculateRunningBalance = (transactions: Transaction[], index: number) => {
-    let balance = 0;
+  const calculateRunningBalance = (txns: Transaction[], index: number) => {
+    let bal = 0;
     for (let i = 0; i <= index; i++) {
-      const txn = transactions[i];
-      balance += txn.kind === 'credit' ? txn.amount : -txn.amount;
+      const t = txns[i];
+      bal += t.kind === 'credit' ? t.amount : -t.amount;
     }
-    return balance;
+    return bal;
   };
 
   if (!account) {
     return (
       <div className="min-h-screen bg-background">
-        <AppBar 
-          title="Customer not found" 
-          showBack={true}
+        <AppBar
+          title="Customer not found"
+          showBack
           onBack={() => setCurrentScreen('dashboard')}
         />
       </div>
@@ -96,11 +102,11 @@ export function CustomerDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppBar 
+      <AppBar
         title={account.name}
         subtitle={account.phone}
-        showBack={true}
-        showMore={true}
+        showBack
+        showMore
         onBack={() => setCurrentScreen('dashboard')}
         rightActions={rightActions}
       />
@@ -129,19 +135,34 @@ export function CustomerDetail() {
       <div className="bg-background border-b sticky top-14 z-20">
         <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as any)}>
           <TabsList className="w-full h-auto p-0 bg-transparent">
-            <TabsTrigger value="all" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="all"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               All
             </TabsTrigger>
-            <TabsTrigger value="daily" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="daily"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Daily
             </TabsTrigger>
-            <TabsTrigger value="weekly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="weekly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Weekly
             </TabsTrigger>
-            <TabsTrigger value="monthly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="monthly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Monthly
             </TabsTrigger>
-            <TabsTrigger value="yearly" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none">
+            <TabsTrigger
+              value="yearly"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+            >
               Yearly
             </TabsTrigger>
           </TabsList>
@@ -149,19 +170,18 @@ export function CustomerDetail() {
       </div>
 
       <main className="pb-20">
-        {/* Previous Balance */}
+        {/* Previous Balance (TODO: compute for selected period) */}
         <div className="bg-muted px-4 py-2 text-sm">
           <div className="flex justify-between">
             <span>Previous Balance</span>
             <span className="font-medium text-green-600">
-              {formatCurrency(1800)} {/* TODO: Calculate actual previous balance */}
+              {formatCurrency(1800)}
             </span>
           </div>
         </div>
 
-        {/* Transaction Table */}
+        {/* Transactions */}
         <div className="bg-background">
-          {/* Table Header */}
           <div className="grid grid-cols-4 gap-4 px-4 py-3 border-b bg-muted text-sm font-medium">
             <div>Date</div>
             <div className="text-green-600">Received</div>
@@ -169,13 +189,12 @@ export function CustomerDetail() {
             <div>Balance</div>
           </div>
 
-          {/* Transaction Rows */}
           {transactions && transactions.length > 0 ? (
-            transactions.map((txn, index) => {
+            transactions.map((txn: Transaction, index: number) => {
               const runningBalance = calculateRunningBalance(transactions, index);
               return (
-                <div 
-                  key={txn.id} 
+                <div
+                  key={txn.id}
                   className="grid grid-cols-4 gap-4 px-4 py-3 border-b text-sm"
                   data-testid={`row-transaction-${txn.id}`}
                 >
@@ -186,9 +205,7 @@ export function CustomerDetail() {
                   <div className="text-red-600 font-medium">
                     {txn.kind === 'debit' ? formatCurrency(txn.amount) : '-'}
                   </div>
-                  <div className="font-medium">
-                    {formatCurrency(runningBalance)}
-                  </div>
+                  <div className="font-medium">{formatCurrency(runningBalance)}</div>
                 </div>
               );
             })
@@ -199,7 +216,7 @@ export function CustomerDetail() {
           )}
         </div>
 
-        {/* Quick Entry Forms */}
+        {/* Quick Entry */}
         {selectedAccountId && (
           <div className="p-4 space-y-4">
             <QuickEntryForm accountId={selectedAccountId} type="received" />

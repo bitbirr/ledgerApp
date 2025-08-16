@@ -8,16 +8,14 @@ import { useAppStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 import { AppBar } from '@/components/layout/AppBar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -37,26 +35,33 @@ import {
 import { Plus, Package, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
+// Match your client-side shape
+type Item = InsertItem & { id: string };
+type Category = { id: string; name: string };
+
 export function Inventory() {
   const { setCurrentScreen } = useAppStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddItem, setShowAddItem] = useState(false);
 
-  const { data: items } = useQuery({
+  // Items
+  const { data: items } = useQuery<Item[]>({
     queryKey: ['items'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Item[]> => {
       return await db.items.toArray();
     },
   });
 
-  const { data: categories } = useQuery({
+  // Categories
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Category[]> => {
       return await db.categories.toArray();
     },
   });
 
+  // Form
   const form = useForm<InsertItem>({
     resolver: zodResolver(insertItemSchema),
     defaultValues: {
@@ -66,22 +71,27 @@ export function Inventory() {
       categoryId: '',
       openingStock: 0,
       lowStockAlert: 0,
-    },
+      // if your InsertItem includes businessId, you can prefill:
+      // businessId: 'default-business',
+    } as any, // allow extra keys if your InsertItem is stricter
   });
 
-  const createItemMutation = useMutation({
-    mutationFn: async (data: InsertItem) => {
+  // Create item
+  const createItemMutation = useMutation<Item, Error, InsertItem>({
+    mutationFn: async (data: InsertItem): Promise<Item> => {
       const id = crypto.randomUUID();
-      const item = { ...data, id };
+      // Ensure businessId exists if your table requires it
+      const item: Item = {
+        id,
+        ...data,
+        ...(data as any).businessId ? {} : { businessId: 'default-business' },
+      } as Item;
       await db.items.add(item);
       return item;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
-      toast({
-        title: 'Success',
-        description: 'Item added successfully',
-      });
+      toast({ title: 'Success', description: 'Item added successfully' });
       form.reset();
       setShowAddItem(false);
     },
@@ -98,24 +108,23 @@ export function Inventory() {
     createItemMutation.mutate(data);
   };
 
-  const isLowStock = (item: any) => {
-    return item.openingStock <= item.lowStockAlert && item.lowStockAlert > 0;
-  };
+  const isLowStock = (item: Item) =>
+    Number(item.openingStock) <= Number(item.lowStockAlert) &&
+    Number(item.lowStockAlert) > 0;
 
   return (
     <div className="min-h-screen bg-background">
-      <AppBar 
+      <AppBar
         title="Items & Inventory"
-        showBack={true}
-        showSearch={true}
+        showBack
+        showSearch
         onBack={() => setCurrentScreen('dashboard')}
       />
 
       <main className="pb-20 p-4">
-        {/* Items List */}
         {items && items.length > 0 ? (
           <div className="space-y-3">
-            {items.map((item) => (
+            {items.map((item: Item) => (
               <Card key={item.id} data-testid={`card-item-${item.id}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -124,16 +133,19 @@ export function Inventory() {
                         <Package className="h-6 w-6 text-muted-foreground" />
                       </div>
                       <div>
-                        <div className="font-medium" data-testid={`text-item-name-${item.id}`}>
+                        <div
+                          className="font-medium"
+                          data-testid={`text-item-name-${item.id}`}
+                        >
                           {item.name}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {formatCurrency(item.rate)} per {item.uom}
+                          {formatCurrency(Number(item.rate))} per {item.uom}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Stock: {item.openingStock} {item.uom}
                           {isLowStock(item) && (
-                            <span className="ml-2 text-orange-600 flex items-center">
+                            <span className="ml-2 text-orange-600 inline-flex items-center">
                               <AlertTriangle className="h-3 w-3 mr-1" />
                               Low Stock
                             </span>
@@ -142,8 +154,11 @@ export function Inventory() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium" data-testid={`text-item-rate-${item.id}`}>
-                        {formatCurrency(item.rate)}
+                      <div
+                        className="font-medium"
+                        data-testid={`text-item-rate-${item.id}`}
+                      >
+                        {formatCurrency(Number(item.rate))}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         per {item.uom}
@@ -160,7 +175,10 @@ export function Inventory() {
             <div className="text-muted-foreground mb-4">
               No items added yet. Add your first item to start managing inventory.
             </div>
-            <Button onClick={() => setShowAddItem(true)} data-testid="button-add-first-item">
+            <Button
+              onClick={() => setShowAddItem(true)}
+              data-testid="button-add-first-item"
+            >
               Add Item
             </Button>
           </Card>
@@ -217,8 +235,10 @@ export function Inventory() {
                         <Input
                           type="number"
                           placeholder="0.00"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? 0}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
                           data-testid="input-item-rate"
                         />
                       </FormControl>
@@ -236,7 +256,8 @@ export function Inventory() {
                       <FormControl>
                         <Input
                           placeholder="pcs, kg, ltr"
-                          {...field}
+                          value={field.value ?? ''}
+                          onChange={field.onChange}
                           data-testid="input-item-uom"
                         />
                       </FormControl>
@@ -252,14 +273,17 @@ export function Inventory() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value ?? ''}
+                    >
                       <FormControl>
                         <SelectTrigger data-testid="select-item-category">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories?.map((category) => (
+                        {categories?.map((category: Category) => (
                           <SelectItem key={category.id} value={category.id}>
                             {category.name}
                           </SelectItem>
@@ -282,8 +306,10 @@ export function Inventory() {
                         <Input
                           type="number"
                           placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? 0}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
                           data-testid="input-opening-stock"
                         />
                       </FormControl>
@@ -302,8 +328,10 @@ export function Inventory() {
                         <Input
                           type="number"
                           placeholder="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? 0}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
                           data-testid="input-low-stock-alert"
                         />
                       </FormControl>
@@ -317,7 +345,6 @@ export function Inventory() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex-1"
                   onClick={() => setShowAddItem(false)}
                   data-testid="button-cancel-add-item"
                 >

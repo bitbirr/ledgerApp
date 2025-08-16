@@ -27,8 +27,8 @@ interface AppState {
   setDrawerOpen: (open: boolean) => void;
   setCurrentScreen: (screen: string) => void;
   setSelectedAccountId: (id: string | null) => void;
-  setSortBy: (sort: typeof AppState.prototype.sortBy) => void;
-  setTimePeriod: (period: typeof AppState.prototype.timePeriod) => void;
+  setSortBy: (sort: AppState['sortBy']) => void;
+  setTimePeriod: (period: AppState['timePeriod']) => void;
   
   // Data Actions
   setAccounts: (accounts: Account[]) => void;
@@ -36,7 +36,7 @@ interface AppState {
   setCashbook: (entries: CashbookEntry[]) => void;
   setInvoices: (invoices: Invoice[]) => void;
   setPreferences: (prefs: Preferences) => void;
-  setAccountSummary: (summary: typeof AppState.prototype.accountSummary) => void;
+  setAccountSummary: (summary: AppState['accountSummary']) => void;
   
   // Business Logic
   getAccountBalance: (accountId: string) => number;

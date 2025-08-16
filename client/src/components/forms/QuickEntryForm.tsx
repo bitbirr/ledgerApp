@@ -5,7 +5,7 @@ import { insertTransactionSchema, type InsertTransaction } from '@shared/schema'
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
-import { convertFileToBase64, compressImage, validateImageFile } from '@/lib/photo-utils';
+import { compressImage, validateImageFile } from '@/lib/photo-utils';
 import {
   Form,
   FormControl,
@@ -37,33 +37,37 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
-  
-  const form = useForm<Omit<InsertTransaction, 'accountId' | 'kind'>>({
+
+  // Form omits fields we auto-set (accountId, kind come from props)
+  type FormValues = Omit<InsertTransaction, 'accountId' | 'kind'>;
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(insertTransactionSchema.omit({ accountId: true, kind: true })),
     defaultValues: {
       amount: 0,
       note: '',
       dateTime: new Date(),
       imageUrl: undefined,
+      // dueDate: undefined, // add if your schema has it
     },
   });
 
-  const addTransactionMutation = useMutation({
-    mutationFn: async (data: Omit<InsertTransaction, 'accountId' | 'kind'>) => {
-      const id = crypto.randomUUID();
-      const transaction = {
-        ...data,
-        id,
+  // db.transactions.add() in your shim returns created id (string)
+  const addTransactionMutation = useMutation<string, Error, FormValues>({
+    mutationFn: async (data: FormValues) => {
+      // IMPORTANT: pass only what the adapter expects.
+      // It will inject businessId/userId/createdAt/updatedAt and convert dateTime.
+      return db.transactions.add({
         accountId,
         kind: type === 'received' ? 'credit' : 'debit',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deleted: false,
-        imageUrl: attachedImage || undefined,
-      } as const;
-      
-      await db.transactions.add(transaction);
-      return transaction;
+        amount: data.amount,
+        note: data.note || undefined,
+        dateTime: data.dateTime,
+        imageUrl: attachedImage ?? undefined,
+        businessId: '', // Will be injected by adapter
+        userId: '', // Will be injected by adapter
+        // dueDate: data.dueDate, // include if present in your schema
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -106,7 +110,7 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
         title: 'Success',
         description: 'Image attached successfully',
       });
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to process image',
@@ -114,9 +118,7 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
       });
     } finally {
       setIsProcessingImage(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -142,7 +144,7 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
     });
   };
 
-  const onSubmit = (data: Omit<InsertTransaction, 'accountId' | 'kind'>) => {
+  const onSubmit = (data: FormValues) => {
     addTransactionMutation.mutate(data);
   };
 
@@ -229,16 +231,14 @@ export function QuickEntryForm({ accountId, type }: QuickEntryFormProps) {
               <Button
                 type="submit"
                 className={`flex-1 ${
-                  isReceived 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-red-600 hover:bg-red-700'
+                  isReceived ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                 }`}
                 disabled={addTransactionMutation.isPending}
                 data-testid={`button-add-${type}`}
               >
                 {addTransactionMutation.isPending ? 'Adding...' : 'Add Entry'}
               </Button>
-              
+
               {/* Attachment Options */}
               <Dialog>
                 <DialogTrigger asChild>

@@ -1,273 +1,365 @@
-import Dexie, { Table } from 'dexie';
-import {
-  Account, Category, Transaction, CashbookEntry, Item, Invoice, InvoiceItem, Preferences, Business,
-  GLAccount, GLJournalEntry, GLJournalLine, InventoryMovement, TaxRate, TaxCode, PostingRule, OpeningBalance
-} from '@shared/schema';
-import { mariaDBAdapter } from './dexie-mariadb-adapter';
+// src/lib/db.ts
+// Dexie-free compat shim that provides Dexie-like collections backed by REST + localStorage.
 
-// Keep the original Dexie class for offline fallback
-export class CreditDebitDB extends Dexie {
-  // Core tables
-  accounts!: Table<Account>;
-  categories!: Table<Category>;
-  transactions!: Table<Transaction>;
-  cashbook!: Table<CashbookEntry>;
-  items!: Table<Item>;
-  invoices!: Table<Invoice>;
-  invoiceItems!: Table<InvoiceItem>;
-  preferences!: Table<Preferences>;
-  businesses!: Table<Business>;
+const DEFAULT_BUSINESS_ID = 'default-business';
+const DEFAULT_USER_ID = 'default-user';
 
-  // General Ledger & Tax
-  glAccounts!: Table<GLAccount>;
-  glJournalEntries!: Table<GLJournalEntry>;
-  glJournalLines!: Table<GLJournalLine>;
-  inventoryMovements!: Table<InventoryMovement>;
-  taxRates!: Table<TaxRate>;
-  taxCodes!: Table<TaxCode>;
-  postingRules!: Table<PostingRule>;
-  openingBalances!: Table<OpeningBalance>;
+// ---------- UI-facing types ----------
+export type AccountType = 'customer' | 'supplier' | 'other';
 
-  constructor() {
-    super('CreditDebitDB');
-    
-    // Keep existing schema for offline fallback
-    // Bump schema for Business + GL/Tax/Inventory
-    this.version(3).stores({
-      // Core domain
-      accounts: 'id, name, type, categoryId, businessId, createdAt, archived',
-      categories: 'id, name, businessId',
-      transactions: 'id, accountId, businessId, dateTime, kind, amount, createdAt, deleted',
-      cashbook: 'id, businessId, dateTime, direction, amount',
-      items: 'id, name, categoryId, businessId',
-      invoices: 'id, number, accountId, businessId, kind, issueDate, status',
-      invoiceItems: 'id, invoiceId, itemId',
-      preferences: 'id, businessId',
-      businesses: 'id, name, createdAt',
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
+  businessId: string;
+  createdAt: Date;
+  archived: boolean;
+  phone?: string;
+  categoryId?: string;
+  photoUrl?: string;
+}
 
-      // General Ledger & Tax
-      glAccounts: 'id, businessId, code, type, isActive',
-      glJournalEntries: 'id, businessId, entryDate, sourceModule',
-      glJournalLines: 'id, entryId, businessId, accountId, partyId, itemId',
-      inventoryMovements: 'id, businessId, date, itemId, sourceModule',
-      taxRates: 'id, businessId, isActive',
-      taxCodes: 'id, businessId, scope, direction',
-      postingRules: 'id, businessId, module, action',
-      openingBalances: 'id, businessId, periodStart',
+export interface Transaction {
+  id: string;
+  businessId: string;
+  userId: string;
+  accountId: string;
+  dateTime: Date;
+  kind: 'credit' | 'debit';
+  amount: number;
+  note?: string;
+  imageUrl?: string;
+  dueDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  deleted: boolean;
+}
+
+export interface CashbookEntry {
+  id: string;
+  businessId: string;
+  dateTime: Date;
+  direction: 'in' | 'out';
+  amount: number;
+  note?: string;
+  attachmentUrl?: string;
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  businessId: string;
+  rate: number;
+  uom: string;
+  openingStock: number;
+  lowStockAlert: number;
+  categoryId?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  color?: string;
+  businessId?: string;
+}
+
+export interface Preferences {
+  id: number;
+  businessId: string;
+  dateFormat: string;
+  timeFormat: string;
+  currency: string;
+  language: string;
+  firstDayOfWeek: number;
+  firstDayOfMonth: number;
+  firstDayOfYear: number;
+  showTimeInReports: boolean;
+  showPreviousBalance: boolean;
+  darkMode: boolean;
+  biometricEnabled: boolean;
+}
+
+// ---------- fetch helper ----------
+async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      'user-id': DEFAULT_USER_ID,
+      'business-id': DEFAULT_BUSINESS_ID,
+      ...(init?.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    let msg = `Request failed: ${res.status}`;
+    try {
+      const j = await res.json();
+      msg = j?.error || msg;
+    } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+const toDate = (v: any) => (v ? new Date(v) : undefined);
+
+// ---------- localStorage buckets for items & categories (until you add /api/items, /api/categories) ----------
+const ls = {
+  read<T>(key: string, fallback: T): T {
+    if (typeof window === 'undefined') return fallback;
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? (JSON.parse(raw) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  },
+  write<T>(key: string, value: T) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(key, JSON.stringify(value));
+  },
+};
+const LS_ITEMS_KEY = `items_${DEFAULT_BUSINESS_ID}`;
+const LS_CATS_KEY = `categories_${DEFAULT_BUSINESS_ID}`;
+const readItems = () => ls.read<Item[]>(LS_ITEMS_KEY, []);
+const writeItems = (arr: Item[]) => ls.write(LS_ITEMS_KEY, arr);
+const readCategories = () => ls.read<Category[]>(LS_CATS_KEY, []);
+const writeCategories = (arr: Category[]) => ls.write(LS_CATS_KEY, arr);
+
+// ---------- Accounts ----------
+const accountsCollection = {
+  async toArray(): Promise<Account[]> {
+    const rows = await fetchJson<any[]>('/api/accounts');
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      type: (r.type as AccountType) ?? 'other',
+      businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+      createdAt: toDate(r.createdAt) ?? new Date(),
+      archived: !!r.archived,
+      phone: r.phone ?? undefined,
+      categoryId: r.categoryId ?? undefined,
+      photoUrl: r.photoUrl ?? undefined,
+    }));
+  },
+  async add(a: Omit<Account, 'createdAt' | 'businessId'>): Promise<string> {
+    const payload = {
+      name: a.name,
+      phone: a.phone ?? null,
+      type: a.type,
+      categoryId: a.categoryId ?? null,
+      photoUrl: a.photoUrl ?? null,
+    };
+    const created = await fetchJson<any>('/api/accounts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
-  }
+    return created.id as string;
+  },
+  async get(id: string): Promise<Account | undefined> {
+    const all = await accountsCollection.toArray();
+    return all.find((x) => x.id === id);
+  },
+  async update(id: string, updates: Partial<Account>): Promise<void> {
+    const payload: any = {
+      ...(updates.name !== undefined && { name: updates.name }),
+      ...(updates.phone !== undefined && { phone: updates.phone }),
+      ...(updates.type !== undefined && { type: updates.type }),
+      ...(updates.categoryId !== undefined && { categoryId: updates.categoryId }),
+      ...(updates.photoUrl !== undefined && { photoUrl: updates.photoUrl }),
+      ...(updates.archived !== undefined && { archived: updates.archived }),
+    };
+    await fetchJson(`/api/accounts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+};
 
-  // Override methods to use MariaDB adapter
-  async getAccountBalance(accountId: string): Promise<number> {
-    try {
-      return await mariaDBAdapter.getAccountBalance(accountId);
-    } catch (error) {
-      console.warn('MariaDB unavailable, falling back to local storage:', error);
-      // Fallback to local Dexie
-      const transactions = await this.transactions
-        .where('accountId')
-        .equals(accountId)
-        .and((txn: Transaction) => !txn.deleted)
-        .toArray();
-      
-      return transactions.reduce((balance, txn) => {
-        return txn.kind === 'credit' ? balance + txn.amount : balance - txn.amount;
-      }, 0);
-    }
-  }
+// ---------- Transactions (supports where(...).equals(...).and(...).reverse().toArray()) ----------
+function transactionsWhere(accountId: string) {
+  type Pred = (t: Transaction) => boolean;
+  let predicates: Pred[] = [(t) => t.accountId === accountId];
 
-  async getAccountSummary() {
-    try {
-      return await mariaDBAdapter.getAccountSummary();
-    } catch (error) {
-      console.warn('MariaDB unavailable, falling back to local storage:', error);
-      // Fallback to local Dexie
-      const accounts = await this.accounts.toArray();
-      const summary = { totalCredit: 0, totalDebit: 0, accountCount: accounts.length };
-      
-      for (const account of accounts) {
-        const balance = await this.getAccountBalance(account.id);
-        if (balance > 0) {
-          summary.totalCredit += balance;
-        } else {
-          summary.totalDebit += Math.abs(balance);
-        }
-      }
-      
-      return summary;
-    }
-  }
-
-  async searchAccounts(query: string) {
-    try {
-      return await mariaDBAdapter.searchAccounts(query);
-    } catch (error) {
-      console.warn('MariaDB unavailable, falling back to local storage:', error);
-      // Fallback to local Dexie
-      return this.accounts
-        .filter((account: Account) => 
-          account.name.toLowerCase().includes(query.toLowerCase())
-        )
-        .toArray();
-    }
-  }
+  const api = {
+    equals(_value: string) {
+      // accountId captured above for Dexie-like shape
+      return api;
+    },
+    and(fn: Pred) {
+      predicates.push(fn);
+      return api;
+    },
+    reverse() {
+      (api as any)._reverse = true;
+      return api;
+    },
+    async toArray(): Promise<Transaction[]> {
+      const rows = await fetchJson<any[]>(`/api/transactions/${accountId}`);
+      let list: Transaction[] = rows.map((r) => ({
+        id: r.id,
+        businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+        userId: r.userId ?? DEFAULT_USER_ID,
+        accountId: r.accountId,
+        dateTime: toDate(r.dateTime)!,
+        kind: r.kind,
+        amount: Number(r.amount),
+        note: r.note ?? undefined,
+        imageUrl: r.imageUrl ?? undefined,
+        dueDate: toDate(r.dueDate),
+        createdAt: toDate(r.createdAt)!,
+        updatedAt: toDate(r.updatedAt)!,
+        deleted: !!r.deleted,
+      }));
+      for (const p of predicates) list = list.filter(p);
+      list.sort((a, b) => b.dateTime.getTime() - a.dateTime.getTime());
+      if ((api as any)._reverse) list.reverse();
+      return list;
+    },
+  };
+  return api;
 }
 
-// Hybrid database that tries MariaDB first, falls back to Dexie
-class HybridDatabase {
-  private dexie = new CreditDebitDB();
-
-  // Account operations
-  get accounts() {
+const transactionsCollection = {
+  where(_field: 'accountId') {
     return {
-      toArray: async () => {
-        try {
-          return await mariaDBAdapter.getAccounts();
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.accounts.toArray();
-        }
-      },
-      get: async (id: string) => {
-        try {
-          const accounts = await mariaDBAdapter.getAccounts();
-          return accounts.find((acc: Account) => acc.id === id);
-        } catch (error) {
-          return this.dexie.accounts.get(id);
-        }
-      },
-      add: async (account: Omit<Account, 'id' | 'createdAt'>) => {
-        try {
-          return await mariaDBAdapter.createAccount(account);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.accounts.add({ ...account, id: crypto.randomUUID(), createdAt: new Date() });
-        }
-      },
-      update: async (id: string, updates: Partial<Account>) => {
-        try {
-          return await mariaDBAdapter.updateAccount(id, updates);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.accounts.update(id, updates);
-        }
-      }
+      equals: (accountId: string) => transactionsWhere(accountId),
     };
-  }
-
-  // Transaction operations
-  get transactions() {
-    return {
-      where: (field: string) => ({
-        equals: (value: any) => ({
-          and: (predicate: (txn: Transaction) => boolean) => ({
-            toArray: async () => {
-              try {
-                const transactions = await mariaDBAdapter.getTransactions();
-                return transactions
-                  .filter((txn: Transaction) => (txn as any)[field] === value)
-                  .filter(predicate);
-              } catch (error) {
-                return this.dexie.transactions.where(field).equals(value).and(predicate).toArray();
-              }
-            },
-            reverse: () => ({
-              sortBy: async (sortField: string) => {
-                try {
-                  const transactions = await mariaDBAdapter.getTransactions();
-                  return transactions
-                    .filter((txn: Transaction) => (txn as any)[field] === value)
-                    .filter(predicate)
-                    .sort((a: Transaction, b: Transaction) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
-                } catch (error) {
-                  return this.dexie.transactions.where(field).equals(value).and(predicate).reverse().sortBy(sortField);
-                }
-              }
-            })
-          })
-        })
+  },
+  async add(t: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt' | 'deleted'>): Promise<string> {
+    const payload = { ...t, dateTime: t.dateTime.toISOString() };
+    const created = await fetchJson<any>('/api/transactions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return created.id as string;
+  },
+  async update(id: string, updates: Partial<Transaction>): Promise<void> {
+    const payload: any = {
+      ...(updates.accountId !== undefined && { accountId: updates.accountId }),
+      ...(updates.kind !== undefined && { kind: updates.kind }),
+      ...(updates.amount !== undefined && { amount: updates.amount }),
+      ...(updates.note !== undefined && { note: updates.note }),
+      ...(updates.imageUrl !== undefined && { imageUrl: updates.imageUrl }),
+      ...(updates.dueDate !== undefined && {
+        dueDate: updates.dueDate ? updates.dueDate.toISOString() : null,
       }),
-      add: async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
-        try {
-          return await mariaDBAdapter.createTransaction(transaction);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.transactions.add({
-            ...transaction,
-            id: crypto.randomUUID(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-          });
-        }
-      },
-      update: async (id: string, updates: Partial<Transaction>) => {
-        try {
-          return await mariaDBAdapter.updateTransaction(id, updates);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.transactions.update(id, updates);
-        }
-      }
+      ...(updates.deleted !== undefined && { deleted: updates.deleted }),
+      ...(updates.dateTime !== undefined && { dateTime: updates.dateTime.toISOString() }),
     };
-  }
+    await fetchJson(`/api/transactions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+};
 
-  // Cashbook operations
-  get cashbook() {
+// ---------- Cashbook (supports orderBy('dateTime').toArray()) ----------
+const cashbookCollection = {
+  orderBy(field: 'dateTime') {
     return {
-      orderBy: (field: string) => ({
-        toArray: async () => {
-          try {
-            const entries = await mariaDBAdapter.getCashbookEntries();
-            return entries.sort((a: CashbookEntry, b: CashbookEntry) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
-          } catch (error) {
-            return this.dexie.cashbook.orderBy(field).toArray();
-          }
+      async toArray(): Promise<CashbookEntry[]> {
+        const rows = await fetchJson<any[]>('/api/cashbook');
+        const list = rows.map((r) => ({
+          id: r.id,
+          businessId: r.businessId ?? DEFAULT_BUSINESS_ID,
+          dateTime: toDate(r.dateTime)!,
+          direction: r.direction,
+          amount: Number(r.amount),
+          note: r.note ?? undefined,
+          attachmentUrl: r.attachmentUrl ?? undefined,
+        }));
+        if (field === 'dateTime') {
+          list.sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
         }
-      }),
-      add: async (entry: Omit<CashbookEntry, 'id'>) => {
-        try {
-          return await mariaDBAdapter.createCashbookEntry(entry);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.cashbook.add({ ...entry, id: crypto.randomUUID() });
-        }
-      }
-    };
-  }
-
-  // Category operations
-  get categories() {
-    return {
-      toArray: async () => {
-        try {
-          return await mariaDBAdapter.getCategories();
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.categories.toArray();
-        }
+        return list;
       },
-      add: async (category: Omit<Category, 'id'>) => {
-        try {
-          return await mariaDBAdapter.createCategory(category);
-        } catch (error) {
-          console.warn('MariaDB unavailable, using local storage');
-          return this.dexie.categories.add({ ...category, id: crypto.randomUUID() });
-        }
-      }
     };
-  }
+  },
+  async add(e: Omit<CashbookEntry, 'id' | 'businessId'>): Promise<string> {
+    const created = await fetchJson<any>('/api/cashbook', {
+      method: 'POST',
+      body: JSON.stringify({ ...e, dateTime: e.dateTime.toISOString() }),
+    });
+    return created.id as string;
+  },
+};
 
-  async getAccountBalance(accountId: string): Promise<number> {
-    return this.dexie.getAccountBalance(accountId);
-  }
+// ---------- Items & Categories (localStorage-backed for now) ----------
+const itemsCollection = {
+  async toArray(): Promise<Item[]> {
+    return readItems();
+  },
+  async add(item: Item): Promise<string> {
+    const items = readItems();
+    items.push({ ...item, businessId: DEFAULT_BUSINESS_ID });
+    writeItems(items);
+    return item.id;
+  },
+};
 
-  async getAccountSummary() {
-    return this.dexie.getAccountSummary();
-  }
+const categoriesCollection = {
+  async toArray(): Promise<Category[]> {
+    return readCategories();
+  },
+};
 
-  async searchAccounts(query: string) {
-    return this.dexie.searchAccounts(query);
-  }
+// ---------- Preferences ----------
+const preferencesCollection = {
+  async get(_id: number): Promise<Preferences> {
+    return {
+      id: 1,
+      businessId: DEFAULT_BUSINESS_ID,
+      dateFormat: 'DD/MM/YYYY',
+      timeFormat: '12',
+      currency: 'ETB',
+      language: 'en',
+      firstDayOfWeek: 1,
+      firstDayOfMonth: 1,
+      firstDayOfYear: 1,
+      showTimeInReports: true,
+      showPreviousBalance: true,
+      darkMode: false,
+      biometricEnabled: false,
+    };
+  },
+  async update(_id: number, _updates: Partial<Preferences>): Promise<void> {
+    return;
+  },
+};
+
+// ---------- helpers used by pages ----------
+async function getAccountBalance(accountId: string): Promise<number> {
+  const txns = await transactionsWhere(accountId).toArray();
+  const credits = txns.filter((t) => t.kind === 'credit' && !t.deleted).reduce((s, t) => s + t.amount, 0);
+  const debits  = txns.filter((t) => t.kind === 'debit'  && !t.deleted).reduce((s, t) => s + t.amount, 0);
+  return credits - debits;
 }
 
-export const db = new HybridDatabase();
+async function getAccountSummary(): Promise<
+  | { totalAdvance: number; totalDue: number; netBalance: number }
+  | { totalCredit: number; totalDebit: number; accountCount: number }
+> {
+  const accts = await accountsCollection.toArray();
+  let totalCredit = 0;
+  let totalDebit = 0;
+  for (const a of accts) {
+    const bal = await getAccountBalance(a.id);
+    if (bal >= 0) totalCredit += bal;
+    else totalDebit += -bal;
+  }
+  return { totalCredit, totalDebit, accountCount: accts.length };
+}
+
+// ---------- exported db ----------
+export const db = {
+  accounts: accountsCollection,
+  transactions: transactionsCollection,
+  cashbook: cashbookCollection,
+  items: itemsCollection,
+  categories: categoriesCollection,
+  preferences: preferencesCollection,
+
+  getAccountBalance,
+  getAccountSummary,
+} as const;

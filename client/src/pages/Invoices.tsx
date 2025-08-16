@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Save, Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { AddItemModal } from '@/components/modals/AddItemModal';
 
 export function Invoices() {
   const { setCurrentScreen } = useAppStore();
@@ -33,7 +34,9 @@ export function Invoices() {
   const { data: accounts } = useQuery({
     queryKey: ['accounts'],
     queryFn: async () => {
-      return await db.accounts.where('archived').equals(false).toArray();
+      // return await db.accounts.where('archived').equals(false).toArray();
+      const all = await db.accounts.toArray();
+      return all.filter((a) => a.archived === false);
     },
   });
 
@@ -44,13 +47,24 @@ export function Invoices() {
     },
   });
 
+  // Add VAT calculation state and logic
+  const [vatRate, setVatRate] = useState<number>(0.15); // 15% VAT
+  const [showVatBreakdown, setShowVatBreakdown] = useState<boolean>(true);
+  
+  // Enhanced calculation functions
   const calculateSubtotal = () => {
     return invoiceItems.reduce((sum, item) => sum + (item.total || 0), 0);
   };
-
+  
+  const calculateVatAmount = () => {
+    const subtotal = calculateSubtotal() + additionalCharges;
+    return subtotal * vatRate; // VAT exclusive calculation
+  };
+  
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
-    return subtotal + additionalCharges - discount;
+    const vatAmount = calculateVatAmount();
+    return subtotal + additionalCharges + vatAmount - discount;
   };
 
   // Remove the local formatCurrency function and use the imported one
@@ -61,16 +75,76 @@ export function Invoices() {
   //   }).format(amount);
   // };
 
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  
   const handleAddItem = () => {
-    // TODO: Show add item modal
-    console.log('Add item to invoice');
+    setShowAddItemModal(true);
+  };
+  
+  const handleAddItemToInvoice = (item: any) => {
+    setInvoiceItems(prev => [...prev, {
+      ...item,
+      quantity: item.qty,
+      rate: item.rate,
+      discount: item.discountPct,
+      total: item.total
+    }]);
+    setShowAddItemModal(false);
   };
 
-  const handleSaveInvoice = () => {
-    // TODO: Save invoice to database
-    console.log('Save invoice');
+  const handleSaveInvoice = async () => {
+    try {
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'business-id': 'default-business', // Get from context
+        },
+        body: JSON.stringify({
+          businessId: 'default-business',
+          userId: 'current-user', // Get from auth context
+          invoiceType,
+          selectedAccount,
+          issueDate,
+          dueDate,
+          invoiceItems,
+          additionalCharges,
+          discount,
+          notes,
+          vatRate,
+        }),
+      });
+      
+      const result = await response.json();
+      console.log('Invoice saved:', result);
+      
+      // Optionally post the invoice immediately
+      await handlePostInvoice(result.invoiceId);
+    } catch (error) {
+      console.error('Error saving invoice:', error);
+    }
   };
-
+  
+  const handlePostInvoice = async (invoiceId: string) => {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'business-id': 'default-business',
+        },
+        body: JSON.stringify({
+          businessId: 'default-business',
+          userId: 'current-user',
+        }),
+      });
+      
+      const result = await response.json();
+      console.log('Invoice posted:', result);
+    } catch (error) {
+      console.error('Error posting invoice:', error);
+    }
+  };
   const handleGenerateInvoice = () => {
     // TODO: Generate PDF invoice
     console.log('Generate PDF');
@@ -220,7 +294,7 @@ export function Invoices() {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span data-testid="text-subtotal">{formatCurrency(calculateSubtotal())}</span>
+                <span>{formatCurrency(calculateSubtotal())}</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -233,10 +307,15 @@ export function Invoices() {
                     className="ml-2 w-20 h-8 text-xs"
                     value={additionalCharges || ''}
                     onChange={(e) => setAdditionalCharges(parseFloat(e.target.value) || 0)}
-                    data-testid="input-additional-charges"
                   />
                 </Label>
-                <span data-testid="text-additional-charges">{formatCurrency(additionalCharges)}</span>
+                <span>{formatCurrency(additionalCharges)}</span>
+              </div>
+              
+              {/* VAT Breakdown */}
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>VAT ({(vatRate * 100).toFixed(0)}%)</span>
+                <span>{formatCurrency(calculateVatAmount())}</span>
               </div>
               
               <div className="flex justify-between items-center">
@@ -249,19 +328,16 @@ export function Invoices() {
                     className="ml-2 w-20 h-8 text-xs"
                     value={discount || ''}
                     onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                    data-testid="input-discount"
                   />
                 </Label>
-                <span className="text-red-600" data-testid="text-discount">
-                  -{formatCurrency(discount)}
-                </span>
+                <span className="text-red-600">-{formatCurrency(discount)}</span>
               </div>
               
               <hr />
               
               <div className="flex justify-between text-lg font-bold">
-                <span>Total</span>
-                <span data-testid="text-invoice-total">{formatCurrency(calculateTotal())}</span>
+                <span>Total (Incl. VAT)</span>
+                <span>{formatCurrency(calculateTotal())}</span>
               </div>
             </div>
 
@@ -300,6 +376,12 @@ export function Invoices() {
           </Button>
         </div>
       </main>
+      <AddItemModal
+        open={showAddItemModal}
+        onClose={() => setShowAddItemModal(false)}
+        onAddItem={handleAddItemToInvoice}
+        invoiceType={invoiceType}
+      />
     </div>
   );
 }

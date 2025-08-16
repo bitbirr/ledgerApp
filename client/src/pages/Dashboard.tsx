@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { db } from '@/lib/db';
 import { useAppStore } from '@/lib/store';
@@ -10,64 +10,83 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Plus } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import type { Account } from '@shared/schema';
+
+type NormalizedSummary = {
+  totalAdvance: number;
+  totalDue: number;
+  netBalance: number;
+};
+
+function normalizeSummary(raw: any): NormalizedSummary {
+  if (raw && typeof raw === 'object') {
+    if ('totalAdvance' in raw && 'totalDue' in raw && 'netBalance' in raw) {
+      return {
+        totalAdvance: Number(raw.totalAdvance) || 0,
+        totalDue: Number(raw.totalDue) || 0,
+        netBalance: Number(raw.netBalance) || 0,
+      };
+    }
+    if ('totalCredit' in raw && 'totalDebit' in raw) {
+      const net = (Number(raw.totalCredit) || 0) - (Number(raw.totalDebit) || 0);
+      return {
+        totalAdvance: Math.max(net, 0),
+        totalDue: Math.max(-net, 0),
+        netBalance: net,
+      };
+    }
+  }
+  return { totalAdvance: 0, totalDue: 0, netBalance: 0 };
+}
 
 export function Dashboard() {
-  const { accounts, setAccounts, setAccountSummary, sortAccounts, setSelectedAccountId, setCurrentScreen } = useAppStore();
+  const {
+    accounts,
+    setAccounts,
+    setAccountSummary,
+    sortAccounts,
+    setSelectedAccountId,
+    setCurrentScreen,
+  } = useAppStore();
   const [showAddCustomer, setShowAddCustomer] = useState(false);
 
-  const { data: accountsData } = useQuery({
+  // ✅ Use Dexie table, not db.getAccounts()
+  const { data: accountsData } = useQuery<Account[]>({
     queryKey: ['accounts'],
     queryFn: async () => {
-      // Fix: Handle undefined/null archived values properly
-      return await db.accounts.filter(account => account.archived !== true).toArray();
+      const all = await db.accounts.toArray();
+      return all.filter((a: Account) => a.archived !== true);
     },
   });
 
-  const { data: summaryData } = useQuery({
+  const { data: rawSummary } = useQuery<any>({
     queryKey: ['account-summary'],
-    queryFn: async () => {
-      return await db.getAccountSummary();
-    },
+    queryFn: async () => db.getAccountSummary(),
   });
+
+  const summaryData = useMemo<NormalizedSummary>(
+    () => normalizeSummary(rawSummary),
+    [rawSummary]
+  );
 
   useEffect(() => {
-    if (accountsData) {
-      setAccounts(accountsData);
-    }
+    if (accountsData) setAccounts(accountsData);
   }, [accountsData, setAccounts]);
 
   useEffect(() => {
-    if (summaryData) {
-      setAccountSummary(summaryData);
-    }
+    if (summaryData) setAccountSummary(summaryData);
   }, [summaryData, setAccountSummary]);
 
   const sortedAccounts = sortAccounts(accounts);
-
-  // Remove this local formatCurrency function that uses INR
-  // const formatCurrency = (amount: number) => {
-  //   return new Intl.NumberFormat('en-IN', {
-  //     style: 'currency',
-  //     currency: 'INR',
-  //   }).format(amount);
-  // };
 
   const handleAccountClick = (accountId: string) => {
     setSelectedAccountId(accountId);
     setCurrentScreen('customer-detail');
   };
 
-  const getAccountBalance = async (accountId: string) => {
-    return await db.getAccountBalance(accountId);
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      <AppBar 
-        title="Dashboard" 
-        showSort={true} 
-        showSearch={true} 
-      />
+      <AppBar title="Dashboard" showSort showSearch />
 
       <main className="pb-20">
         {/* Summary Cards */}
@@ -99,8 +118,8 @@ export function Dashboard() {
               <div className="text-muted-foreground">
                 No customers added yet. Add your first customer to get started.
               </div>
-              <Button 
-                className="mt-4" 
+              <Button
+                className="mt-4"
                 onClick={() => setShowAddCustomer(true)}
                 data-testid="button-add-first-customer"
               >
@@ -108,7 +127,7 @@ export function Dashboard() {
               </Button>
             </Card>
           ) : (
-            sortedAccounts.map((account) => (
+            sortedAccounts.map((account: Account) => (
               <AccountCard
                 key={account.id}
                 account={account}
@@ -130,44 +149,40 @@ export function Dashboard() {
         <Plus className="h-6 w-6" />
       </Button>
 
-      <AddCustomerModal 
-        open={showAddCustomer} 
-        onClose={() => setShowAddCustomer(false)} 
-      />
+      <AddCustomerModal open={showAddCustomer} onClose={() => setShowAddCustomer(false)} />
     </div>
   );
 }
 
-function AccountCard({ account, onClick }: { account: any; onClick: () => void }) {
+function AccountCard({ account, onClick }: { account: Account; onClick: () => void }) {
   const [balance, setBalance] = useState(0);
 
   useEffect(() => {
-    const loadBalance = async () => {
-      const accountBalance = await db.getAccountBalance(account.id);
-      setBalance(accountBalance);
+    let mounted = true;
+    (async () => {
+      const b = await db.getAccountBalance(account.id);
+      if (mounted) setBalance(b);
+    })();
+    return () => {
+      mounted = false;
     };
-    loadBalance();
   }, [account.id]);
 
-  // Remove the local formatCurrency function since it's already imported
-  // const formatCurrency = (amount: number) => {
-  //   return new Intl.NumberFormat('en-IN', {
-  //     style: 'currency',
-  //     currency: 'INR',
-  //   }).format(amount);
-  // };
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-  };
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
 
   const isAdvance = balance > 0;
   const balanceColor = isAdvance ? 'text-green-600' : 'text-red-600';
   const balanceLabel = isAdvance ? 'Advance' : 'Due';
 
   return (
-    <Card 
-      className="p-4 cursor-pointer hover:shadow-md transition-shadow" 
+    <Card
+      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
       onClick={onClick}
       data-testid={`card-account-${account.id}`}
     >
@@ -179,26 +194,33 @@ function AccountCard({ account, onClick }: { account: any; onClick: () => void }
             </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-medium text-foreground" data-testid={`text-account-name-${account.id}`}>
+            <div
+              className="font-medium text-foreground"
+              data-testid={`text-account-name-${account.id}`}
+            >
               {account.name}
             </div>
             {account.phone && (
-              <div className="text-sm text-muted-foreground" data-testid={`text-account-phone-${account.id}`}>
+              <div
+                className="text-sm text-muted-foreground"
+                data-testid={`text-account-phone-${account.id}`}
+              >
                 {account.phone}
               </div>
             )}
             <div className="text-xs text-muted-foreground">
-              Last: 2 days ago {/* TODO: Calculate from actual last transaction */}
+              Last: 2 days ago {/* TODO: derive from last txn */}
             </div>
           </div>
         </div>
         <div className="text-right">
-          <div className={`text-lg font-bold ${balanceColor}`} data-testid={`text-account-balance-${account.id}`}>
+          <div
+            className={`text-lg font-bold ${balanceColor}`}
+            data-testid={`text-account-balance-${account.id}`}
+          >
             {formatCurrency(balance)}
           </div>
-          <div className="text-xs text-muted-foreground">
-            {balanceLabel}
-          </div>
+          <div className="text-xs text-muted-foreground">{balanceLabel}</div>
         </div>
       </div>
     </Card>
