@@ -4,16 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { TableSkeleton, TableEmpty } from '@/components/ui/loading';
 import { Scale, Download, RefreshCw, AlertTriangle } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface TrialBalanceItem {
   accountId: string;
   accountCode: string;
   accountName: string;
-  accountType: string;
+  accountType: string; // 'asset' | 'liability' | 'equity' | 'revenue' | 'expense' | ...
   debitBalance: number;
   creditBalance: number;
 }
@@ -35,37 +43,41 @@ export function TrialBalance() {
       const response = await fetch(`/api/reports/trial-balance?asOfDate=${asOfDate}`, {
         headers: {
           'business-id': 'default-business',
-          'user-id': 'default-user'
-        }
+        'user-id': 'default-user',
+        },
       });
       if (!response.ok) throw new Error('Failed to fetch trial balance');
       const data = (await response.json()) as TrialBalanceData;
       return data;
-      /* return response.json() as TrialBalanceData;*/
-    }
+    },
   });
-
-  const exportToPDF = () => {
-    // TODO: Implement PDF export
-    console.log('Export to PDF');
-  };
 
   const exportToCSV = () => {
     if (!trialBalance) return;
-    
-    const csvData = [
+
+    const rows: (string | number)[][] = [
       ['Account Code', 'Account Name', 'Account Type', 'Debit Balance', 'Credit Balance'],
-      ...trialBalance.items.map(item => [
+      ...trialBalance.items.map((item) => [
         item.accountCode,
         item.accountName,
         item.accountType,
-        item.debitBalance.toString(),
-        item.creditBalance.toString()
+        item.debitBalance,
+        item.creditBalance,
       ]),
-      ['', '', 'TOTALS', trialBalance.totalDebits.toString(), trialBalance.totalCredits.toString()]
+      ['', '', 'TOTALS', trialBalance.totalDebits, trialBalance.totalCredits],
     ];
-    
-    const csv = csvData.map(row => row.join(',')).join('\n');
+
+    const csv = rows
+      .map((r) =>
+        r
+          .map((v) => {
+            const s = String(v ?? '');
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+          })
+          .join(','),
+      )
+      .join('\n');
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -73,6 +85,23 @@ export function TrialBalance() {
     a.download = `trial-balance-${asOfDate}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const typeToBadgeVariant = (t: string): 'default' | 'secondary' | 'outline' | 'destructive' => {
+    switch (t) {
+      case 'asset':
+        return 'default';
+      case 'liability':
+        return 'secondary';
+      case 'equity':
+        return 'outline';
+      case 'revenue':
+        return 'default';
+      case 'expense':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
   };
 
   return (
@@ -100,6 +129,7 @@ export function TrialBalance() {
           </div>
         </CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         {/* Date Filter */}
         <div className="flex items-center gap-4">
@@ -115,7 +145,7 @@ export function TrialBalance() {
           </div>
         </div>
 
-        {/* Trial Balance Table */}
+        {/* Table / States */}
         {isLoading ? (
           <TableSkeleton rows={10} cols={5} />
         ) : trialBalance ? (
@@ -124,13 +154,14 @@ export function TrialBalance() {
               <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
                 <span className="text-sm text-destructive">
-                  Trial Balance is not balanced! Total debits ({formatCurrency(trialBalance.totalDebits)}) 
-                  do not equal total credits ({formatCurrency(trialBalance.totalCredits)}).
+                  Trial Balance is not balanced! Total debits (
+                  {formatCurrency(trialBalance.totalDebits)}) do not equal total credits (
+                  {formatCurrency(trialBalance.totalCredits)}).
                 </span>
               </div>
             )}
-            
-            <Table financial responsive>
+
+            <Table className="table-enhanced table-financial">
               <TableHeader>
                 <TableRow>
                   <TableHead>Account Code</TableHead>
@@ -141,33 +172,41 @@ export function TrialBalance() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trialBalance.items.map(item => (
+                {trialBalance.items.map((item) => (
                   <TableRow key={item.accountId}>
                     <TableCell className="font-mono">{item.accountCode}</TableCell>
                     <TableCell className="font-medium">{item.accountName}</TableCell>
                     <TableCell>
-                      <Badge variant={item.accountType === 'asset' ? 'default' : 
-                                     item.accountType === 'liability' ? 'secondary' :
-                                     item.accountType === 'equity' ? 'outline' :
-                                     item.accountType === 'revenue' ? 'default' : 'destructive'}>
+                      <Badge variant={typeToBadgeVariant(item.accountType)}>
                         {item.accountType.toUpperCase()}
                       </Badge>
                     </TableCell>
-                    <TableCell amount positive={item.debitBalance > 0}>
+                    <TableCell
+                      className={cn(
+                        'amount-cell',
+                        item.debitBalance > 0 ? 'amount-positive' : 'amount-neutral',
+                      )}
+                    >
                       {item.debitBalance > 0 ? formatCurrency(item.debitBalance) : '-'}
                     </TableCell>
-                    <TableCell amount positive={item.creditBalance > 0}>
+                    <TableCell
+                      className={cn(
+                        'amount-cell',
+                        item.creditBalance > 0 ? 'amount-negative' : 'amount-neutral',
+                      )}
+                    >
                       {item.creditBalance > 0 ? formatCurrency(item.creditBalance) : '-'}
                     </TableCell>
                   </TableRow>
                 ))}
+
                 {/* Totals Row */}
                 <TableRow className="font-semibold bg-muted/30">
                   <TableCell colSpan={3}>TOTALS</TableCell>
-                  <TableCell amount className="font-bold">
+                  <TableCell className="amount-cell font-bold">
                     {formatCurrency(trialBalance.totalDebits)}
                   </TableCell>
-                  <TableCell amount className="font-bold">
+                  <TableCell className="amount-cell font-bold">
                     {formatCurrency(trialBalance.totalCredits)}
                   </TableCell>
                 </TableRow>
@@ -175,7 +214,7 @@ export function TrialBalance() {
             </Table>
           </div>
         ) : (
-          <TableEmpty 
+          <TableEmpty
             icon={Scale}
             title="No trial balance data"
             description="No account balances found for the selected date"

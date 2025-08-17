@@ -2,91 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Professional Financial UI Theme */
+/* ================================
+   Professional Financial UI Theme
+   ================================ */
 :root {
-  /* Primary Financial Colors */
-  --background: hsl(210, 20%, 98%);
-  --foreground: hsl(222, 84%, 4.9%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222, 84%, 4.9%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222, 84%, 4.9%);
-  
+  /* Primary Financial Colors (HSL triples) */
+  --background: 210 20% 98%;
+  --foreground: 222 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 84% 4.9%;
+
   /* Professional Blue Palette */
-  --primary: hsl(221, 83%, 53%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222, 84%, 4.9%);
-  
+  --primary: 221 83% 53%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 84% 4.9%;
+
   /* Neutral Grays */
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222, 84%, 4.9%);
-  
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 84% 4.9%;
+
   /* Status Colors */
-  --success: hsl(142, 76%, 36%);
-  --success-foreground: hsl(355, 100%, 97%);
-  --warning: hsl(38, 92%, 50%);
-  --warning-foreground: hsl(48, 96%, 89%);
-  --destructive: hsl(0, 84%, 60%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  
+  --success: 142 76% 36%;
+  --success-foreground: 355 100% 97%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 48 96% 89%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+
   /* Financial Specific Colors */
-  --profit: hsl(142, 76%, 36%);
-  --loss: hsl(0, 84%, 60%);
-  --neutral: hsl(215, 16%, 47%);
-  --credit: hsl(142, 76%, 36%);
-  --debit: hsl(0, 84%, 60%);
-  
+  --profit: 142 76% 36%;
+  --loss: 0 84% 60%;
+  --neutral: 215 16% 47%;
+  --credit: 142 76% 36%;
+  --debit: 0 84% 60%;
+
   /* UI Elements */
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --ring: hsl(221, 83%, 53%);
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 221 83% 53%;
   --radius: 8px;
-  
+
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  
-  /* Shadows for depth */
+
+  /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  /* Primary-tinted shadow */
+  --shadow-primary-25: 0 10px 15px -3px hsl(var(--primary) / 0.25),
+                       0 4px 6px -4px hsl(var(--primary) / 0.25);
 }
 
 .dark {
-  --background: hsl(222, 84%, 4.9%);
-  --foreground: hsl(210, 40%, 98%);
-  --card: hsl(222, 84%, 4.9%);
-  --card-foreground: hsl(210, 40%, 98%);
-  --popover: hsl(222, 84%, 4.9%);
-  --popover-foreground: hsl(210, 40%, 98%);
-  --primary: hsl(217, 91%, 60%);
-  --primary-foreground: hsl(222, 84%, 4.9%);
-  --secondary: hsl(217, 32%, 17%);
-  --secondary-foreground: hsl(210, 40%, 98%);
-  --muted: hsl(217, 32%, 17%);
-  --muted-foreground: hsl(215, 20%, 65%);
-  --accent: hsl(217, 32%, 17%);
-  --accent-foreground: hsl(210, 40%, 98%);
-  --border: hsl(217, 32%, 17%);
-  --input: hsl(217, 32%, 17%);
-  --ring: hsl(224, 76%, 78%);
+  --background: 222 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 84% 4.9%;
+  --secondary: 217 32% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 32% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 32% 17%;
+  --accent-foreground: 210 40% 98%;
+  --border: 217 32% 17%;
+  --input: 217 32% 17%;
+  --ring: 224 76% 78%;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  
+  * { @apply border-border; }
+
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -97,904 +100,343 @@
 
 @layer components {
   /* Responsive Container System */
-  .container-responsive {
-    @apply w-full mx-auto px-4;
-  }
-  
-  @screen sm {
-    .container-responsive {
-      @apply max-w-screen-sm px-6;
-    }
-  }
-  
-  @screen md {
-    .container-responsive {
-      @apply max-w-screen-md px-8;
-    }
-  }
-  
-  @screen lg {
-    .container-responsive {
-      @apply max-w-screen-lg px-12;
-    }
-  }
-  
-  @screen xl {
-    .container-responsive {
-      @apply max-w-screen-xl px-16;
-    }
-  }
-  
+  .container-responsive { @apply w-full mx-auto px-4; }
+  @screen sm { .container-responsive { @apply max-w-screen-sm px-6; } }
+  @screen md { .container-responsive { @apply max-w-screen-md px-8; } }
+  @screen lg { .container-responsive { @apply max-w-screen-lg px-12; } }
+  @screen xl { .container-responsive { @apply max-w-screen-xl px-16; } }
+
   /* Professional Card Components */
-  .financial-card {
-    @apply bg-card text-card-foreground rounded-lg border shadow-sm;
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .financial-card:hover {
-    @apply shadow-md;
-    transform: translateY(-1px);
-  }
-  
-  .financial-card-elevated {
-    @apply financial-card shadow-lg;
-  }
-  
+  .financial-card { @apply bg-card text-card-foreground rounded-lg border shadow-sm; transition: all 0.2s ease-in-out; }
+  .financial-card:hover { @apply shadow-md; transform: translateY(-1px); }
+  .financial-card-elevated { @apply bg-card text-card-foreground rounded-lg border; box-shadow: var(--shadow-lg); }
+
   /* Financial Status Colors */
-  .text-profit {
-    color: var(--profit);
-  }
-  
-  .text-loss {
-    color: var(--loss);
-  }
-  
-  .text-credit {
-    color: var(--credit);
-  }
-  
-  .text-debit {
-    color: var(--debit);
-  }
-  
-  .bg-profit {
-    background-color: var(--profit);
-  }
-  
-  .bg-loss {
-    background-color: var(--loss);
-  }
-  
+  .text-profit { color: hsl(var(--profit)); }
+  .text-loss { color: hsl(var(--loss)); }
+  .text-credit { color: hsl(var(--credit)); }
+  .text-debit { color: hsl(var(--debit)); }
+  .bg-profit { background-color: hsl(var(--profit)); }
+  .bg-loss { background-color: hsl(var(--loss)); }
+
   /* Responsive Grid System */
-  .grid-responsive {
-    @apply grid gap-4;
-    grid-template-columns: 1fr;
-  }
-  
-  @screen sm {
-    .grid-responsive {
-      grid-template-columns: repeat(2, 1fr);
-      @apply gap-6;
-    }
-  }
-  
-  @screen lg {
-    .grid-responsive {
-      grid-template-columns: repeat(3, 1fr);
-      @apply gap-8;
-    }
-  }
-  
+  .grid-responsive { @apply grid gap-4; grid-template-columns: 1fr; }
+  @screen sm { .grid-responsive { grid-template-columns: repeat(2, 1fr); @apply gap-6; } }
+  @screen lg { .grid-responsive { grid-template-columns: repeat(3, 1fr); @apply gap-8; } }
+
   /* Mobile-First Navigation */
-  .nav-mobile {
-    @apply fixed bottom-0 left-0 right-0 bg-card border-t z-50;
-  }
-  
-  .nav-desktop {
-    @apply hidden;
-  }
-  
+  .nav-mobile { @apply fixed bottom-0 left-0 right-0 bg-card border-t z-50; }
+  .nav-desktop { @apply hidden; }
   @screen lg {
-    .nav-mobile {
-      @apply hidden;
-    }
-    
-    .nav-desktop {
-      @apply block fixed left-0 top-0 h-full w-64 bg-card border-r z-40;
-    }
+    .nav-mobile { @apply hidden; }
+    .nav-desktop { @apply block fixed left-0 top-0 h-full w-64 bg-card border-r z-40; }
   }
-  
+
   /* Professional Typography */
-  .heading-financial {
-    @apply text-2xl font-bold tracking-tight text-foreground;
-  }
-  
-  .subheading-financial {
-    @apply text-lg font-semibold text-muted-foreground;
-  }
-  
-  .body-financial {
-    @apply text-sm text-foreground leading-relaxed;
-  }
-  
-  .caption-financial {
-    @apply text-xs text-muted-foreground;
-  }
-  
+  .heading-financial { @apply text-2xl font-bold tracking-tight text-foreground; }
+  .subheading-financial { @apply text-lg font-semibold text-muted-foreground; }
+  .body-financial { @apply text-sm text-foreground leading-relaxed; }
+  .caption-financial { @apply text-xs text-muted-foreground; }
+
   /* Financial Data Display */
-  .amount-display {
-    @apply font-mono text-right tabular-nums;
-  }
-  
-  .amount-large {
-    @apply amount-display text-2xl font-bold;
-  }
-  
-  .amount-medium {
-    @apply amount-display text-lg font-semibold;
-  }
-  
-  .amount-small {
-    @apply amount-display text-sm;
-  }
-  
+  .amount-display { @apply font-mono text-right tabular-nums; }
+  .amount-large { @apply amount-display text-2xl font-bold; }
+  .amount-medium { @apply amount-display text-lg font-semibold; }
+  .amount-small { @apply amount-display text-sm; }
+
   /* Loading States */
-  .skeleton {
-    @apply animate-pulse bg-muted rounded;
-  }
-  
+  .skeleton { @apply animate-pulse bg-muted rounded; }
+
   /* Touch Targets for Mobile */
-  .touch-target {
-    @apply min-h-[44px] min-w-[44px];
-  }
-  
+  .touch-target { @apply min-h-[44px] min-w-[44px]; }
+
   /* Safe Area Support */
-  .safe-area-top {
-    padding-top: env(safe-area-inset-top);
+  .safe-area-top { padding-top: env(safe-area-inset-top); }
+  .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-area-left { padding-left: env(safe-area-inset-left); }
+  .safe-area-right { padding-right: env(safe-area-inset-right); }
+
+  /* ----- Forms (Enhanced) ----- */
+  .form-enhanced { @apply space-y-6; }
+  .form-enhanced .form-section { @apply space-y-4; }
+  .form-enhanced .form-row { @apply grid gap-4; }
+  .form-enhanced .form-row-2 { @apply grid grid-cols-1 sm:grid-cols-2 gap-4; }
+  .form-enhanced .form-row-3 { @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4; }
+
+  .form-field-enhanced { @apply space-y-2; }
+  .form-field-enhanced .form-label { @apply text-sm font-medium text-foreground flex items-center gap-1; }
+  .form-field-enhanced .form-label.required::after { content: '*'; color: hsl(var(--destructive)); }
+
+  .form-field-enhanced .form-input,
+  .form-field-enhanced .form-select,
+  .form-field-enhanced .form-textarea {
+    @apply w-full px-3 py-2.5 text-sm bg-background border border-input rounded-md transition-all duration-200 placeholder:text-muted-foreground;
+    @apply focus:outline-none; /* do not use focus: variants in @apply */
   }
-  
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+  /* Focus styles without variants in @apply */
+  .form-field-enhanced .form-input:focus,
+  .form-field-enhanced .form-select:focus,
+  .form-field-enhanced .form-textarea:focus {
+    @apply ring-2 ring-offset-2;
+    --tw-ring-color: hsl(var(--ring));
+    border-color: transparent;
   }
-  
-  .safe-area-left {
-    padding-left: env(safe-area-inset-left);
+  .form-field-enhanced .form-input:hover,
+  .form-field-enhanced .form-select:hover,
+  .form-field-enhanced .form-textarea:hover { @apply border-ring/50; }
+
+  /* Validation states */
+  .form-field-enhanced .form-input.error { @apply border-destructive; }
+  .form-field-enhanced .form-input.error:focus { --tw-ring-color: hsl(var(--destructive)); }
+  .form-field-enhanced .form-input.success { @apply border-success; }
+  .form-field-enhanced .form-input.success:focus { --tw-ring-color: hsl(var(--success)); }
+
+  /* Form messages */
+  .form-message { @apply text-xs font-medium flex items-center gap-1 animate-fade-in; }
+  .form-message.error { @apply text-destructive; }
+  .form-message.success { @apply text-success; }
+  .form-message.warning { @apply text-warning; }
+
+  /* Form actions / buttons */
+  .form-actions { @apply flex flex-col sm:flex-row gap-3 pt-6; }
+  .form-actions .btn-primary {
+    @apply flex-1 sm:flex-none sm:min-w-[120px] bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200;
   }
-  
-  .safe-area-right {
-    padding-right: env(safe-area-inset-right);
+  .form-actions .btn-primary:focus { @apply ring-2 ring-offset-2; --tw-ring-color: hsl(var(--ring)); }
+  .form-actions .btn-secondary {
+    @apply flex-1 sm:flex-none sm:min-w-[120px] bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all duration-200;
   }
+  .form-actions .btn-secondary:focus { @apply ring-2 ring-offset-2; --tw-ring-color: hsl(var(--ring)); }
+
+  /* Dialog forms */
+  .dialog-form { @apply max-w-md mx-4; }
+  .dialog-form .dialog-content { @apply max-h-[90vh] overflow-y-auto; }
+  @media (max-width: 640px) {
+    .dialog-form { @apply max-w-[95vw] mx-2; }
+    .dialog-form .dialog-content { @apply max-h-[85vh]; }
+  }
+
+  /* Financial form specifics */
+  .financial-form .amount-input { @apply font-mono text-right; }
+  .financial-form .currency-symbol { @apply absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none; }
+  .financial-form .amount-field { @apply relative; }
+  .financial-form .amount-field .form-input { @apply pl-8; }
+
+  /* Tables */
+  .table-responsive { @apply relative w-full; }
+  .table-responsive .table-wrapper { @apply overflow-x-auto border border-border rounded-lg bg-card; }
+
+  .table-enhanced { @apply w-full border-collapse text-sm; }
+  .table-enhanced thead { @apply bg-muted/50 sticky top-0 z-10; }
+  .table-enhanced th { @apply px-4 py-3 text-left font-semibold text-muted-foreground border-b border-border whitespace-nowrap; }
+  .table-enhanced td { @apply px-4 py-3 border-b border-border/50 align-middle; }
+  .table-enhanced tbody tr { @apply transition-colors hover:bg-muted/30; }
+  .table-enhanced tbody tr:last-child td { @apply border-b-0; }
+
+  @media (max-width: 768px) {
+    .table-responsive .table-wrapper { @apply -mx-4 rounded-none border-x-0; }
+    .table-enhanced th, .table-enhanced td { @apply px-3 py-2 text-xs; }
+    .table-enhanced th { @apply py-3; }
+  }
+
+  .table-actions { @apply flex items-center gap-1; }
+  .table-actions .btn-action { @apply p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors touch-manipulation; }
+  @media (max-width: 640px) { .table-actions { @apply gap-0.5; } .table-actions .btn-action { @apply p-1.5; } }
+
+  .table-financial .amount-cell { @apply font-mono text-right tabular-nums; }
+  .table-financial .amount-positive { @apply text-profit; }
+  .table-financial .amount-negative { @apply text-loss; }
+  .table-financial .amount-neutral { @apply text-muted-foreground; }
+
+  .table-loading { @apply opacity-60 pointer-events-none; }
+  .table-skeleton { @apply animate-pulse; }
+  .table-skeleton td { @apply py-4; }
+  .table-skeleton .skeleton-text { @apply h-4 bg-muted rounded; }
+  .table-skeleton .skeleton-text.short { @apply w-16; }
+  .table-skeleton .skeleton-text.medium { @apply w-24; }
+  .table-skeleton .skeleton-text.long { @apply w-32; }
+
+  .table-empty { @apply text-center py-12 text-muted-foreground; }
+  .table-empty .empty-icon { @apply w-12 h-12 mx-auto mb-4 text-muted-foreground/50; }
+  .table-empty .empty-title { @apply text-lg font-medium mb-2 text-foreground; }
+  .table-empty .empty-description { @apply text-sm mb-4; }
+
+  .table-filters { @apply flex flex-col sm:flex-row gap-4 mb-4 p-4 bg-muted/30 rounded-lg; }
+  .table-search { @apply relative flex-1; }
+  .table-search .search-icon { @apply absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground; }
+  .table-search input { @apply pl-10; }
+
+  .table-pagination { @apply flex items-center justify-between pt-4 border-t border-border; }
+  .table-pagination .pagination-info { @apply text-sm text-muted-foreground; }
+  .table-pagination .pagination-controls { @apply flex items-center gap-2; }
+  @media (max-width: 640px) { .table-pagination { @apply flex-col gap-3; } .table-pagination .pagination-controls { @apply w-full justify-center; } }
+
+  .table-cards { @apply space-y-3; }
+  .table-card { @apply p-4 border border-border rounded-lg bg-card transition-colors hover:bg-muted/30; }
+  .table-card-header { @apply flex items-center justify-between mb-3; }
+  .table-card-title { @apply font-semibold; }
+  .table-card-actions { @apply flex items-center gap-2; }
+  .table-card-content { @apply space-y-2; }
+  .table-card-row { @apply flex justify-between text-sm; }
+  .table-card-label { @apply text-muted-foreground; }
+  .table-card-value { @apply font-medium; }
+
+  @media (max-width: 768px) {
+    .table-responsive.mobile-cards .table-wrapper { @apply hidden; }
+    .table-responsive.mobile-cards .table-cards { @apply block; }
+  }
+  @media (min-width: 769px) {
+    .table-responsive .table-cards { @apply hidden; }
+  }
+
+  .table-export { @apply flex items-center gap-2; }
+  .table-export button { @apply text-xs; }
+  @media (max-width: 640px) { .table-export { @apply w-full justify-center; } }
+
+  /* Loading & Button Enhancements */
+  .loading-container { @apply relative; }
+  .loading-overlay { @apply absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg; }
+  .loading-spinner-professional { @apply w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin; }
+
+  .btn-enhanced { @apply relative overflow-hidden transform transition-all duration-200 ease-in-out; }
+  .btn-enhanced:focus-visible { @apply ring-2 ring-ring ring-offset-2 outline-none; }
+  .btn-enhanced:hover { transform: translateY(-1px); }
+  .btn-enhanced:active { transform: translateY(0); }
+
+  .btn-loading { @apply relative opacity-70 cursor-not-allowed transition-opacity duration-200; }
+  .btn-loading .btn-content { @apply opacity-0; }
+  .btn-loading .btn-spinner { @apply absolute inset-0 flex items-center justify-center; }
+
+  .btn-profit { @apply bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md; }
+  .btn-loss { @apply bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md; }
+  .btn-neutral { @apply bg-gray-600 text-white hover:bg-gray-700 active:bg-gray-800 shadow-sm hover:shadow-md; }
+
+  .btn-group { @apply flex rounded-lg overflow-hidden shadow-sm; }
+  .btn-group .btn-enhanced { @apply rounded-none border-r border-border last:border-r-0 first:rounded-l-lg last:rounded-r-lg; }
+  .btn-group .btn-enhanced:hover { @apply z-10; transform: translateY(0); }
+
+  @media (max-width: 640px) {
+    .btn-mobile-stack { @apply flex flex-col gap-3; }
+    .btn-mobile-stack .btn-enhanced { @apply w-full min-h-[44px]; }
+    .btn-mobile-horizontal { @apply flex gap-2 overflow-x-auto pb-2; }
+    .btn-mobile-horizontal .btn-enhanced { @apply flex-shrink-0 min-w-[120px]; }
+  }
+
+  .btn-icon-left { @apply flex-row-reverse; }
+  .btn-icon-right { @apply flex-row; }
+
+  .btn-fab { @apply fixed bottom-6 right-6 z-50 rounded-full shadow-lg hover:shadow-xl; transform: translateZ(0); transition: transform 0.3s; }
+  .btn-fab:hover { transform: scale(1.1); }
+  .btn-fab:active { transform: scale(0.95); }
+
+  .btn-with-badge { @apply relative; }
+  .btn-badge { @apply absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center border-2 border-background; }
+
+  /* Inputs helper */
+  .input-focus { @apply transition-all duration-200 ease-out; }
+  .input-focus:focus { @apply ring-2; --tw-ring-color: hsl(var(--ring)); border-color: hsl(var(--ring)); transform: scale(1.01); }
+
+  /* Hover effects */
+  .hover-lift { @apply transition-transform duration-200 ease-out; }
+  .hover-lift:hover { transform: translateY(-0.25rem); }
+
+  .hover-scale { @apply transition-transform duration-200 ease-out; }
+  .hover-scale:hover { transform: scale(1.05); }
+
+  .hover-rotate { @apply transition-transform duration-300 ease-out; }
+  .hover-rotate:hover { transform: rotate(3deg); }
+
+  .hover-glow { @apply transition-all duration-300 ease-out; }
+  .hover-glow:hover { box-shadow: var(--shadow-lg), var(--shadow-primary-25); }
+
+  /* Fancy focus ring without variants in @apply */
+  .focus-ring-animated { @apply transition-all duration-200 ease-out; }
+  .focus-ring-animated:focus { @apply ring-2 ring-offset-2; --tw-ring-color: hsl(var(--ring)); transform: scale(1.02); }
 }
 
 @layer utilities {
   /* Responsive Visibility */
-  .mobile-only {
-    @apply block;
-  }
-  
-  .desktop-only {
-    @apply hidden;
-  }
-  
-  @screen lg {
-    .mobile-only {
-      @apply hidden;
-    }
-    
-    .desktop-only {
-      @apply block;
-    }
-  }
-  
+  .mobile-only { @apply block; }
+  .desktop-only { @apply hidden; }
+  @screen lg { .mobile-only { @apply hidden; } .desktop-only { @apply block; } }
+
   /* Scrollbar Styling */
-  .scrollbar-thin {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted));
+  .scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--muted)); }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: hsl(var(--muted)); }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground)); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary)); }
+
+  /* Animation helpers */
+  .animate-slide-in-bottom { animation: slideInFromBottom 0.3s ease-out; }
+  .animate-slide-in-right { animation: slideInFromRight 0.3s ease-out; }
+  .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+
+  /* Micro-interactions */
+  .loading-dots::after { content: ''; animation: loadingDots 1.5s infinite; }
+  .loading-bar { @apply relative overflow-hidden; }
+  .loading-bar::before {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.3), transparent);
+    transform: translateX(-100%);
+    animation: loadingBar 2s infinite;
   }
-  
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground));
-    border-radius: 3px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary));
-  }
+
+  .notification-slide-in { animation: notificationSlideIn 0.3s ease-out; }
+  .notification-slide-out { animation: notificationSlideOut 0.3s ease-in; }
+
+  .nav-item { @apply transition-all duration-200 ease-out hover:bg-muted/50; }
+  .nav-item:hover { transform: translateX(0.25rem); }
+  .nav-item.active { @apply bg-primary/10 border-r-2 border-primary; animation: navItemActive 0.3s ease-out; }
+
+  .table-row-enter { animation: tableRowEnter 0.3s ease-out; }
+  .table-row-exit { animation: tableRowExit 0.2s ease-in; }
+
+  .will-animate { will-change: transform, opacity; }
+  .gpu-accelerated { transform: translateZ(0); backface-visibility: hidden; perspective: 1000px; }
 }
 
 /* Print Styles */
 @media print {
   body {
+    print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-    color-adjust: exact;
   }
-  
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-break-before {
-    break-before: page;
-  }
-  
-  .print-break-after {
-    break-after: page;
-  }
-}
-
-/* Animations */
-@keyframes slideInFromBottom {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideInFromRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.animate-slide-in-bottom {
-  animation: slideInFromBottom 0.3s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInFromRight 0.3s ease-out;
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Enhanced Form Styles */
-.form-enhanced {
-  @apply space-y-6;
-}
-
-.form-enhanced .form-section {
-  @apply space-y-4;
-}
-
-.form-enhanced .form-row {
-  @apply grid gap-4;
-}
-
-.form-enhanced .form-row-2 {
-  @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
-}
-
-.form-enhanced .form-row-3 {
-  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
-}
-
-/* Enhanced Form Fields */
-.form-field-enhanced {
-  @apply space-y-2;
-}
-
-.form-field-enhanced .form-label {
-  @apply text-sm font-medium text-foreground;
-  @apply flex items-center gap-1;
-}
-
-.form-field-enhanced .form-label.required::after {
-  content: '*';
-  @apply text-destructive;
-}
-
-.form-field-enhanced .form-input {
-  @apply w-full px-3 py-2.5 text-sm;
-  @apply bg-background border border-input rounded-md;
-  @apply transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
-  @apply placeholder:text-muted-foreground;
-}
-
-.form-field-enhanced .form-input:hover {
-  @apply border-ring/50;
-}
-
-.form-field-enhanced .form-input.error {
-  @apply border-destructive focus:ring-destructive;
-}
-
-.form-field-enhanced .form-input.success {
-  @apply border-success focus:ring-success;
-}
-
-/* Enhanced Select Styles */
-.form-field-enhanced .form-select {
-  @apply w-full px-3 py-2.5 text-sm;
-  @apply bg-background border border-input rounded-md;
-  @apply transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
-}
-
-/* Enhanced Textarea Styles */
-.form-field-enhanced .form-textarea {
-  @apply w-full px-3 py-2.5 text-sm;
-  @apply bg-background border border-input rounded-md;
-  @apply transition-all duration-200;
-  @apply focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
-  @apply placeholder:text-muted-foreground;
-  @apply resize-none;
-}
-
-/* Form Validation States */
-.form-message {
-  @apply text-xs font-medium;
-  @apply flex items-center gap-1;
-  @apply animate-fade-in;
-}
-
-.form-message.error {
-  @apply text-destructive;
-}
-
-.form-message.success {
-  @apply text-success;
-}
-
-.form-message.warning {
-  @apply text-warning;
-}
-
-/* Form Buttons */
-.form-actions {
-  @apply flex flex-col sm:flex-row gap-3 pt-6;
-}
-
-.form-actions .btn-primary {
-  @apply flex-1 sm:flex-none sm:min-w-[120px];
-  @apply bg-primary text-primary-foreground;
-  @apply hover:bg-primary/90;
-  @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
-  @apply transition-all duration-200;
-}
-
-.form-actions .btn-secondary {
-  @apply flex-1 sm:flex-none sm:min-w-[120px];
-  @apply bg-secondary text-secondary-foreground;
-  @apply hover:bg-secondary/80;
-  @apply focus:ring-2 focus:ring-ring focus:ring-offset-2;
-  @apply transition-all duration-200;
-}
-
-/* Mobile Form Optimizations */
-@media (max-width: 640px) {
-  .form-enhanced {
-    @apply space-y-4;
-  }
-  
-  .form-enhanced .form-section {
-    @apply space-y-3;
-  }
-  
-  .form-field-enhanced .form-input,
-  .form-field-enhanced .form-select,
-  .form-field-enhanced .form-textarea {
-    @apply py-3 text-base; /* Larger touch targets on mobile */
-  }
-  
-  .form-actions {
-    @apply pt-4;
-  }
-  
-  .form-actions button {
-    @apply py-3 text-base; /* Larger buttons on mobile */
-  }
-}
-
-/* Form Loading States */
-.form-loading {
-  @apply opacity-50 pointer-events-none;
-}
-
-.form-loading .form-input,
-.form-loading .form-select,
-.form-loading .form-textarea {
-  @apply bg-muted;
-}
-
-/* Form Focus Management */
-.form-enhanced .form-input:focus-visible,
-.form-enhanced .form-select:focus-visible,
-.form-enhanced .form-textarea:focus-visible {
-  @apply outline-2 outline-offset-2 outline-ring;
-}
-
-/* Enhanced Dialog Forms */
-.dialog-form {
-  @apply max-w-md mx-4;
-}
-
-.dialog-form .dialog-content {
-  @apply max-h-[90vh] overflow-y-auto;
-}
-
-@media (max-width: 640px) {
-  .dialog-form {
-    @apply max-w-[95vw] mx-2;
-  }
-  
-  .dialog-form .dialog-content {
-    @apply max-h-[85vh];
-  }
-}
-
-/* Financial Form Specific Styles */
-.financial-form .amount-input {
-  @apply font-mono text-right;
-}
-
-.financial-form .currency-symbol {
-  @apply absolute left-3 top-1/2 transform -translate-y-1/2;
-  @apply text-muted-foreground pointer-events-none;
-}
-
-.financial-form .amount-field {
-  @apply relative;
-}
-
-.financial-form .amount-field .form-input {
-  @apply pl-8; /* Space for currency symbol */
-}
-
-/* Form Animations */
-@keyframes formSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.form-animate-in {
-  animation: formSlideIn 0.3s ease-out;
-}
-
-/* Form Error Shake Animation */
-@keyframes formShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
-.form-error-shake {
-  animation: formShake 0.4s ease-in-out;
-}
-
-/* ===== RESPONSIVE TABLE SYSTEM ===== */
-
-/* Base Table Container */
-.table-responsive {
-  @apply relative w-full;
-}
-
-.table-responsive .table-wrapper {
-  @apply overflow-x-auto;
-  @apply border border-border rounded-lg;
-  @apply bg-card;
-}
-
-/* Enhanced Table Styling */
-.table-enhanced {
-  @apply w-full border-collapse;
-  @apply text-sm;
-}
-
-.table-enhanced thead {
-  @apply bg-muted/50;
-  @apply sticky top-0 z-10;
-}
-
-.table-enhanced th {
-  @apply px-4 py-3;
-  @apply text-left font-semibold;
-  @apply text-muted-foreground;
-  @apply border-b border-border;
-  @apply whitespace-nowrap;
-}
-
-.table-enhanced td {
-  @apply px-4 py-3;
-  @apply border-b border-border/50;
-  @apply align-middle;
-}
-
-.table-enhanced tbody tr {
-  @apply transition-colors;
-  @apply hover:bg-muted/30;
-}
-
-.table-enhanced tbody tr:last-child td {
-  @apply border-b-0;
-}
-
-/* Mobile Table Adaptations */
-@media (max-width: 768px) {
-  .table-responsive .table-wrapper {
-    @apply -mx-4; /* Extend to screen edges on mobile */
-    @apply rounded-none border-x-0;
-  }
-  
-  .table-enhanced th,
-  .table-enhanced td {
-    @apply px-3 py-2; /* Tighter spacing on mobile */
-    @apply text-xs; /* Smaller text on mobile */
-  }
-  
-  .table-enhanced th {
-    @apply py-3; /* Keep header height */
-  }
-}
-
-/* Table Action Buttons */
-.table-actions {
-  @apply flex items-center gap-1;
-}
-
-.table-actions .btn-action {
-  @apply p-2 rounded-md;
-  @apply text-muted-foreground;
-  @apply hover:text-foreground hover:bg-muted;
-  @apply transition-colors;
-  @apply touch-manipulation; /* Better touch response */
-}
-
-@media (max-width: 640px) {
-  .table-actions {
-    @apply gap-0.5;
-  }
-  
-  .table-actions .btn-action {
-    @apply p-1.5; /* Smaller buttons on mobile */
-  }
-}
-
-/* Financial Table Specific */
-.table-financial .amount-cell {
-  @apply font-mono text-right;
-  @apply tabular-nums; /* Better number alignment */
-}
-
-.table-financial .amount-positive {
-  @apply text-profit;
-}
-
-.table-financial .amount-negative {
-  @apply text-loss;
-}
-
-.table-financial .amount-neutral {
-  @apply text-muted-foreground;
-}
-
-/* Table Loading States */
-.table-loading {
-  @apply opacity-60 pointer-events-none;
-}
-
-.table-skeleton {
-  @apply animate-pulse;
-}
-
-.table-skeleton td {
-  @apply py-4;
-}
-
-.table-skeleton .skeleton-text {
-  @apply h-4 bg-muted rounded;
-}
-
-.table-skeleton .skeleton-text.short {
-  @apply w-16;
-}
-
-.table-skeleton .skeleton-text.medium {
-  @apply w-24;
-}
-
-.table-skeleton .skeleton-text.long {
-  @apply w-32;
-}
-
-/* Empty Table States */
-.table-empty {
-  @apply text-center py-12;
-  @apply text-muted-foreground;
-}
-
-.table-empty .empty-icon {
-  @apply w-12 h-12 mx-auto mb-4;
-  @apply text-muted-foreground/50;
-}
-
-.table-empty .empty-title {
-  @apply text-lg font-medium mb-2;
-  @apply text-foreground;
-}
-
-.table-empty .empty-description {
-  @apply text-sm mb-4;
-}
-
-/* Table Filters and Search */
-.table-filters {
-  @apply flex flex-col sm:flex-row gap-4 mb-4;
-  @apply p-4 bg-muted/30 rounded-lg;
-}
-
-.table-search {
-  @apply relative flex-1;
-}
-
-.table-search .search-icon {
-  @apply absolute left-3 top-1/2 transform -translate-y-1/2;
-  @apply w-4 h-4 text-muted-foreground;
-}
-
-.table-search input {
-  @apply pl-10;
-}
-
-/* Table Pagination */
-.table-pagination {
-  @apply flex items-center justify-between;
-  @apply pt-4 border-t border-border;
-}
-
-.table-pagination .pagination-info {
-  @apply text-sm text-muted-foreground;
-}
-
-.table-pagination .pagination-controls {
-  @apply flex items-center gap-2;
-}
-
-@media (max-width: 640px) {
-  .table-pagination {
-    @apply flex-col gap-3;
-  }
-  
-  .table-pagination .pagination-controls {
-    @apply w-full justify-center;
-  }
-}
-
-/* Card-based Table Alternative for Mobile */
-.table-cards {
-  @apply space-y-3;
-}
-
-.table-card {
-  @apply p-4 border border-border rounded-lg;
-  @apply bg-card;
-  @apply transition-colors hover:bg-muted/30;
-}
-
-.table-card-header {
-  @apply flex items-center justify-between mb-3;
-}
-
-.table-card-title {
-  @apply font-semibold;
-}
-
-.table-card-actions {
-  @apply flex items-center gap-2;
-}
-
-.table-card-content {
-  @apply space-y-2;
-}
-
-.table-card-row {
-  @apply flex justify-between;
-  @apply text-sm;
-}
-
-.table-card-label {
-  @apply text-muted-foreground;
-}
-
-.table-card-value {
-  @apply font-medium;
-}
-
-/* Responsive Table Toggle */
-@media (max-width: 768px) {
-  .table-responsive.mobile-cards .table-wrapper {
-    @apply hidden;
-  }
-  
-  .table-responsive.mobile-cards .table-cards {
-    @apply block;
-  }
-}
-
-@media (min-width: 769px) {
-  .table-responsive .table-cards {
-    @apply hidden;
-  }
-}
-
-/* Table Export Actions */
-.table-export {
-  @apply flex items-center gap-2;
-}
-
-.table-export button {
-  @apply text-xs;
-}
-
-@media (max-width: 640px) {
-  .table-export {
-    @apply w-full justify-center;
-  }
-}
-
-/* Professional Loading States */
-.loading-container {
-  @apply relative;
-}
-
-.loading-overlay {
-  @apply absolute inset-0 bg-background/60 backdrop-blur-sm;
-  @apply flex items-center justify-center;
-  @apply z-10 rounded-lg;
-}
-
-.loading-spinner-professional {
-  @apply w-6 h-6 border-2 border-primary border-t-transparent rounded-full;
-  @apply animate-spin;
-}
-
-/* Enhanced Button Loading States */
-.btn-loading {
-  @apply relative opacity-70 cursor-not-allowed;
-  @apply transition-opacity duration-200;
-}
-
-.btn-loading .btn-content {
-  @apply opacity-0;
-}
-
-.btn-loading .btn-spinner {
-  @apply absolute inset-0 flex items-center justify-center;
-}
-
-/* Form Loading States */
-.form-loading {
-  @apply opacity-60 pointer-events-none;
-  @apply transition-opacity duration-300;
-}
-
-.form-loading .form-input,
-.form-loading .form-select,
-.form-loading .form-textarea {
-  @apply bg-muted cursor-not-allowed;
-}
-
-/* Card Loading States */
-.card-loading {
-  @apply opacity-75;
-  @apply transition-opacity duration-200;
-}
-
-.card-loading .card-content {
-  @apply pointer-events-none;
-}
-
-/* Enhanced Skeleton Animations */
-.skeleton-enhanced {
-  @apply relative overflow-hidden bg-muted;
-}
-
-.skeleton-enhanced::before {
-  content: '';
-  @apply absolute inset-0;
-  @apply bg-gradient-to-r from-transparent via-background/60 to-transparent;
-  @apply transform -translate-x-full;
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Financial Loading States */
-.financial-loading {
-  @apply space-y-2;
-}
-
-.financial-loading .amount-skeleton {
-  @apply h-6 bg-muted rounded font-mono;
-}
-
-.financial-loading .label-skeleton {
-  @apply h-4 bg-muted/70 rounded;
-}
-
-/* Mobile Loading Optimizations */
-@media (max-width: 640px) {
-  .loading-overlay {
-    @apply bg-background/80;
-  }
-  
-  .skeleton-enhanced::before {
-    animation-duration: 1.5s;
-  }
-  
-  .btn-loading {
-    @apply opacity-60;
-  }
-}
-
-/* Accessibility and Reduced Motion */
+  .no-print { display: none !important; }
+  .print-break-before { break-before: page; }
+  .print-break-after { break-after: page; }
+}
+
+/* Keyframes */
+@keyframes slideInFromBottom { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes slideInFromRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideInFromLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideInFromTop { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
+@keyframes wiggle { 0%, 7% { transform: rotateZ(0); } 15% { transform: rotateZ(-15deg); } 20% { transform: rotateZ(10deg); } 25% { transform: rotateZ(-10deg); } 30% { transform: rotateZ(6deg); } 35% { transform: rotateZ(-4deg); } 40%, 100% { transform: rotateZ(0); } }
+@keyframes heartbeat { 0% { transform: scale(1); } 14% { transform: scale(1.3); } 28% { transform: scale(1); } 42% { transform: scale(1.3); } 70% { transform: scale(1); } }
+@keyframes loadingDots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+@keyframes loadingBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes formSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes formShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes notificationSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes notificationSlideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+@keyframes navItemActive { 0% { transform: translateX(-10px); opacity: 0.5; } 100% { transform: translateX(0); opacity: 1; } }
+@keyframes tableRowEnter { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tableRowExit { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-  .loading-spinner-professional,
-  .skeleton-enhanced::before {
-    animation: none;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-  
-  .skeleton-enhanced::before {
-    display: none;
-  }
-  
-  .btn-loading,
-  .form-loading,
-  .card-loading {
-    transition: none;
-  }
-}
-
-/* Loading State Utilities */
-.loading-pulse {
-  @apply animate-pulse;
-}
-
-.loading-fade {
-  @apply opacity-50 transition-opacity duration-300;
-}
-
-.loading-disabled {
-  @apply pointer-events-none cursor-not-allowed;
+  .hover-lift:hover, .hover-scale:hover, .hover-rotate:hover { transform: none !important; }
 }

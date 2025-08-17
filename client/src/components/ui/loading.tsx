@@ -1,10 +1,17 @@
+// client/src/components/ui/loading.tsx
+
+import type React from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+
 import { Skeleton } from './skeleton';
 import { Card, CardContent, CardHeader } from './card';
 import { Button } from './button';
 import { cn } from '@/lib/utils';
-import { Loader2 } from 'lucide-react';
 
-// Dashboard Summary Cards Skeleton
+/* =========================
+ * Dashboard Summary Cards
+ * ========================= */
 export function DashboardSkeleton() {
   return (
     <div className="space-y-6">
@@ -25,7 +32,7 @@ export function DashboardSkeleton() {
           </Card>
         ))}
       </div>
-      
+
       {/* Customer List */}
       <Card className="financial-card">
         <CardHeader>
@@ -51,7 +58,9 @@ export function DashboardSkeleton() {
   );
 }
 
-// Form Loading Skeleton
+/* ================
+ * Form Skeleton
+ * ================ */
 export function FormSkeleton({ fields = 4 }: { fields?: number }) {
   return (
     <div className="space-y-4">
@@ -69,13 +78,15 @@ export function FormSkeleton({ fields = 4 }: { fields?: number }) {
   );
 }
 
-// Table Loading Skeleton (Enhanced version of existing TableSkeleton)
-export function TableLoadingSkeleton({ 
-  rows = 5, 
-  columns = 4 
-}: { 
-  rows?: number; 
-  columns?: number; 
+/* =====================================
+ * Table Loading Skeleton + Alias export
+ * ===================================== */
+export function TableLoadingSkeleton({
+  rows = 5,
+  columns = 4,
+}: {
+  rows?: number;
+  columns?: number;
 }) {
   return (
     <div className="table-skeleton">
@@ -87,17 +98,17 @@ export function TableLoadingSkeleton({
           </div>
         ))}
       </div>
-      
+
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div key={rowIndex} className="flex py-3 border-b border-border/50">
           {Array.from({ length: columns }).map((_, colIndex) => (
             <div key={colIndex} className="flex-1 px-3">
-              <Skeleton 
+              <Skeleton
                 className={cn(
-                  "h-4",
-                  colIndex === 0 ? "w-24" : colIndex === columns - 1 ? "w-16" : "w-20"
-                )} 
+                  'h-4',
+                  colIndex === 0 ? 'w-24' : colIndex === columns - 1 ? 'w-16' : 'w-20',
+                )}
               />
             </div>
           ))}
@@ -107,7 +118,14 @@ export function TableLoadingSkeleton({
   );
 }
 
-// Card List Skeleton (for Inventory, etc.)
+/** Alias used by various pages/components that import <TableSkeleton /> */
+export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
+  return <TableLoadingSkeleton rows={rows} columns={cols} />;
+}
+
+/* ============================
+ * Card grid loading skeleton
+ * ============================ */
 export function CardListSkeleton({ items = 6 }: { items?: number }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -130,27 +148,22 @@ export function CardListSkeleton({ items = 6 }: { items?: number }) {
   );
 }
 
-// Button Loading State
-export function LoadingButton({ 
-  children, 
-  loading, 
+/* =====================
+ * Loading Button
+ * ===================== */
+export function LoadingButton({
+  children,
+  loading,
   className,
   disabled,
-  ...props 
-}: {
+  ...props
+}: Omit<React.ComponentProps<typeof Button>, 'children'> & {
   children: React.ReactNode;
   loading?: boolean;
-  className?: string;
-  disabled?: boolean;
-  [key: string]: any;
 }) {
   return (
-    <Button 
-      className={cn(
-        "relative",
-        loading && "opacity-70 cursor-not-allowed",
-        className
-      )}
+    <Button
+      className={cn('relative', loading && 'opacity-70 cursor-not-allowed', className)}
       disabled={loading || disabled}
       {...props}
     >
@@ -159,15 +172,15 @@ export function LoadingButton({
           <Loader2 className="w-4 h-4 animate-spin" />
         </div>
       )}
-      <span className={loading ? "opacity-0" : ""}>
-        {children}
-      </span>
+      <span className={loading ? 'opacity-0' : ''}>{children}</span>
     </Button>
   );
 }
 
-// Page Loading Overlay
-export function PageLoadingOverlay({ message = "Loading..." }: { message?: string }) {
+/* =========================
+ * Page Loading Overlay
+ * ========================= */
+export function PageLoadingOverlay({ message = 'Loading...' }: { message?: string }) {
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
       <div className="flex flex-col items-center space-y-4">
@@ -178,35 +191,37 @@ export function PageLoadingOverlay({ message = "Loading..." }: { message?: strin
   );
 }
 
-// Inline Loading Spinner
-export function LoadingSpinner({ 
-  size = "sm", 
-  className 
-}: { 
-  size?: "sm" | "md" | "lg"; 
-  className?: string; 
+/* =========================
+ * Inline Loading Spinner
+ * ========================= */
+export function LoadingSpinner({
+  size = 'sm',
+  className,
+}: {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
 }) {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-6 h-6",
-    lg: "w-8 h-8"
-  };
-  
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+  } as const;
+
   return (
-    <Loader2 className={cn(
-      "animate-spin text-muted-foreground",
-      sizeClasses[size],
-      className
-    )} />
+    <Loader2
+      className={cn('animate-spin text-muted-foreground', sizeClasses[size], className)}
+    />
   );
 }
 
-// Content Loading Wrapper
-export function LoadingWrapper({ 
-  loading, 
-  children, 
+/* =========================
+ * Loading Wrapper
+ * ========================= */
+export function LoadingWrapper({
+  loading,
+  children,
   skeleton,
-  className 
+  className,
 }: {
   loading: boolean;
   children: React.ReactNode;
@@ -216,26 +231,26 @@ export function LoadingWrapper({
   if (loading && skeleton) {
     return <div className={className}>{skeleton}</div>;
   }
-  
+
   return (
-    <div className={cn(loading && "loading-container", className)}>
+    <div className={cn(loading && 'loading-container', className)}>
       {loading && (
         <div className="loading-overlay">
           <LoadingSpinner size="md" />
         </div>
       )}
-      <div className={loading ? "opacity-50 pointer-events-none" : ""}>
-        {children}
-      </div>
+      <div className={loading ? 'opacity-50 pointer-events-none' : ''}>{children}</div>
     </div>
   );
 }
 
-// Financial Data Loading (for amounts, balances)
-export function FinancialDataSkeleton({ 
+/* ============================
+ * Financial Data Skeleton
+ * ============================ */
+export function FinancialDataSkeleton({
   rows = 3,
-  showHeader = true 
-}: { 
+  showHeader = true,
+}: {
   rows?: number;
   showHeader?: boolean;
 }) {
@@ -257,5 +272,35 @@ export function FinancialDataSkeleton({
         </div>
       ))}
     </div>
+  );
+}
+
+/* =========================
+ * Table Empty State
+ * ========================= */
+export function TableEmpty({
+  icon: Icon,
+  title = 'Nothing here yet',
+  description = 'Try adjusting your filters or add new data.',
+  action,
+  className,
+}: {
+  icon?: LucideIcon;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card className={cn('p-8 text-center', className)}>
+      {Icon ? (
+        <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <Icon className="h-8 w-8 text-muted-foreground" />
+        </div>
+      ) : null}
+      <h3 className="subheading-financial mb-2">{title}</h3>
+      <p className="body-financial text-muted-foreground mb-4">{description}</p>
+      {action}
+    </Card>
   );
 }
