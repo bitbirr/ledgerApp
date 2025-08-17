@@ -5,12 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { db, type Account } from '@/lib/db';
 import { useAppStore } from '@/lib/store';
 import { AddCustomerModal } from '@/components/modals/AddCustomerModal';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, TrendingUp, TrendingDown, Users, Activity } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { Plus, TrendingUp, Users } from 'lucide-react';
+import { formatCurrency, cn } from '@/lib/utils';
+import { DashboardSkeleton, LoadingSpinner } from '@/components/ui/loading';
 
 type NormalizedSummary = {
   totalAdvance: number;
@@ -51,7 +51,7 @@ export function Dashboard() {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Fetch accounts via facade (REST-backed)
+  // Fetch accounts via facade (REST/Dexie-backed)
   const { data: accountsData, isLoading: accountsLoading } = useQuery<Account[]>({
     queryKey: ['accounts'],
     queryFn: async () => {
@@ -78,111 +78,96 @@ export function Dashboard() {
     if (summaryData) setAccountSummary(summaryData);
   }, [summaryData, setAccountSummary]);
 
-  // Batch fetch balances once (fast + avoids N requests/work)
+  // Batch fetch balances once (fast + avoids N requests)
   const accountIds = useMemo(() => (accountsData ?? []).map((a) => a.id), [accountsData]);
   const { data: balances, isLoading: balancesLoading } = useQuery<Record<string, number>>({
     queryKey: ['account-balances', accountIds],
     enabled: accountIds.length > 0,
     staleTime: 30_000,
     queryFn: async () => {
-      // Prefer facade helper if available; otherwise fall back to Promise.all
       if ('getAccountBalancesMap' in db && typeof (db as any).getAccountBalancesMap === 'function') {
         return (db as any).getAccountBalancesMap(accountIds) as Promise<Record<string, number>>;
       }
       const vals = await Promise.all(accountIds.map((id) => db.getAccountBalance(id)));
-      return Object.fromEntries(accountIds.map((id, i) => [id, vals[i]]));
+      return Object.fromEntries(accountIds.map((id, i) => [id, vals[i] ?? 0]));
     },
   });
 
   const sortedAccounts = sortAccounts(accounts);
   const isLoading = accountsLoading || summaryLoading || balancesLoading;
 
-  const handleAccountClick = (accountId: string) => {
-    startTransition(() => {
-      setSelectedAccountId(accountId);
-      setCurrentScreen('customer-detail');
-    });
-  };
+  // Show skeleton while loading
+  if (isLoading) {
+    return (
+      <div className="container-responsive py-6">
+        <DashboardSkeleton />
+      </div>
+    );
+  }
 
   return (
-    <div className="animate-fade-in">
-      {/* Financial Summary Cards */}
-      <div className="grid-responsive mb-6">
-        <SummaryCard
-          title="Total Advance"
-          amount={summaryData.totalAdvance}
-          icon={TrendingUp}
-          variant="profit"
-          isLoading={isLoading}
-        />
-        <SummaryCard
-          title="Total Due"
-          amount={summaryData.totalDue}
-          icon={TrendingDown}
-          variant="loss"
-          isLoading={isLoading}
-        />
-        <SummaryCard
-          title="Net Balance"
-          amount={summaryData.netBalance}
-          icon={Activity}
-          variant={summaryData.netBalance >= 0 ? 'profit' : 'loss'}
-          isLoading={isLoading}
-        />
+    <div className="container-responsive py-6">
+      {/* Summary Cards */}
+      <div className="grid-responsive gap-4 mb-6">
+        <Card className="financial-card">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Advance</CardTitle>
+              <TrendingUp className="h-4 w-4 text-profit" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-profit">
+              {formatCurrency(summaryData.totalAdvance)}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Money given</p>
+          </CardContent>
+        </Card>
+
+        {/* You can add more summary cards here similarly */}
       </div>
 
-      {/* Customers Section */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            <h2 className="heading-financial">Customers</h2>
-            <span className="caption-financial bg-muted px-2 py-1 rounded-full">
-              {sortedAccounts.length}
-            </span>
+      {/* Customers List */}
+      <Card className="financial-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Customers
+              {isPending && <LoadingSpinner size="sm" />}
+            </CardTitle>
+            <Button
+              size="sm"
+              onClick={() => setShowAddCustomer(true)}
+              className="btn-primary"
+              disabled={isPending}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAddCustomer(true)}
-            className="desktop-only"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Customer
-          </Button>
-        </div>
-
-        {/* Customer Cards */}
-        {isLoading ? (
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="financial-card p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="skeleton w-12 h-12 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <div className="skeleton h-4 w-32" />
-                    <div className="skeleton h-3 w-24" />
-                  </div>
-                  <div className="skeleton h-6 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : sortedAccounts.length === 0 ? (
-          <EmptyState onAddCustomer={() => setShowAddCustomer(true)} />
-        ) : (
-          <div className="space-y-3">
-            {sortedAccounts.map((account: Account) => (
-              <AccountCard
-                key={account.id}
-                account={account}
-                balance={balances?.[account.id] ?? 0}
-                onClick={() => handleAccountClick(account.id)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+        </CardHeader>
+        <CardContent>
+          {sortedAccounts.length === 0 ? (
+            <EmptyState onAddCustomer={() => setShowAddCustomer(true)} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {sortedAccounts.map((a) => (
+                <AccountCard
+                  key={a.id}
+                  account={a}
+                  balance={balances?.[a.id] ?? 0}
+                  onClick={() => {
+                    startTransition(() => {
+                      setSelectedAccountId(a.id);
+                      setCurrentScreen('account-detail');
+                    });
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Mobile FAB */}
       <Button
@@ -215,14 +200,15 @@ function SummaryCard({
   return (
     <Card className="financial-card p-4">
       <div className="flex items-center justify-between mb-2">
-        <div className={cn(
-          "p-2 rounded-lg",
-          variant === 'profit' ? "bg-profit/10" : "bg-loss/10"
-        )}>
-          <Icon className={cn(
-            "h-4 w-4",
-            variant === 'profit' ? "text-profit" : "text-loss"
-          )} />
+        <div
+          className={cn(
+            'p-2 rounded-lg',
+            variant === 'profit' ? 'bg-profit/10' : 'bg-loss/10'
+          )}
+        >
+          <Icon
+            className={cn('h-4 w-4', variant === 'profit' ? 'text-profit' : 'text-loss')}
+          />
         </div>
       </div>
       <div className="space-y-1">
@@ -230,10 +216,12 @@ function SummaryCard({
         {isLoading ? (
           <div className="skeleton h-8 w-24" />
         ) : (
-          <p className={cn(
-            "amount-large",
-            variant === 'profit' ? "text-profit" : "text-loss"
-          )}>
+          <p
+            className={cn(
+              'amount-large',
+              variant === 'profit' ? 'text-profit' : 'text-loss'
+            )}
+          >
             {formatCurrency(amount)}
           </p>
         )}
@@ -299,10 +287,7 @@ function AccountCard({
           </div>
         </div>
         <div className="text-right">
-          <div
-            className={cn("amount-medium", balanceColor)}
-            data-testid={`text-account-balance-${account.id}`}
-          >
+          <div className={cn('amount-medium', balanceColor)} data-testid={`text-account-balance-${account.id}`}>
             {formatCurrency(Math.abs(balance))}
           </div>
           <div className="caption-financial">{balanceLabel}</div>
@@ -322,11 +307,7 @@ function EmptyState({ onAddCustomer }: { onAddCustomer: () => void }) {
       <p className="body-financial text-muted-foreground mb-4">
         Add your first customer to start managing accounts and transactions.
       </p>
-      <Button
-        onClick={onAddCustomer}
-        data-testid="button-add-first-customer"
-        className="touch-target"
-      >
+      <Button onClick={onAddCustomer} data-testid="button-add-first-customer" className="touch-target">
         <Plus className="h-4 w-4 mr-2" />
         Add Customer
       </Button>

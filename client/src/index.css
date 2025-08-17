@@ -865,3 +865,136 @@
     @apply w-full justify-center;
   }
 }
+
+/* Professional Loading States */
+.loading-container {
+  @apply relative;
+}
+
+.loading-overlay {
+  @apply absolute inset-0 bg-background/60 backdrop-blur-sm;
+  @apply flex items-center justify-center;
+  @apply z-10 rounded-lg;
+}
+
+.loading-spinner-professional {
+  @apply w-6 h-6 border-2 border-primary border-t-transparent rounded-full;
+  @apply animate-spin;
+}
+
+/* Enhanced Button Loading States */
+.btn-loading {
+  @apply relative opacity-70 cursor-not-allowed;
+  @apply transition-opacity duration-200;
+}
+
+.btn-loading .btn-content {
+  @apply opacity-0;
+}
+
+.btn-loading .btn-spinner {
+  @apply absolute inset-0 flex items-center justify-center;
+}
+
+/* Form Loading States */
+.form-loading {
+  @apply opacity-60 pointer-events-none;
+  @apply transition-opacity duration-300;
+}
+
+.form-loading .form-input,
+.form-loading .form-select,
+.form-loading .form-textarea {
+  @apply bg-muted cursor-not-allowed;
+}
+
+/* Card Loading States */
+.card-loading {
+  @apply opacity-75;
+  @apply transition-opacity duration-200;
+}
+
+.card-loading .card-content {
+  @apply pointer-events-none;
+}
+
+/* Enhanced Skeleton Animations */
+.skeleton-enhanced {
+  @apply relative overflow-hidden bg-muted;
+}
+
+.skeleton-enhanced::before {
+  content: '';
+  @apply absolute inset-0;
+  @apply bg-gradient-to-r from-transparent via-background/60 to-transparent;
+  @apply transform -translate-x-full;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Financial Loading States */
+.financial-loading {
+  @apply space-y-2;
+}
+
+.financial-loading .amount-skeleton {
+  @apply h-6 bg-muted rounded font-mono;
+}
+
+.financial-loading .label-skeleton {
+  @apply h-4 bg-muted/70 rounded;
+}
+
+/* Mobile Loading Optimizations */
+@media (max-width: 640px) {
+  .loading-overlay {
+    @apply bg-background/80;
+  }
+  
+  .skeleton-enhanced::before {
+    animation-duration: 1.5s;
+  }
+  
+  .btn-loading {
+    @apply opacity-60;
+  }
+}
+
+/* Accessibility and Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner-professional,
+  .skeleton-enhanced::before {
+    animation: none;
+  }
+  
+  .skeleton-enhanced::before {
+    display: none;
+  }
+  
+  .btn-loading,
+  .form-loading,
+  .card-loading {
+    transition: none;
+  }
+}
+
+/* Loading State Utilities */
+.loading-pulse {
+  @apply animate-pulse;
+}
+
+.loading-fade {
+  @apply opacity-50 transition-opacity duration-300;
+}
+
+.loading-disabled {
+  @apply pointer-events-none cursor-not-allowed;
+}

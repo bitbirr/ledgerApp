@@ -35,7 +35,7 @@ import {
 import { Plus, Package, AlertTriangle } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-// Match your client-side shape
+// Local types to match client shape
 type Item = InsertItem & { id: string };
 type Category = { id: string; name: string };
 
@@ -45,15 +45,17 @@ export function Inventory() {
   const queryClient = useQueryClient();
   const [showAddItem, setShowAddItem] = useState(false);
 
-  // Items
-  const { data: items } = useQuery<Item[]>({
+  /* =========================
+     Queries
+  ========================= */
+
+  const { data: items, isLoading } = useQuery<Item[]>({
     queryKey: ['items'],
     queryFn: async (): Promise<Item[]> => {
       return await db.items.toArray();
     },
   });
 
-  // Categories
   const { data: categories } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async (): Promise<Category[]> => {
@@ -61,7 +63,10 @@ export function Inventory() {
     },
   });
 
-  // Form
+  /* =========================
+     Form
+  ========================= */
+
   const form = useForm<InsertItem>({
     resolver: zodResolver(insertItemSchema),
     defaultValues: {
@@ -71,21 +76,25 @@ export function Inventory() {
       categoryId: '',
       openingStock: 0,
       lowStockAlert: 0,
-      // if your InsertItem includes businessId, you can prefill:
+      // If InsertItem includes businessId and your DB requires it, you can prefill it:
       // businessId: 'default-business',
-    } as any, // allow extra keys if your InsertItem is stricter
+    } as any, // in case InsertItem is stricter in your shared schema
   });
 
-  // Create item
+  /* =========================
+     Mutations
+  ========================= */
+
   const createItemMutation = useMutation<Item, Error, InsertItem>({
     mutationFn: async (data: InsertItem): Promise<Item> => {
       const id = crypto.randomUUID();
-      // Ensure businessId exists if your table requires it
       const item: Item = {
         id,
         ...data,
+        // Ensure businessId exists if your table requires it
         ...(data as any).businessId ? {} : { businessId: 'default-business' },
       } as Item;
+
       await db.items.add(item);
       return item;
     },
@@ -105,12 +114,29 @@ export function Inventory() {
   });
 
   const onSubmit = (data: InsertItem) => {
-    createItemMutation.mutate(data);
+    // Normalize numbers and empty strings if your schema is strict
+    const payload: InsertItem = {
+      ...data,
+      rate: Number(data.rate) || 0,
+      openingStock: Number(data.openingStock) || 0,
+      lowStockAlert: Number(data.lowStockAlert) || 0,
+      categoryId: data.categoryId || '', // leave empty if unassigned
+    } as any;
+
+    createItemMutation.mutate(payload);
   };
+
+  /* =========================
+     Helpers
+  ========================= */
 
   const isLowStock = (item: Item) =>
     Number(item.openingStock) <= Number(item.lowStockAlert) &&
     Number(item.lowStockAlert) > 0;
+
+  /* =========================
+     Render
+  ========================= */
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +148,19 @@ export function Inventory() {
       />
 
       <main className="pb-20 p-4">
-        {items && items.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            {/* simple skeleton without external dependency */}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <div className="h-6 w-1/3 bg-muted animate-pulse rounded mb-2" />
+                  <div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : items && items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item: Item) => (
               <Card key={item.id} data-testid={`card-item-${item.id}`}>
@@ -205,8 +243,8 @@ export function Inventory() {
           </DialogHeader>
 
           <Form {...form}>
-            <form 
-              onSubmit={form.handleSubmit(onSubmit)} 
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
               className="form-enhanced financial-form form-animate-in"
             >
               <div className="form-section">
@@ -284,12 +322,9 @@ export function Inventory() {
                   render={({ field }) => (
                     <FormItem className="form-field-enhanced">
                       <FormLabel className="form-label">Category</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value ?? ''}
-                      >
+                      <Select value={field.value ?? ''} onValueChange={field.onChange}>
                         <FormControl>
-                          <SelectTrigger 
+                          <SelectTrigger
                             className="form-select"
                             data-testid="select-item-category"
                           >
@@ -376,7 +411,7 @@ export function Inventory() {
                 >
                   {createItemMutation.isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                       Adding...
                     </>
                   ) : (

@@ -1,10 +1,9 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { insertAccountSchema, type InsertAccount } from '@shared/schema';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '@/lib/db';
 import { useToast } from '@/hooks/use-toast';
+
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+
 import {
   Form,
   FormControl,
@@ -20,6 +20,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -40,7 +42,7 @@ interface AddCustomerModalProps {
 export function AddCustomerModal({ open, onClose }: AddCustomerModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm<InsertAccount>({
     resolver: zodResolver(insertAccountSchema),
     defaultValues: {
@@ -53,60 +55,65 @@ export function AddCustomerModal({ open, onClose }: AddCustomerModalProps) {
     },
   });
 
-const createAccountMutation = useMutation({
-  mutationFn: async (data: InsertAccount) => {
-    // Build only fields the API expects
-    const payload = {
-      name: data.name.trim(),
-      phone: data.phone?.trim() || undefined,
-      type: data.type, // 'customer' | 'supplier' | 'other'
-      // send a category id only if it's a real id, not your placeholder
-      categoryId: data.categoryId && data.categoryId !== 'general' ? data.categoryId : undefined,
-      photoUrl: data.photoUrl || undefined,
-    };
+  const createAccountMutation = useMutation({
+    mutationFn: async (data: InsertAccount) => {
+      // Normalize payload for API (avoid sending empty strings)
+      const payload = {
+        name: data.name.trim(),
+        phone: data.phone?.trim() || undefined,
+        type: data.type, // 'customer' | 'supplier' | 'other'
+        categoryId:
+          data.categoryId && data.categoryId !== 'general' ? data.categoryId : undefined,
+        photoUrl: data.photoUrl || undefined,
+      };
 
-    const res = await fetch('/api/accounts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // your server relies on these headers
-        'user-id': 'default-user',
-        'business-id': 'default-business',
-      },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': 'default-user',
+          'business-id': 'default-business',
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to create account');
-    }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to create account');
+      }
 
-    const created = await res.json();
-    return created; // shape is whatever your API returns
-  },
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['accounts'] });
-    // If you also cache summaries, invalidate those too:
-    queryClient.invalidateQueries({ queryKey: ['account-summary'] });
-    toast({ title: 'Success', description: 'Customer added successfully' });
-    form.reset();
-    onClose();
-  },
-  onError: () => {
-    toast({
-      title: 'Error',
-      description: 'Failed to add customer',
-      variant: 'destructive',
-    });
-  },
-});
+      return await res.json();
+    },
+    onSuccess: () => {
+      // Invalidate any related caches
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['account-summary'] });
+
+      toast({ title: 'Success', description: 'Customer added successfully' });
+      form.reset();
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error?.message || 'Failed to add customer',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const onSubmit = (data: InsertAccount) => {
     createAccountMutation.mutate(data);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        // Close only when dialog transitions to closed
+        if (!next) onClose();
+      }}
+    >
       <DialogContent className="dialog-form">
         <DialogHeader>
           <div className="flex justify-between items-center">
@@ -127,10 +134,7 @@ const createAccountMutation = useMutation({
         </DialogHeader>
 
         <Form {...form}>
-          <form 
-            onSubmit={form.handleSubmit(onSubmit)} 
-            className="form-enhanced form-animate-in"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="form-enhanced form-animate-in">
             <div className="form-section">
               <FormField
                 control={form.control}
@@ -160,7 +164,7 @@ const createAccountMutation = useMutation({
                     <FormControl>
                       <Input
                         type="tel"
-                        placeholder="+91 98765 43210"
+                        placeholder="+251 9XX XX XX XX"
                         className="form-input"
                         {...field}
                         data-testid="input-customer-phone"
@@ -197,12 +201,10 @@ const createAccountMutation = useMutation({
                 render={({ field }) => (
                   <FormItem className="form-field-enhanced">
                     <FormLabel className="form-label">Account Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    {/* Controlled Select: use value, not defaultValue */}
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger 
-                          className="form-select"
-                          data-testid="select-customer-type"
-                        >
+                        <SelectTrigger className="form-select" data-testid="select-customer-type">
                           <SelectValue placeholder="Select account type" />
                         </SelectTrigger>
                       </FormControl>
@@ -222,25 +224,19 @@ const createAccountMutation = useMutation({
               <Button
                 type="button"
                 variant="outline"
-                className="btn-secondary"
                 onClick={onClose}
-                data-testid="button-cancel"
+                disabled={createAccountMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                className="btn-primary"
-                disabled={createAccountMutation.isPending}
-                data-testid="button-save-customer"
-              >
+              <Button type="submit" className="btn-primary" disabled={createAccountMutation.isPending}>
                 {createAccountMutation.isPending ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                     Saving...
                   </>
                 ) : (
-                  'Save Customer'
+                  'Add Customer'
                 )}
               </Button>
             </div>
