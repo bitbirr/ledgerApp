@@ -1,647 +1,412 @@
 // server/routes.ts
-import type { Express, Request, Response } from "express";
-import { createServer, type Server } from "http";
-import { randomUUID } from "crypto";
-import { eq, and, sql } from "drizzle-orm";
+import type { Express, Request, Response } from 'express';
+import { db as dbPromise } from './db/index.ts';
+import * as schema from './db/schema.ts'; // import schema directly to avoid re-export issues
+import { and, eq, gte, lte, like, sql, inArray } from 'drizzle-orm';
+import { seedAll } from './seed.ts';
 
-import { db } from "./db";
-import {
-  accounts,
-  transactions,
-  cashbook,
-  categories,
-  glAccounts,
-  glJournalEntries,
-  glJournalLines,
-  taxRates,
-  taxCodes,
-  invoices,
-  invoiceItems as invoiceItemsTable,
-  inventoryMovements
-} from "./db/schema";
+// Always await the DB (your db export is a Promise)
+const getDb = async () => await dbPromise;
 
-import { SettingsService } from "./services/settings.js";
-import { postCashbookWithJournal, postInvoiceWithJournal } from "./services/posting.js";
+function getBizId(req: Request): string {
+  const h = (req.headers['business-id'] as string) || '';
+  if (!h || h === 'default-business') return 'biz_ismail';
+  return h;
+}
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express) {
+  // Dev seed
+  if (app.get('env') === 'development') {
+    app.post('/api/dev/seed/full', async (_req: Request, res: Response) => {
+      const result = await seedAll();
+      res.json({ ok: true, result });
+    });
+  }
+
   // ---------------- Accounts ----------------
-  app.get("/api/accounts", async (req, res) => {
-    const userId = req.headers["user-id"] as string;
-    const businessId = (req.headers["business-id"] as string) || "default-business";
-    const database = await db;
+  app.get('/api/accounts', async (req: Request, res: Response) => {
+    const dbc = await getDb();
+    const businessId = getBizId(req);
 
-    const userAccounts = await database
-      .select()
-      .from(accounts)
-      .where(and(eq(accounts.userId, userId), eq(accounts.businessId, businessId), eq(accounts.archived, false)));
-
-    res.json(userAccounts);
-  });
-
-  app.post("/api/accounts", async (req, res) => {
-    try {
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      const accountData = {
-        ...req.body,
-        id: randomUUID(),
-        userId,
-        businessId: "default-business",
-        createdAt: new Date(),
-        archived: false
-      };
-
-      await database.insert(accounts).values(accountData);
-      const [newAccount] = await database.select().from(accounts).where(eq(accounts.id, accountData.id)).limit(1);
-      res.json(newAccount);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating account:", error);
-      res.status(500).json({ error: "Failed to create account" });
-    }
-  });
-
-  app.put("/api/accounts/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      await database
-        .update(accounts)
-        .set({ ...req.body, updatedAt: new Date() })
-        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-
-      const [updatedAccount] = await database.select().from(accounts).where(eq(accounts.id, id)).limit(1);
-      res.json(updatedAccount);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error updating account:", error);
-      res.status(500).json({ error: "Failed to update account" });
-    }
-  });
-
-  app.delete("/api/accounts/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      await database
-        .update(accounts)
-        .set({ archived: true })
-        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
-
-      res.json({ success: true });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error deleting account:", error);
-      res.status(500).json({ error: "Failed to delete account" });
-    }
-  });
-
-  // ---------------- Transactions ----------------
-  app.get("/api/transactions/:accountId", async (req, res) => {
-    const { accountId } = req.params;
-    const userId = req.headers["user-id"] as string;
-
-    const database = await db;
-    const rows = await database
-      .select()
-      .from(transactions)
-      .where(and(eq(transactions.accountId, accountId), eq(transactions.userId, userId), eq(transactions.deleted, false)));
+    const rows = await dbc
+      .select({
+        id: schema.accounts.id,
+        name: schema.accounts.name,
+        phone: schema.accounts.phone,
+        type: schema.accounts.type,
+      })
+      .from(schema.accounts)
+      .where(eq(schema.accounts.businessId, businessId));
 
     res.json(rows);
   });
 
-  app.post("/api/transactions", async (req, res) => {
-    try {
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      const row = {
-        ...req.body,
-        id: randomUUID(),
-        userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        deleted: false
-      };
-
-      await database.insert(transactions).values(row);
-      const [inserted] = await database.select().from(transactions).where(eq(transactions.id, row.id)).limit(1);
-      res.json(inserted);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating transaction:", error);
-      res.status(500).json({ error: "Failed to create transaction" });
-    }
-  });
-
-  app.put("/api/transactions/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      await database
-        .update(transactions)
-        .set({ ...req.body, updatedAt: new Date() })
-        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
-
-      const [updated] = await database.select().from(transactions).where(eq(transactions.id, id)).limit(1);
-      res.json(updated);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error updating transaction:", error);
-      res.status(500).json({ error: "Failed to update transaction" });
-    }
-  });
-
-  app.delete("/api/transactions/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const userId = req.headers["user-id"] as string;
-      const database = await db;
-
-      await database
-        .update(transactions)
-        .set({ deleted: true })
-        .where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
-
-      res.json({ success: true });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error deleting transaction:", error);
-      res.status(500).json({ error: "Failed to delete transaction" });
-    }
-  });
-
-  // ---------------- Sync ----------------
-  app.post("/api/sync", async (req, res) => {
-    const { lastSyncTime } = req.body;
-    const _userId = req.headers["user-id"] as string;
-    // TODO: implement conflict resolution and changes since lastSyncTime
-    res.json({ success: true, serverData: [], lastSyncTime });
-  });
-
   // ---------------- Cashbook ----------------
-  app.get("/api/cashbook", async (req, res) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const database = await db;
+  app.get('/api/cashbook', async (req: Request, res: Response) => {
+    const dbc = await getDb();
+    const businessId = getBizId(req);
 
-      const entries = await database
-        .select()
-        .from(cashbook)
-        .where(eq(cashbook.businessId, businessId))
-        .orderBy(cashbook.dateTime);
+    const rows = await dbc
+      .select({
+        id: schema.cashbook.id,
+        dateTime: schema.cashbook.dateTime,
+        direction: schema.cashbook.direction,
+        amount: schema.cashbook.amount,
+        note: schema.cashbook.note,
+      })
+      .from(schema.cashbook)
+      .where(eq(schema.cashbook.businessId, businessId))
+      .orderBy(sql`date_time desc`);
 
-      res.json(entries);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching cashbook entries:", error);
-      res.status(500).json({ error: "Failed to fetch cashbook entries" });
-    }
+    res.json(rows);
   });
 
-  app.post("/api/cashbook", async (req, res) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const database = await db;
-      const { direction, amount, note, attachmentUrl, dateTime } = req.body;
+  // ---------------- GL Accounts ----------------
+  app.get('/api/gl-accounts', async (req: Request, res: Response) => {
+    const dbc = await getDb();
+    const businessId = getBizId(req);
 
-      const newEntry = {
-        id: randomUUID(),
+    const rows = await dbc
+      .select({
+        id: schema.glAccounts.id,
+        businessId: schema.glAccounts.businessId,
+        code: schema.glAccounts.code,
+        name: schema.glAccounts.name,
+        type: schema.glAccounts.type,
+      })
+      .from(schema.glAccounts)
+      .where(eq(schema.glAccounts.businessId, businessId))
+      .orderBy(schema.glAccounts.code);
+
+    res.json(rows);
+  });
+
+  // ---------------- Journal Entries + Lines ----------------
+  app.get('/api/journal-entries', async (req: Request, res: Response) => {
+    const dbc = await getDb();
+    const businessId = getBizId(req);
+    const { dateFrom, dateTo, accountId, sourceModule, search } = req.query as Record<string, string>;
+
+    const entryWhere = [
+      eq(schema.glJournalEntries.businessId, businessId),
+      dateFrom ? gte(schema.glJournalEntries.entryDate, new Date(dateFrom)) : undefined,
+      dateTo ? lte(schema.glJournalEntries.entryDate, new Date(dateTo)) : undefined,
+      sourceModule ? eq(schema.glJournalEntries.sourceModule, sourceModule) : undefined,
+      search ? like(schema.glJournalEntries.memo, `%${search}%`) : undefined,
+    ].filter(Boolean) as any[];
+
+    const entries = await dbc
+      .select({
+        id: schema.glJournalEntries.id,
+        entryDate: schema.glJournalEntries.entryDate,
+        memo: schema.glJournalEntries.memo,
+        sourceModule: schema.glJournalEntries.sourceModule,
+        sourceId: schema.glJournalEntries.sourceId,
+        locked: schema.glJournalEntries.locked,
+      })
+      .from(schema.glJournalEntries)
+      .where(and(...entryWhere))
+      .orderBy(sql`entry_date desc`);
+
+    if (entries.length === 0) return res.json([]);
+
+    const entryIds = entries.map((e) => e.id);
+
+    const linesRaw = await dbc
+      .select({
+        id: schema.glJournalLines.id,
+        entryId: schema.glJournalLines.entryId,
+        accountId: schema.glJournalLines.accountId,
+        debit: schema.glJournalLines.debit,
+        credit: schema.glJournalLines.credit,
+        notes: schema.glJournalLines.notes,
+        accountCode: schema.glAccounts.code,
+        accountName: schema.glAccounts.name,
+      })
+      .from(schema.glJournalLines)
+      .leftJoin(schema.glAccounts, eq(schema.glJournalLines.accountId, schema.glAccounts.id))
+      .where(
+        and(
+          eq(schema.glJournalLines.businessId, businessId),
+          inArray(schema.glJournalLines.entryId, entryIds),
+          accountId ? eq(schema.glJournalLines.accountId, accountId) : sql`1=1`,
+          search ? like(schema.glJournalLines.notes, `%${search}%`) : sql`1=1`,
+        ),
+      );
+
+    const linesByEntry = new Map<string, any[]>();
+    for (const line of linesRaw) {
+      const arr = linesByEntry.get(line.entryId) ?? [];
+      arr.push({
+        id: line.id,
         businessId,
-        direction,
-        amount: amount.toString(),
-        note,
-        attachmentUrl,
-        dateTime: new Date(dateTime)
-      };
-
-      await database.insert(cashbook).values(newEntry);
-      const [inserted] = await database.select().from(cashbook).where(eq(cashbook.id, newEntry.id)).limit(1);
-      res.status(201).json(inserted);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating cashbook entry:", error);
-      res.status(500).json({ error: "Failed to create cashbook entry" });
-    }
-  });
-
-  // ---------------- Settings ----------------
-  app.get("/api/settings/:key", async (req, res) => {
-    try {
-      const { key } = req.params;
-      const setting = await SettingsService.getSetting(key);
-      if (setting === null) return res.status(404).json({ error: "Setting not found" });
-      res.json({ value: setting });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching setting:", error);
-      res.status(500).json({ error: "Failed to fetch setting" });
-    }
-  });
-
-  app.get("/api/settings/category/:category", async (req, res) => {
-    try {
-      const { category } = req.params;
-      const settings = await SettingsService.getSettingsByCategory(category);
-      res.json(settings);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching settings:", error);
-      res.status(500).json({ error: "Failed to fetch settings" });
-    }
-  });
-
-  app.put("/api/settings/:key", async (req, res) => {
-    try {
-      const { key } = req.params;
-      const { value, type = "string", category = "general", description } = req.body;
-      await SettingsService.setSetting(key, value, type, category, description);
-      res.json({ success: true });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error updating setting:", error);
-      res.status(500).json({ error: "Failed to update setting" });
-    }
-  });
-
-  app.delete("/api/settings/:key", async (req, res) => {
-    try {
-      const { key } = req.params;
-      await SettingsService.deleteSetting(key);
-      res.json({ success: true });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error deleting setting:", error);
-      res.status(500).json({ error: "Failed to delete setting" });
-    }
-  });
-
-  // ---------------- GL: Accounts ----------------
-  app.get("/api/gl/accounts", async (req, res) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const database = await db;
-      const list = await database.select().from(glAccounts).where(eq(glAccounts.businessId, businessId));
-      res.json(list);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching GL accounts:", error);
-      res.status(500).json({ error: "Failed to fetch GL accounts" });
-    }
-  });
-
-  app.post("/api/gl/accounts", async (req, res) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const database = await db;
-      const { code, name, type, parentId, isLeaf = true, isActive = true, description } = req.body;
-
-      const record = {
-        id: randomUUID(),
-        businessId,
-        code,
-        name,
-        type,
-        parentId,
-        isLeaf,
-        isActive,
-        systemFlag: false,
-        description,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      await database.insert(glAccounts).values(record);
-      const [inserted] = await database.select().from(glAccounts).where(eq(glAccounts.id, record.id)).limit(1);
-      res.status(201).json(inserted);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating GL account:", error);
-      res.status(500).json({ error: "Failed to create GL account" });
-    }
-  });
-
-  app.put("/api/gl/accounts/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const database = await db;
-
-      const [current] = await database.select().from(glAccounts).where(eq(glAccounts.id, id)).limit(1);
-      if (!current) return res.status(404).json({ error: "GL account not found" });
-
-      if (current.systemFlag) {
-        const allowed = {
-          isActive: req.body.isActive ?? current.isActive,
-          description: req.body.description ?? current.description,
-          updatedAt: new Date()
-        };
-        await database.update(glAccounts).set(allowed).where(eq(glAccounts.id, id));
-      } else {
-        await database.update(glAccounts).set({ ...req.body, updatedAt: new Date() }).where(eq(glAccounts.id, id));
-      }
-
-      const [updated] = await database.select().from(glAccounts).where(eq(glAccounts.id, id)).limit(1);
-      res.json(updated);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error updating GL account:", error);
-      res.status(500).json({ error: "Failed to update GL account" });
-    }
-  });
-
-  // ---------------- GL: Journal ----------------
-  app.get("/api/gl/journal", async (req, res) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const database = await db;
-      const entries = await database.select().from(glJournalEntries).where(eq(glJournalEntries.businessId, businessId));
-      res.json(entries);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching journal entries:", error);
-      res.status(500).json({ error: "Failed to fetch journal entries" });
-    }
-  });
-
-  app.post("/api/gl/journal", async (req, res) => {
-    try {
-      const database = await db;
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const postedBy = (req.headers["user-id"] as string) || "system";
-
-      const { entry, lines } = req.body as {
-        entry: { entryDate: string; memo?: string; sourceModule: string; sourceId?: string };
-        lines: Array<{ accountId: string; debit?: number; credit?: number; partyId?: string; itemId?: string; notes?: string }>;
-      };
-
-      if (!Array.isArray(lines) || lines.length < 2) {
-        return res.status(400).json({ error: "At least two lines required" });
-      }
-
-      const acctIds = Array.from(new Set(lines.map((l) => l.accountId)));
-      const acctList = await database.select().from(glAccounts);
-      const needed = acctList.filter((a) => acctIds.includes(a.id) && a.businessId === businessId);
-
-      if (needed.length !== acctIds.length) return res.status(400).json({ error: "One or more GL accounts not found" });
-      if (needed.some((a) => a.isLeaf === false || a.isActive === false)) {
-        return res.status(400).json({ error: "Posting allowed to active leaf accounts only" });
-      }
-
-      const totalDebit = lines.reduce((s, l) => s + Number(l.debit || 0), 0);
-      const totalCredit = lines.reduce((s, l) => s + Number(l.credit || 0), 0);
-      if (Number(totalDebit.toFixed(2)) !== Number(totalCredit.toFixed(2))) {
-        return res.status(400).json({ error: "Journal not balanced" });
-      }
-
-      const entryId = randomUUID();
-      const now = new Date();
-
-      await database.insert(glJournalEntries).values({
-        id: entryId,
-        businessId,
-        entryDate: new Date(entry.entryDate),
-        memo: entry.memo,
-        sourceModule: entry.sourceModule,
-        sourceId: entry.sourceId,
-        postedBy,
-        postedAt: now,
-        createdAt: now,
-        locked: false
+        entryId: line.entryId,
+        accountId: line.accountId,
+        accountCode: line.accountCode,
+        description: line.notes ?? null,
+        debitAmount: Number(line.debit ?? 0),
+        creditAmount: Number(line.credit ?? 0),
+        notes: line.notes ?? null,
       });
-
-      for (const l of lines) {
-        await database.insert(glJournalLines).values({
-          id: randomUUID(),
-          entryId,
-          businessId,
-          accountId: l.accountId,
-          debit: (l.debit ?? 0).toString(),
-          credit: (l.credit ?? 0).toString(),
-          partyId: l.partyId,
-          itemId: l.itemId,
-          notes: l.notes
-        });
-      }
-
-      const [created] = await database.select().from(glJournalEntries).where(eq(glJournalEntries.id, entryId)).limit(1);
-      res.status(201).json(created);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating journal entry:", error);
-      res.status(500).json({ error: "Failed to create journal entry" });
+      linesByEntry.set(line.entryId, arr);
     }
+
+    const payload = entries.map((e) => ({
+      id: e.id,
+      businessId,
+      entryDate: e.entryDate,
+      memo: e.memo,
+      sourceModule: e.sourceModule,
+      sourceId: e.sourceId,
+      locked: !!e.locked,
+      lines: linesByEntry.get(e.id) || [],
+    }));
+
+    res.json(payload);
   });
 
-  // ---------------- Reports: Trial Balance ----------------
-  app.get("/api/reports/trial-balance", async (req: Request, res: Response) => {
-    try {
-      const businessId = (req.headers["business-id"] as string) || "default-business";
-      const asOfDate = (req.query.asOfDate as string) || new Date().toISOString().split("T")[0];
-      const database = await db;
+  // ---------------- Trial Balance ----------------
+  app.get('/api/reports/trial-balance', async (req: Request, res: Response) => {
+    const dbc = await getDb();
+    const businessId = getBizId(req);
+    const asOfDate = (req.query.asOfDate as string) || new Date().toISOString().slice(0, 10);
+    const cutoff = new Date(asOfDate);
 
-      const acctRows = await database
-        .select()
-        .from(glAccounts)
-        .where(and(eq(glAccounts.businessId, businessId), eq(glAccounts.isActive, true), eq(glAccounts.isLeaf, true)));
+    const rows = await dbc
+      .select({
+        accountId: schema.glAccounts.id,
+        accountCode: schema.glAccounts.code,
+        accountName: schema.glAccounts.name,
+        accountType: schema.glAccounts.type,
+        debitSum: sql<number>`COALESCE(SUM(${schema.glJournalLines.debit}), 0)`,
+        creditSum: sql<number>`COALESCE(SUM(${schema.glJournalLines.credit}), 0)`,
+      })
+      .from(schema.glAccounts)
+      .leftJoin(schema.glJournalLines, eq(schema.glAccounts.id, schema.glJournalLines.accountId))
+      .leftJoin(
+        schema.glJournalEntries,
+        and(
+          eq(schema.glJournalEntries.id, schema.glJournalLines.entryId),
+          lte(schema.glJournalEntries.entryDate, cutoff),
+          eq(schema.glJournalEntries.businessId, businessId),
+        ),
+      )
+      .where(eq(schema.glAccounts.businessId, businessId))
+      .groupBy(schema.glAccounts.id)
+      .orderBy(schema.glAccounts.code);
 
-      const items: Array<{
-        accountId: string;
-        accountCode: string;
-        accountName: string;
-        accountType: string;
-        debitBalance: number;
-        creditBalance: number;
-      }> = [];
+    const items = rows.map((r) => {
+      const debit = Number(r.debitSum || 0);
+      const credit = Number(r.creditSum || 0);
+      const diff = debit - credit;
+      return {
+        accountId: r.accountId,
+        accountCode: r.accountCode,
+        accountName: r.accountName,
+        accountType: r.accountType,
+        debitBalance: diff > 0 ? diff : 0,
+        creditBalance: diff < 0 ? Math.abs(diff) : 0,
+      };
+    });
 
-      let totalDebits = 0;
-      let totalCredits = 0;
+    const totals = items.reduce(
+      (acc, it) => {
+        acc.totalDebits += it.debitBalance;
+        acc.totalCredits += it.creditBalance;
+        return acc;
+      },
+      { totalDebits: 0, totalCredits: 0 },
+    );
 
-      for (const account of acctRows) {
-        const lines = await database
-          .select()
-          .from(glJournalLines)
-          .innerJoin(glJournalEntries, eq(glJournalLines.entryId, glJournalEntries.id))
-          .where(
-            and(
-              eq(glJournalLines.businessId, businessId),
-              eq(glJournalLines.accountId, account.id),
-              sql`DATE(${glJournalEntries.entryDate}) <= ${asOfDate}`
-            )
-          );
-
-        const totalDebit = lines.reduce((s, r) => s + parseFloat(r.gl_journal_lines.debit || "0"), 0);
-        const totalCredit = lines.reduce((s, r) => s + parseFloat(r.gl_journal_lines.credit || "0"), 0);
-        const net = totalDebit - totalCredit;
-
-        let debitBalance = 0;
-        let creditBalance = 0;
-
-        if (["asset", "expense"].includes(account.type)) {
-          if (net > 0) {
-            debitBalance = net;
-            totalDebits += net;
-          } else if (net < 0) {
-            creditBalance = Math.abs(net);
-            totalCredits += Math.abs(net);
-          }
-        } else {
-          if (net < 0) {
-            creditBalance = Math.abs(net);
-            totalCredits += Math.abs(net);
-          } else if (net > 0) {
-            debitBalance = net;
-            totalDebits += net;
-          }
-        }
-
-        if (debitBalance > 0 || creditBalance > 0) {
-          items.push({
-            accountId: account.id,
-            accountCode: account.code,
-            accountName: account.name,
-            accountType: account.type,
-            debitBalance: Math.round(debitBalance * 100) / 100,
-            creditBalance: Math.round(creditBalance * 100) / 100
-          });
-        }
-      }
-
-      items.sort((a, b) => a.accountCode.localeCompare(b.accountCode));
-      const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
-
-      res.json({
-        items,
-        totalDebits: Math.round(totalDebits * 100) / 100,
-        totalCredits: Math.round(totalCredits * 100) / 100,
-        isBalanced,
-        asOfDate
-      });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error generating trial balance:", error);
-      res.status(500).json({ error: "Failed to generate trial balance" });
-    }
+    res.json({
+      items,
+      totalDebits: totals.totalDebits,
+      totalCredits: totals.totalCredits,
+      isBalanced: Math.abs(totals.totalDebits - totals.totalCredits) < 0.005,
+      asOfDate,
+    });
   });
 
-  // ---------------- Invoices ----------------
-  app.post("/api/invoices", async (req, res) => {
-    try {
-      const {
-        businessId,
-        userId,
-        invoiceType,
-        selectedAccount,
-        issueDate,
-        dueDate,
-        invoiceItems,
-        additionalCharges,
-        discount,
-        notes,
-        vatRate
-      } = req.body;
+  // ---------------- Items ----------------
+  app.get('/api/items', async (req, res) => {
+    const dbc = await getDb();
+    const bizId = (req.headers['business-id'] as string) || (req.query.businessId as string) || '';
 
-      if (!businessId || !userId) {
-        return res.status(400).json({ error: "businessId and userId are required" });
-      }
+    const q = dbc
+      .select({
+        id: schema.items.id,
+        name: schema.items.name,
+        rate: schema.items.rate,
+        uom: schema.items.uom,
+        categoryId: schema.items.categoryId,
+        businessId: schema.items.businessId,
+        openingStock: schema.items.openingStock,
+        lowStockAlert: schema.items.lowStockAlert,
+      })
+      .from(schema.items);
 
-      const database = await db;
-      const invoiceId = randomUUID();
-      const invoiceNumber = `INV-${Date.now()}`;
-
-      const subtotal = (invoiceItems as Array<{ total: number }>).reduce((sum, item) => sum + item.total, 0);
-      const vatAmount = (subtotal + Number(additionalCharges || 0)) * Number(vatRate || 0);
-      const total = subtotal + Number(additionalCharges || 0) + vatAmount - Number(discount || 0);
-
-      await database.insert(invoices).values({
-        id: invoiceId,
-        businessId,
-        number: invoiceNumber,
-        kind: invoiceType,
-        accountId: selectedAccount,
-        issueDate: new Date(issueDate),
-        dueDate: dueDate ? new Date(dueDate) : null,
-        subtotal: subtotal.toString(),
-        addlCharges: Number(additionalCharges || 0).toString(),
-        discount: Number(discount || 0).toString(),
-        total: total.toString(),
-        //notes, // ensure this column exists in your schema; remove if not
-        status: "draft",
-        //createdAt: new Date()
-      });
-
-      for (const item of invoiceItems as Array<any>) {
-+   await database.insert(invoiceItemsTable).values({
-          id: randomUUID(),
-          invoiceId,
-          itemId: item.itemId,
-          qty: Number(item.quantity).toString(),
-          rate: Number(item.rate).toString(),
-          discountPct: Number(item.discount || 0).toString(),
-          total: Number(item.total).toString()
-        });
-      }
-
-      res.json({ invoiceId, invoiceNumber });
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error saving invoice:", error);
-      res.status(500).json({ error: error.message });
-    }
+    const rows = bizId ? await q.where(eq(schema.items.businessId, bizId)) : await q;
+    res.json(rows);
   });
 
-  app.post("/api/invoices/:id/post", async (req, res) => {
-    try {
-      const invoiceId = req.params.id;
-      const { businessId, userId } = req.body;
+  app.post('/api/items', async (req, res) => {
+    const dbc = await getDb();
+    const body = req.body as {
+      name: string;
+      rate: string | number;
+      uom: string;
+      businessId: string;
+      openingStock?: string | number;
+      lowStockAlert?: string | number;
+      categoryId?: string;
+    };
 
-      if (!businessId || !userId) {
-        return res.status(400).json({ error: "businessId and userId are required" });
-      }
+    const id = `itm_${crypto.randomUUID().slice(0, 8)}`;
 
-      const result = await postInvoiceWithJournal({ invoiceId, businessId, userId });
-      res.json(result);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Invoice posting error:", error);
-      res.status(500).json({ error: error.message });
-    }
+    await dbc.insert(schema.items).values({
+      id,
+      name: body.name,
+      rate: String(body.rate),
+      uom: body.uom,
+      businessId: body.businessId,
+      categoryId: body.categoryId ?? null,
+      openingStock: body.openingStock != null ? String(body.openingStock) : '0',
+      lowStockAlert: body.lowStockAlert != null ? String(body.lowStockAlert) : '0',
+    });
+
+    const [created] = await dbc.select().from(schema.items).where(eq(schema.items.id, id));
+    res.status(201).json(created);
   });
 
   // ---------------- Categories ----------------
-  app.get("/api/categories", async (_req, res) => {
-    try {
-      const database = await db;
-      const rows = await database.select().from(categories);
-      res.json(rows);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error fetching categories:", error);
-      res.status(500).json({ error: "Failed to fetch categories" });
-    }
+  app.get('/api/categories', async (req, res) => {
+    const dbc = await getDb();
+    const bizId = (req.headers['business-id'] as string) || (req.query.businessId as string) || '';
+
+    const q = dbc
+      .select({
+        id: schema.categories.id,
+        name: schema.categories.name,
+        color: schema.categories.color,
+        businessId: schema.categories.businessId,
+      })
+      .from(schema.categories);
+
+    const rows = bizId ? await q.where(eq(schema.categories.businessId, bizId)) : await q;
+    res.json(rows);
   });
 
-  app.post("/api/categories", async (req, res) => {
-    try {
-      const database = await db;
-      const row = { ...req.body, id: randomUUID() };
-      await database.insert(categories).values(row);
-      const [inserted] = await database.select().from(categories).where(eq(categories.id, row.id)).limit(1);
-      res.json(inserted);
-    } catch (e) {
-      const error = e as Error;
-      console.error("Error creating category:", error);
-      res.status(500).json({ error: "Failed to create category" });
-    }
+  app.post('/api/categories', async (req, res) => {
+    const dbc = await getDb();
+    const body = req.body as { name: string; color: string; businessId: string };
+    const id = `cat_${crypto.randomUUID().slice(0, 8)}`;
+
+    await dbc.insert(schema.categories).values({
+      id,
+      name: body.name,
+      color: body.color,
+      businessId: body.businessId,
+    });
+
+    const [created] = await dbc.select().from(schema.categories).where(eq(schema.categories.id, id));
+    res.status(201).json(created);
   });
 
-  // ---------- finally create and return HTTP server ----------
-  const httpServer = createServer(app);
-  return httpServer;
+  // ---------------- Preferences ----------------
+  app.get('/api/preferences/:id', async (req, res) => {
+    const dbc = await getDb();
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid id' });
+
+    const [row] = await dbc.select().from(schema.preferences).where(eq(schema.preferences.id, id));
+    if (!row) return res.status(404).json({ message: 'Not found' });
+    res.json(row);
+  });
+
+  app.put('/api/preferences/:id', async (req, res) => {
+    const dbc = await getDb();
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid id' });
+
+    const allowed: Partial<typeof schema.preferences.$inferInsert> = {};
+    const b = req.body ?? {};
+
+    if (b.dateFormat !== undefined) allowed.dateFormat = b.dateFormat;
+    if (b.timeFormat !== undefined) allowed.timeFormat = b.timeFormat;
+    if (b.currency !== undefined) allowed.currency = b.currency;
+    if (b.language !== undefined) allowed.language = b.language;
+    if (b.firstDayOfWeek !== undefined) allowed.firstDayOfWeek = b.firstDayOfWeek;
+    if (b.firstDayOfMonth !== undefined) allowed.firstDayOfMonth = b.firstDayOfMonth;
+    if (b.firstDayOfYear !== undefined) allowed.firstDayOfYear = b.firstDayOfYear;
+    if (b.showTimeInReports !== undefined) allowed.showTimeInReports = !!b.showTimeInReports;
+    if (b.showPreviousBalance !== undefined) allowed.showPreviousBalance = !!b.showPreviousBalance;
+    if (b.darkMode !== undefined) allowed.darkMode = !!b.darkMode;
+    if (b.biometricEnabled !== undefined) allowed.biometricEnabled = !!b.biometricEnabled;
+
+    await dbc.update(schema.preferences).set(allowed).where(eq(schema.preferences.id, id));
+    const [row] = await dbc.select().from(schema.preferences).where(eq(schema.preferences.id, id));
+    res.json(row);
+  });
+
+  // ---------------- Transactions ----------------
+  app.get('/api/transactions/:accountId', async (req, res) => {
+    const dbc = await getDb();
+    const accountId = req.params.accountId;
+
+    const rows = await dbc
+      .select({
+        id: schema.transactions.id,
+        accountId: schema.transactions.accountId,
+        businessId: schema.transactions.businessId,
+        dateTime: schema.transactions.dateTime,
+        kind: schema.transactions.kind,
+        amount: schema.transactions.amount, // DECIMAL as string
+        note: schema.transactions.note,
+        imageUrl: schema.transactions.imageUrl,
+        dueDate: schema.transactions.dueDate,
+        deleted: schema.transactions.deleted,
+        userId: schema.transactions.userId,
+      })
+      .from(schema.transactions)
+      .where(eq(schema.transactions.accountId, accountId))
+      .orderBy(sql`date_time desc`);
+
+    res.json(rows);
+  });
+
+  app.post('/api/transactions', async (req, res) => {
+    const dbc = await getDb();
+    const b = req.body as {
+      accountId: string;
+      businessId: string;
+      dateTime: string | Date;
+      kind: string;
+      amount: string | number;
+      note?: string;
+      imageUrl?: string;
+      dueDate?: string | Date;
+      userId: string;
+    };
+
+    const id = `txn_${crypto.randomUUID().slice(0, 8)}`;
+
+    await dbc.insert(schema.transactions).values({
+      id,
+      accountId: b.accountId,
+      businessId: b.businessId,
+      dateTime: new Date(b.dateTime),
+      kind: b.kind,
+      amount: String(b.amount),
+      note: b.note ?? null,
+      imageUrl: b.imageUrl ?? null,
+      dueDate: b.dueDate ? new Date(b.dueDate) : null,
+      deleted: false,
+      userId: b.userId,
+    });
+
+    const [created] = await dbc.select().from(schema.transactions).where(eq(schema.transactions.id, id));
+    res.status(201).json(created);
+  });
+
+  return app;
 }

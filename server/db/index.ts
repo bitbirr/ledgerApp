@@ -1,27 +1,22 @@
-import { drizzle } from 'drizzle-orm/mysql2';
+// server/db/index.ts
+import { drizzle, type MySql2Database } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
-import * as schema from './schema';
+import * as schema from './schema.ts';
 
 if (!process.env.DATABASE_URL) {
   throw new Error('DATABASE_URL is required');
 }
 
-// Create connection function to handle async initialization
-async function createDbConnection() {
-  const connection = await mysql.createConnection({
-    uri: process.env.DATABASE_URL,
-    authPlugins: {
-      mysql_native_password: () => () => Buffer.alloc(0)
-    }
-  });
-  
-  return drizzle(connection, { 
-    schema, 
-    mode: 'default'
-  });
+// Use a pool so db is NOT a Promise
+export const pool = mysql.createPool(process.env.DATABASE_URL);
+
+// Strongly-typed Drizzle DB bound to our schema
+export const db: MySql2Database<typeof schema> = drizzle(pool, { schema, mode: 'default' });
+
+// Re-export schema so other modules can `import { db, schema } from './db/index.ts'`
+export { schema };
+
+// Optional: graceful shutdown helper
+export async function closePool() {
+  await pool.end();
 }
-
-// Export the database connection promise
-export const db = createDbConnection();
-
-
