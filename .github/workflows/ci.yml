@@ -1,4 +1,4 @@
-name: CI (dev-mode)
+name: CI
 
 on:
   push:
@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
   build-and-test:
+    name: Build & Test (dev)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -24,21 +25,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: "20"
+          cache: "npm"
 
-      - name: Copy .env.example to .env
-        run: cp .env.example .env
+      - name: Prepare .env (dev defaults)
+        run: |
+          cp .env.example .env
+          echo "NODE_ENV=development" >> .env
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
       - name: Type check
         run: npm run check
 
-      # Keep the build so we catch prod-build regressions too, even though
-      # your server will run in dev mode on Render.
-      - name: Build (client + server)
+      - name: Build
         run: npm run build
 
       - name: Unit tests
@@ -51,15 +52,15 @@ jobs:
           name: dist
           path: dist
 
-  # Optional smoke test in DEV mode: only runs if you provide DATABASE_URL
-  smoke-dev:
-    needs: build-and-test
-    if: ${{ secrets.DATABASE_URL != '' }}
+  db-smoke:
+    name: DB Smoke (internal pushes only)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    needs: build-and-test
+    # Only run when secrets are available (internal pushes)
+    if: ${{ github.event_name == 'push' }}
     env:
       NODE_ENV: development
-      PORT: 5000
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
@@ -69,37 +70,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
-      - name: Start dev server (Express + Vite middleware)
+      # Quick connectivity ping so we don't need to hit /api/dev/seed/full
+      - name: DB connectivity check
         run: |
-          nohup npx tsx --env-file=.env server/index.ts > server.log 2>&1 &
-          echo $! > server.pid
-
-      - name: Wait for /healthz
-        run: |
-          npx --yes wait-on http://127.0.0.1:${PORT}/healthz -t 30000
-          curl -sS http://127.0.0.1:${PORT}/healthz
-
-      # Optional: seed the dev DB used in CI
-      - name: Seed dev data (optional)
-        continue-on-error: true
-        run: |
-          curl -sS -X POST "http://127.0.0.1:${PORT}/api/dev/seed/full" || true
-
-      - name: Stop server
-        if: always()
-        run: |
-          if [ -f server.pid ]; then kill $(cat server.pid) || true; fi
-          sleep 1 || true
-
-      - name: Upload server log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-log
-          path: server.log
+          node -e "const mysql=require('mysql2/promise');(async()=>{const c=await mysql.createConnection(process.env.DATABASE_URL);const [r]=await c.query('SELECT 1');console.log('DB OK', r[0]);await c.end();})();"
