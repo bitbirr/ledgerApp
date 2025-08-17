@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "c:\\ledgerApp\\logs\\.4dcb636fe57744b7cc93e6b8740c834e7c27370a-audit.json",
+    "files": [
+        {
+            "date": 1755461258461,
+            "name": "c:\\ledgerApp\\logs\\security-structured-2025-08-17.json",
+            "hash": "ca41a021ba44e01306662f7171ad215093cab5ab7c3dafb9ac0c57df3071c768"
+        },
+        {
+            "date": 1755464415084,
+            "name": "c:\\ledgerApp\\logs\\security-structured-2025-08-18.json",
+            "hash": "023b34539f2484cb0e7197871f213439f123665fbd8b73200349436cd7dff028"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -1,6 +1,6 @@
 // server/seed.ts
 import { db, schema } from './db/index.ts';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 
 const now = () => new Date();
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400000);
@@ -61,9 +61,10 @@ export async function seedAll(): Promise<SeedResult> {
 
   // Users
   const users = [
-    { id: 'user_ismail', email: 'ismail@eng-ict.com', name: 'Eng. Ismail', passwordHash: 'hash_ismail', emailVerified: true, createdAt: now(), updatedAt: now() },
-    { id: 'user_najib',  email: 'najib@hajielec.com', name: 'Najib Haji',   passwordHash: 'hash_najib',  emailVerified: true, createdAt: now(), updatedAt: now() },
-    { id: 'user_mawlid', email: 'mawlid@opera.studio', name: 'Mawlid Opera', passwordHash: 'hash_mawlid', emailVerified: true, createdAt: now(), updatedAt: now() },
+    { id: 'user_ismail', email: 'ismail@eng-ict.com', name: 'Eng. Ismail', passwordHash: '$2b$12$AvEOWPY4zD/rTRbsjsMLZ.lDYIRXCmQJK2VgyXQFsWUzyoi2kamYS', emailVerified: true, createdAt: now(), updatedAt: now() },
+    { id: 'user_najib',  email: 'najib@hajielec.com', name: 'Najib Haji',   passwordHash: '$2b$12$AvEOWPY4zD/rTRbsjsMLZ.lDYIRXCmQJK2VgyXQFsWUzyoi2kamYS',  emailVerified: true, createdAt: now(), updatedAt: now() },
+    { id: 'user_mawlid', email: 'mawlid@opera.studio', name: 'Mawlid Opera', passwordHash: '$2b$12$AvEOWPY4zD/rTRbsjsMLZ.lDYIRXCmQJK2VgyXQFsWUzyoi2kamYS', emailVerified: true, createdAt: now(), updatedAt: now() },
+    { id: 'user_admin', email: 'admin@system.com', name: 'System Administrator', passwordHash: '$2b$12$moTed7XntL9cGQSHFigdau./veWqYG2l9csYLshZk62yUmTpS28Eq', emailVerified: true, createdAt: now(), updatedAt: now() },
   ];
   await conn.insert(schema.users).values(users);
 
@@ -108,6 +109,17 @@ export async function seedAll(): Promise<SeedResult> {
   ];
   await conn.insert(schema.businesses).values(businesses);
 
+  // Branches
+  const branches = [
+    { id: 'branch_ismail_main', businessId: 'biz_ismail', name: 'Main Branch', address: 'Kebele 04, Jigjiga, Ethiopia', phone: '+251-91-000-0001', email: 'main@eng-ict.com', isActive: true, createdAt: now(), updatedAt: now() },
+    { id: 'branch_ismail_branch1', businessId: 'biz_ismail', name: 'Branch 1', address: 'Kebele 05, Jigjiga, Ethiopia', phone: '+251-91-000-0004', email: 'branch1@eng-ict.com', isActive: true, createdAt: now(), updatedAt: now() },
+    { id: 'branch_najib_main', businessId: 'biz_najib', name: 'Main Branch', address: 'Karamara, Jigjiga, Ethiopia', phone: '+251-91-000-0002', email: 'main@hajielec.com', isActive: true, createdAt: now(), updatedAt: now() },
+    { id: 'branch_najib_branch1', businessId: 'biz_najib', name: 'Branch 1', address: 'Kebele 06, Jigjiga, Ethiopia', phone: '+251-91-000-0005', email: 'branch1@hajielec.com', isActive: true, createdAt: now(), updatedAt: now() },
+    { id: 'branch_mawlid_main', businessId: 'biz_mawlid', name: 'Main Branch', address: 'Fafan, Jigjiga, Ethiopia', phone: '+251-91-000-0003', email: 'main@opera.studio', isActive: true, createdAt: now(), updatedAt: now() },
+    { id: 'branch_mawlid_branch1', businessId: 'biz_mawlid', name: 'Branch 1', address: 'Kebele 07, Jigjiga, Ethiopia', phone: '+251-91-000-0006', email: 'branch1@opera.studio', isActive: true, createdAt: now(), updatedAt: now() },
+  ];
+  await conn.insert(schema.branches).values(branches);
+
   // Business Users
   const businessUsers = [
     { id: 'bu_ismail_owner', businessId: 'biz_ismail', userId: 'user_ismail', role: 'owner', permissions: null, invitedBy: 'user_ismail', invitedAt: now(), acceptedAt: now(), status: 'accepted', createdAt: now() },
@@ -115,6 +127,72 @@ export async function seedAll(): Promise<SeedResult> {
     { id: 'bu_mawlid_owner', businessId: 'biz_mawlid', userId: 'user_mawlid', role: 'owner', permissions: null, invitedBy: 'user_mawlid', invitedAt: now(), acceptedAt: now(), status: 'accepted', createdAt: now() },
   ];
   await conn.insert(schema.businessUsers).values(businessUsers);
+  
+  // Additional Staff Users
+  await conn.insert(schema.businessUsers).values({
+    id: 'bu_ismail_staff1',
+    businessId: 'biz_ismail',
+    userId: 'user_ismail',
+    role: 'Staff',
+    permissions: null,
+    invitedBy: 'user_ismail',
+    invitedAt: now(),
+    acceptedAt: now(),
+    status: 'accepted',
+    createdAt: now()
+  });
+  
+  await conn.insert(schema.businessUsers).values({
+    id: 'bu_ismail_staff2',
+    businessId: 'biz_ismail',
+    userId: 'user_ismail',
+    role: 'Staff',
+    permissions: null,
+    invitedBy: 'user_ismail',
+    invitedAt: now(),
+    acceptedAt: now(),
+    status: 'accepted',
+    createdAt: now()
+  });
+  
+  // SuperAdmin User
+  await conn.insert(schema.businessUsers).values({
+    id: 'bu_admin_super',
+    businessId: 'biz_ismail', // Assign to first business as placeholder
+    userId: 'user_admin',
+    role: 'SuperAdmin',
+    permissions: null,
+    invitedBy: 'user_admin',
+    invitedAt: now(),
+    acceptedAt: now(),
+    status: 'accepted',
+    createdAt: now()
+  });
+  
+  // Update businessUsers with branch associations
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_ismail_main' })
+    .where(eq(schema.businessUsers.id, 'bu_ismail_owner'));
+    
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_najib_main' })
+    .where(eq(schema.businessUsers.id, 'bu_najib_owner'));
+    
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_mawlid_main' })
+    .where(eq(schema.businessUsers.id, 'bu_mawlid_owner'));
+    
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_ismail_main' })
+    .where(eq(schema.businessUsers.id, 'bu_ismail_staff1'));
+    
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_ismail_branch1' })
+    .where(eq(schema.businessUsers.id, 'bu_ismail_staff2'));
+    
+  await conn.update(schema.businessUsers)
+    .set({ branchId: 'branch_ismail_main' })
+    .where(eq(schema.businessUsers.id, 'bu_admin_super'));
 
   // Categories
   const categories = [
@@ -344,7 +422,7 @@ export async function seedAll(): Promise<SeedResult> {
   return {
     users: users.length,
     businesses: businesses.length,
-    businessUsers: businessUsers.length,
+    businessUsers: businessUsers.length + 3, // +3 for additional users (2 staff + 1 superadmin)
     categories: categories.length,
     accounts: accounts.length,
     items: items.length,

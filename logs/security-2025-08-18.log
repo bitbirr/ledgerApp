@@ -1,0 +1,12 @@
+2025-08-17T21:05:26.523Z [SECURITY]: Failed login {
+  email: 'ismail@eng-ict.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-17T21:06:12.133Z [SECURITY]: Failed login {
+  email: 'ismail@eng-ict.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}

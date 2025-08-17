@@ -3,6 +3,8 @@ import { db as dbPromise } from './db/index.ts';
 import * as schema from './db/schema.ts';
 import { and, eq, gte, lte, like, sql, inArray } from 'drizzle-orm';
 import { seedAll } from './seed.ts';
+import { httpLogger } from './services/logger.ts';
+import { authenticateUser, authenticateSuperAdmin, getUserBusinesses, getUserBranches, verifyToken } from './services/auth.ts';
 
 const getDb = async () => await dbPromise;
 
@@ -21,6 +23,9 @@ export async function registerRoutes(app: Express): Promise<void> {
     });
   }
 
+  // Apply HTTP logging middleware to all routes
+  app.use(httpLogger);
+
   // health probe
   app.get('/healthz', async (_req, res) => {
     try {
@@ -33,6 +38,60 @@ export async function registerRoutes(app: Express): Promise<void> {
         message: (err as Error).message ?? 'db check failed',
       });
     }
+  });
+  
+  // -------- Authentication
+  app.post('/api/auth/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    
+    const result = await authenticateUser({ email, password });
+    res.json(result);
+  });
+  
+  app.post('/api/auth/admin/login', async (req, res) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    
+    const result = await authenticateSuperAdmin({ email, password });
+    res.json(result);
+  });
+  
+  app.get('/api/auth/businesses', async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    
+    const userSession = verifyToken(token);
+    if (!userSession) {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+    
+    const businesses = await getUserBusinesses(userSession.userId);
+    res.json({ businesses });
+  });
+  
+  app.get('/api/auth/branches/:businessId', async (req, res) => {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    
+    const userSession = verifyToken(token);
+    if (!userSession) {
+      return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+    
+    const { businessId } = req.params;
+    const branches = await getUserBranches(userSession.userId, businessId);
+    res.json({ branches });
   });
 
   // -------- Accounts

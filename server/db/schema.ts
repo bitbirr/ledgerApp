@@ -1,4 +1,5 @@
-import { mysqlTable, varchar, timestamp, decimal, boolean, int, text } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, timestamp, decimal, boolean, int, text, index } from 'drizzle-orm/mysql-core';
+import { relations } from 'drizzle-orm';
 
 // Users table - for authentication and user management
 export const users = mysqlTable('users', {
@@ -25,19 +26,38 @@ export const businesses = mysqlTable('businesses', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
+// Branches table - for multi-branch support
+export const branches = mysqlTable('branches', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  businessId: varchar('business_id', { length: 255 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  address: text('address'),
+  phone: varchar('phone', { length: 50 }),
+  email: varchar('email', { length: 255 }),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+}, (table) => ({
+  businessIdx: index('ix_branches_business').on(table.businessId),
+}));
+
 // Business Users junction table - for staff invitations and roles
 export const businessUsers = mysqlTable('business_users', {
   id: varchar('id', { length: 255 }).primaryKey(),
   businessId: varchar('business_id', { length: 255 }).notNull(), // references businesses.id
+  branchId: varchar('branch_id', { length: 255 }), // New field for branch association
   userId: varchar('user_id', { length: 255 }).notNull(), // references users.id
-  role: varchar('role', { length: 50 }).default('staff'), // placeholder for future roles: owner, admin, staff, viewer
+  role: varchar('role', { length: 50 }).default('Staff'), // Update to match RBAC roles: SuperAdmin, Admin, Staff
   permissions: text('permissions'), // JSON string for future role-based permissions
   invitedBy: varchar('invited_by', { length: 255 }), // references users.id
   invitedAt: timestamp('invited_at').defaultNow(),
   acceptedAt: timestamp('accepted_at'),
   status: varchar('status', { length: 20 }).default('pending'), // pending, accepted, declined
   createdAt: timestamp('created_at').defaultNow(),
-});
+}, (table) => ({
+  businessIdx: index('ix_business_users_business').on(table.businessId),
+  branchIdx: index('ix_business_users_branch').on(table.branchId), // New index
+}));
 
 // Update accounts table to use businessId instead of shopId
 export const accounts = mysqlTable('accounts', {
@@ -268,3 +288,67 @@ export const openingBalances = mysqlTable('opening_balances', {
   locked: boolean('locked').default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// Audit Logs table - for tracking user actions
+export const auditLogs = mysqlTable('audit_logs', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  businessId: varchar('business_id', { length: 255 }),
+  branchId: varchar('branch_id', { length: 255 }),
+  action: varchar('action', { length: 100 }).notNull(),
+  tableName: varchar('table_name', { length: 100 }),
+  recordId: varchar('record_id', { length: 255 }),
+  oldValues: text('old_values'), // JSON string
+  newValues: text('new_values'), // JSON string
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: varchar('user_agent', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  userIdx: index('ix_audit_logs_user').on(table.userId),
+  businessIdx: index('ix_audit_logs_business').on(table.businessId),
+  branchIdx: index('ix_audit_logs_branch').on(table.branchId),
+  actionIdx: index('ix_audit_logs_action').on(table.action),
+  tableIdx: index('ix_audit_logs_table').on(table.tableName),
+  dateIdx: index('ix_audit_logs_date').on(table.createdAt),
+}));
+
+// Add relationships for branches
+export const branchesRelations = relations(branches, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [branches.businessId],
+    references: [businesses.id],
+  }),
+  businessUsers: many(businessUsers),
+}));
+
+// Add relationships for businessUsers
+export const businessUsersRelations = relations(businessUsers, ({ one }) => ({
+  business: one(businesses, {
+    fields: [businessUsers.businessId],
+    references: [businesses.id],
+  }),
+  branch: one(branches, {
+    fields: [businessUsers.branchId],
+    references: [branches.id],
+  }),
+  user: one(users, {
+    fields: [businessUsers.userId],
+    references: [users.id],
+  }),
+}));
+
+// Add relationships for auditLogs
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+  business: one(businesses, {
+    fields: [auditLogs.businessId],
+    references: [businesses.id],
+  }),
+  branch: one(branches, {
+    fields: [auditLogs.branchId],
+    references: [branches.id],
+  }),
+}));

@@ -1,0 +1,4 @@
+{"level":"security","message":"Failed login","metadata":{"email":"ismail@eng-ict.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-17T21:05:26.523Z"}
+{"level":"info","message":"Request completed","metadata":{"duration":"1523ms","ip":"127.0.0.1","method":"POST","statusCode":200,"url":"/api/auth/login"},"timestamp":"2025-08-17T21:05:26.527Z"}
+{"level":"security","message":"Failed login","metadata":{"email":"ismail@eng-ict.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-17T21:06:12.134Z"}
+{"level":"info","message":"Request completed","metadata":{"duration":"1030ms","ip":"127.0.0.1","method":"POST","statusCode":200,"url":"/api/auth/login"},"timestamp":"2025-08-17T21:06:12.147Z"}

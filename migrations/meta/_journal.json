@@ -15,6 +15,13 @@
       "when": 1755370769720,
       "tag": "0001_lazy_umar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1755464905957,
+      "tag": "0002_friendly_kat_farrell",
+      "breakpoints": true
     }
   ]
 }

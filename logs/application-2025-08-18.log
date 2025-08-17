@@ -1,0 +1,28 @@
+2025-08-17T21:05:26.522Z [SECURITY]: Failed login {
+  email: 'ismail@eng-ict.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-17T21:05:26.527Z [INFO]: Request completed {
+  method: 'POST',
+  url: '/api/auth/login',
+  statusCode: 200,
+  duration: '1523ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-17T21:06:12.132Z [SECURITY]: Failed login {
+  email: 'ismail@eng-ict.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-17T21:06:12.146Z [INFO]: Request completed {
+  method: 'POST',
+  url: '/api/auth/login',
+  statusCode: 200,
+  duration: '1030ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
