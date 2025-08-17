@@ -1,30 +1,31 @@
 // server/routes.ts
-import type { Express, Request, Response } from 'express';
-import { db as dbPromise } from './db/index.ts';
-import * as schema from './db/schema.ts'; // import schema directly to avoid re-export issues
-import { and, eq, gte, lte, like, sql, inArray } from 'drizzle-orm';
-import { seedAll } from './seed.ts';
+import type { Express, Request, Response } from "express";
+import { db as dbPromise } from "./db/index";
+import * as schema from "./db/schema"; // import schema directly
+import { and, eq, gte, lte, like, sql, inArray } from "drizzle-orm";
+import { seedAll } from "./seed";
+import { randomUUID } from "crypto";
 
-// Always await the DB (your db export is a Promise)
+// Always resolve the DB (your db export is a Promise)
 const getDb = async () => await dbPromise;
 
 function getBizId(req: Request): string {
-  const h = (req.headers['business-id'] as string) || '';
-  if (!h || h === 'default-business') return 'biz_ismail';
+  const h = (req.headers["business-id"] as string) || "";
+  if (!h || h === "default-business") return "biz_ismail";
   return h;
 }
 
-export async function registerRoutes(app: Express) {
-  // Dev seed
-  if (app.get('env') === 'development') {
-    app.post('/api/dev/seed/full', async (_req: Request, res: Response) => {
+export async function registerRoutes(app: Express): Promise<void> {
+  // ---------- Dev seed ----------
+  if (app.get("env") === "development") {
+    app.post("/api/dev/seed/full", async (_req: Request, res: Response) => {
       const result = await seedAll();
       res.json({ ok: true, result });
     });
   }
 
-  // ---------------- Accounts ----------------
-  app.get('/api/accounts', async (req: Request, res: Response) => {
+  // ---------- Accounts ----------
+  app.get("/api/accounts", async (req: Request, res: Response) => {
     const dbc = await getDb();
     const businessId = getBizId(req);
 
@@ -41,8 +42,8 @@ export async function registerRoutes(app: Express) {
     res.json(rows);
   });
 
-  // ---------------- Cashbook ----------------
-  app.get('/api/cashbook', async (req: Request, res: Response) => {
+  // ---------- Cashbook ----------
+  app.get("/api/cashbook", async (req: Request, res: Response) => {
     const dbc = await getDb();
     const businessId = getBizId(req);
 
@@ -61,8 +62,8 @@ export async function registerRoutes(app: Express) {
     res.json(rows);
   });
 
-  // ---------------- GL Accounts ----------------
-  app.get('/api/gl-accounts', async (req: Request, res: Response) => {
+  // ---------- GL Accounts ----------
+  app.get("/api/gl-accounts", async (req: Request, res: Response) => {
     const dbc = await getDb();
     const businessId = getBizId(req);
 
@@ -81,11 +82,12 @@ export async function registerRoutes(app: Express) {
     res.json(rows);
   });
 
-  // ---------------- Journal Entries + Lines ----------------
-  app.get('/api/journal-entries', async (req: Request, res: Response) => {
+  // ---------- Journal Entries + Lines ----------
+  app.get("/api/journal-entries", async (req: Request, res: Response) => {
     const dbc = await getDb();
     const businessId = getBizId(req);
-    const { dateFrom, dateTo, accountId, sourceModule, search } = req.query as Record<string, string>;
+    const { dateFrom, dateTo, accountId, sourceModule, search } =
+      (req.query as Record<string, string>) || {};
 
     const entryWhere = [
       eq(schema.glJournalEntries.businessId, businessId),
@@ -124,7 +126,10 @@ export async function registerRoutes(app: Express) {
         accountName: schema.glAccounts.name,
       })
       .from(schema.glJournalLines)
-      .leftJoin(schema.glAccounts, eq(schema.glJournalLines.accountId, schema.glAccounts.id))
+      .leftJoin(
+        schema.glAccounts,
+        eq(schema.glJournalLines.accountId, schema.glAccounts.id),
+      )
       .where(
         and(
           eq(schema.glJournalLines.businessId, businessId),
@@ -165,11 +170,12 @@ export async function registerRoutes(app: Express) {
     res.json(payload);
   });
 
-  // ---------------- Trial Balance ----------------
-  app.get('/api/reports/trial-balance', async (req: Request, res: Response) => {
+  // ---------- Trial Balance ----------
+  app.get("/api/reports/trial-balance", async (req: Request, res: Response) => {
     const dbc = await getDb();
     const businessId = getBizId(req);
-    const asOfDate = (req.query.asOfDate as string) || new Date().toISOString().slice(0, 10);
+    const asOfDate =
+      (req.query.asOfDate as string) || new Date().toISOString().slice(0, 10);
     const cutoff = new Date(asOfDate);
 
     const rows = await dbc
@@ -182,7 +188,10 @@ export async function registerRoutes(app: Express) {
         creditSum: sql<number>`COALESCE(SUM(${schema.glJournalLines.credit}), 0)`,
       })
       .from(schema.glAccounts)
-      .leftJoin(schema.glJournalLines, eq(schema.glAccounts.id, schema.glJournalLines.accountId))
+      .leftJoin(
+        schema.glJournalLines,
+        eq(schema.glAccounts.id, schema.glJournalLines.accountId),
+      )
       .leftJoin(
         schema.glJournalEntries,
         and(
@@ -227,10 +236,13 @@ export async function registerRoutes(app: Express) {
     });
   });
 
-  // ---------------- Items ----------------
-  app.get('/api/items', async (req, res) => {
+  // ---------- Items ----------
+  app.get("/api/items", async (req, res) => {
     const dbc = await getDb();
-    const bizId = (req.headers['business-id'] as string) || (req.query.businessId as string) || '';
+    const bizId =
+      (req.headers["business-id"] as string) ||
+      (req.query.businessId as string) ||
+      "";
 
     const q = dbc
       .select({
@@ -249,7 +261,7 @@ export async function registerRoutes(app: Express) {
     res.json(rows);
   });
 
-  app.post('/api/items', async (req, res) => {
+  app.post("/api/items", async (req, res) => {
     const dbc = await getDb();
     const body = req.body as {
       name: string;
@@ -261,7 +273,7 @@ export async function registerRoutes(app: Express) {
       categoryId?: string;
     };
 
-    const id = `itm_${crypto.randomUUID().slice(0, 8)}`;
+    const id = `itm_${randomUUID().slice(0, 8)}`;
 
     await dbc.insert(schema.items).values({
       id,
@@ -270,18 +282,26 @@ export async function registerRoutes(app: Express) {
       uom: body.uom,
       businessId: body.businessId,
       categoryId: body.categoryId ?? null,
-      openingStock: body.openingStock != null ? String(body.openingStock) : '0',
-      lowStockAlert: body.lowStockAlert != null ? String(body.lowStockAlert) : '0',
+      openingStock:
+        body.openingStock != null ? String(body.openingStock) : "0",
+      lowStockAlert:
+        body.lowStockAlert != null ? String(body.lowStockAlert) : "0",
     });
 
-    const [created] = await dbc.select().from(schema.items).where(eq(schema.items.id, id));
+    const [created] = await dbc
+      .select()
+      .from(schema.items)
+      .where(eq(schema.items.id, id));
     res.status(201).json(created);
   });
 
-  // ---------------- Categories ----------------
-  app.get('/api/categories', async (req, res) => {
+  // ---------- Categories ----------
+  app.get("/api/categories", async (req, res) => {
     const dbc = await getDb();
-    const bizId = (req.headers['business-id'] as string) || (req.query.businessId as string) || '';
+    const bizId =
+      (req.headers["business-id"] as string) ||
+      (req.query.businessId as string) ||
+      "";
 
     const q = dbc
       .select({
@@ -292,14 +312,16 @@ export async function registerRoutes(app: Express) {
       })
       .from(schema.categories);
 
-    const rows = bizId ? await q.where(eq(schema.categories.businessId, bizId)) : await q;
+    const rows = bizId
+      ? await q.where(eq(schema.categories.businessId, bizId))
+      : await q;
     res.json(rows);
   });
 
-  app.post('/api/categories', async (req, res) => {
+  app.post("/api/categories", async (req, res) => {
     const dbc = await getDb();
     const body = req.body as { name: string; color: string; businessId: string };
-    const id = `cat_${crypto.randomUUID().slice(0, 8)}`;
+    const id = `cat_${randomUUID().slice(0, 8)}`;
 
     await dbc.insert(schema.categories).values({
       id,
@@ -308,25 +330,31 @@ export async function registerRoutes(app: Express) {
       businessId: body.businessId,
     });
 
-    const [created] = await dbc.select().from(schema.categories).where(eq(schema.categories.id, id));
+    const [created] = await dbc
+      .select()
+      .from(schema.categories)
+      .where(eq(schema.categories.id, id));
     res.status(201).json(created);
   });
 
-  // ---------------- Preferences ----------------
-  app.get('/api/preferences/:id', async (req, res) => {
+  // ---------- Preferences ----------
+  app.get("/api/preferences/:id", async (req, res) => {
     const dbc = await getDb();
     const id = Number(req.params.id);
-    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid id' });
+    if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
 
-    const [row] = await dbc.select().from(schema.preferences).where(eq(schema.preferences.id, id));
-    if (!row) return res.status(404).json({ message: 'Not found' });
+    const [row] = await dbc
+      .select()
+      .from(schema.preferences)
+      .where(eq(schema.preferences.id, id));
+    if (!row) return res.status(404).json({ message: "Not found" });
     res.json(row);
   });
 
-  app.put('/api/preferences/:id', async (req, res) => {
+  app.put("/api/preferences/:id", async (req, res) => {
     const dbc = await getDb();
     const id = Number(req.params.id);
-    if (Number.isNaN(id)) return res.status(400).json({ message: 'Invalid id' });
+    if (Number.isNaN(id)) return res.status(400).json({ message: "Invalid id" });
 
     const allowed: Partial<typeof schema.preferences.$inferInsert> = {};
     const b = req.body ?? {};
@@ -338,18 +366,28 @@ export async function registerRoutes(app: Express) {
     if (b.firstDayOfWeek !== undefined) allowed.firstDayOfWeek = b.firstDayOfWeek;
     if (b.firstDayOfMonth !== undefined) allowed.firstDayOfMonth = b.firstDayOfMonth;
     if (b.firstDayOfYear !== undefined) allowed.firstDayOfYear = b.firstDayOfYear;
-    if (b.showTimeInReports !== undefined) allowed.showTimeInReports = !!b.showTimeInReports;
-    if (b.showPreviousBalance !== undefined) allowed.showPreviousBalance = !!b.showPreviousBalance;
+    if (b.showTimeInReports !== undefined)
+      allowed.showTimeInReports = !!b.showTimeInReports;
+    if (b.showPreviousBalance !== undefined)
+      allowed.showPreviousBalance = !!b.showPreviousBalance;
     if (b.darkMode !== undefined) allowed.darkMode = !!b.darkMode;
-    if (b.biometricEnabled !== undefined) allowed.biometricEnabled = !!b.biometricEnabled;
+    if (b.biometricEnabled !== undefined)
+      allowed.biometricEnabled = !!b.biometricEnabled;
 
-    await dbc.update(schema.preferences).set(allowed).where(eq(schema.preferences.id, id));
-    const [row] = await dbc.select().from(schema.preferences).where(eq(schema.preferences.id, id));
+    await dbc
+      .update(schema.preferences)
+      .set(allowed)
+      .where(eq(schema.preferences.id, id));
+
+    const [row] = await dbc
+      .select()
+      .from(schema.preferences)
+      .where(eq(schema.preferences.id, id));
     res.json(row);
   });
 
-  // ---------------- Transactions ----------------
-  app.get('/api/transactions/:accountId', async (req, res) => {
+  // ---------- Transactions ----------
+  app.get("/api/transactions/:accountId", async (req, res) => {
     const dbc = await getDb();
     const accountId = req.params.accountId;
 
@@ -374,7 +412,7 @@ export async function registerRoutes(app: Express) {
     res.json(rows);
   });
 
-  app.post('/api/transactions', async (req, res) => {
+  app.post("/api/transactions", async (req, res) => {
     const dbc = await getDb();
     const b = req.body as {
       accountId: string;
@@ -388,7 +426,7 @@ export async function registerRoutes(app: Express) {
       userId: string;
     };
 
-    const id = `txn_${crypto.randomUUID().slice(0, 8)}`;
+    const id = `txn_${randomUUID().slice(0, 8)}`;
 
     await dbc.insert(schema.transactions).values({
       id,
@@ -396,7 +434,7 @@ export async function registerRoutes(app: Express) {
       businessId: b.businessId,
       dateTime: new Date(b.dateTime),
       kind: b.kind,
-      amount: String(b.amount),
+      amount: String(b.amount), // ensure DECIMAL string
       note: b.note ?? null,
       imageUrl: b.imageUrl ?? null,
       dueDate: b.dueDate ? new Date(b.dueDate) : null,
@@ -404,9 +442,10 @@ export async function registerRoutes(app: Express) {
       userId: b.userId,
     });
 
-    const [created] = await dbc.select().from(schema.transactions).where(eq(schema.transactions.id, id));
+    const [created] = await dbc
+      .select()
+      .from(schema.transactions)
+      .where(eq(schema.transactions.id, id));
     res.status(201).json(created);
   });
-
-  return app;
 }

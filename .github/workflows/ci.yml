@@ -1,4 +1,4 @@
-name: CI
+name: CI (dev-mode)
 
 on:
   push:
@@ -6,10 +6,16 @@ on:
   pull_request:
     branches: ["**"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NODE_ENV: development
 
     steps:
       - name: Checkout
@@ -18,19 +24,21 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: 20
+          cache: npm
 
       - name: Copy .env.example to .env
         run: cp .env.example .env
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
       - name: Type check
         run: npm run check
 
-      - name: Build
+      # Keep the build so we catch prod-build regressions too, even though
+      # your server will run in dev mode on Render.
+      - name: Build (client + server)
         run: npm run build
 
       - name: Unit tests
@@ -42,3 +50,56 @@ jobs:
         with:
           name: dist
           path: dist
+
+  # Optional smoke test in DEV mode: only runs if you provide DATABASE_URL
+  smoke-dev:
+    needs: build-and-test
+    if: ${{ secrets.DATABASE_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Start dev server (Express + Vite middleware)
+        run: |
+          nohup npx tsx --env-file=.env server/index.ts > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Wait for /healthz
+        run: |
+          npx --yes wait-on http://127.0.0.1:${PORT}/healthz -t 30000
+          curl -sS http://127.0.0.1:${PORT}/healthz
+
+      # Optional: seed the dev DB used in CI
+      - name: Seed dev data (optional)
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "http://127.0.0.1:${PORT}/api/dev/seed/full" || true
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f server.pid ]; then kill $(cat server.pid) || true; fi
+          sleep 1 || true
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log
+          path: server.log
