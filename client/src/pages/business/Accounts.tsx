@@ -21,8 +21,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Account } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function Accounts() {
+  const { toast } = useToast();
   const { businessId, user, role } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
@@ -50,9 +52,21 @@ export function Accounts() {
         await api.deleteAccount(accountId, businessId, user.id);
         // Invalidate and refetch accounts
         queryClient.invalidateQueries({ queryKey: ['accounts', businessId, user.id] });
+        
+        // Show success message
+        toast({
+          title: 'Account Deleted',
+          description: 'The account has been deleted successfully.',
+        });
       } catch (err) {
         console.error('Failed to delete account:', err);
-        alert('Failed to delete account. Please try again.');
+        
+        // Show error message
+        toast({
+          title: 'Error',
+          description: 'Failed to delete account. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };

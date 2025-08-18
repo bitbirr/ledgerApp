@@ -30,6 +30,7 @@ export const businessUserSchema = z.object({
   id: z.string(),
   businessId: z.string(),
   userId: z.string(),
+  branchId: z.string().optional(), // Added branch association
   role: z.enum(['owner', 'admin', 'staff', 'viewer']).default('staff'),
   permissions: z.string().optional(), // JSON string for future role-based permissions
   invitedBy: z.string().optional(),
@@ -143,6 +144,19 @@ export const preferencesSchema = z.object({
   biometricEnabled: z.boolean().default(false),
 });
 
+// Branch schema
+export const branchSchema = z.object({
+  id: z.string(),
+  businessId: z.string(),
+  name: z.string(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  isActive: z.boolean().default(true),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
 // Type exports
 export type User = z.infer<typeof userSchema>;
 export type Business = z.infer<typeof businessSchema>;
@@ -155,6 +169,7 @@ export type Item = z.infer<typeof itemSchema>;
 export type Invoice = z.infer<typeof invoiceSchema>;
 export type InvoiceItem = z.infer<typeof invoiceItemSchema>;
 export type Preferences = z.infer<typeof preferencesSchema>;
+export type Branch = z.infer<typeof branchSchema>; // Added Branch type
 
 // Insert schemas
 export const insertUserSchema = userSchema.omit({ id: true, createdAt: true, updatedAt: true });
@@ -168,6 +183,7 @@ export const insertItemSchema = itemSchema.omit({ id: true });
 export const insertInvoiceSchema = invoiceSchema.omit({ id: true });
 export const insertInvoiceItemSchema = invoiceItemSchema.omit({ id: true });
 export const insertPreferencesSchema = preferencesSchema.omit({ id: true });
+export const insertBranchSchema = branchSchema.omit({ id: true, createdAt: true, updatedAt: true }); // Added branch insert schema
 
 // Insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -181,6 +197,7 @@ export type InsertItem = z.infer<typeof insertItemSchema>;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
 export type InsertPreferences = z.infer<typeof insertPreferencesSchema>;
+export type InsertBranch = z.infer<typeof insertBranchSchema>; // Added branch insert type
 
 // ======================
 // General Ledger & Tax (Config C)

@@ -21,8 +21,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { CashbookEntry } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function Cashbook() {
+  const { toast } = useToast();
   const { businessId, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -63,9 +65,21 @@ export function Cashbook() {
         await api.deleteCashbookEntry(entryId, businessId);
         // Invalidate and refetch entries
         queryClient.invalidateQueries({ queryKey: ['cashbook', businessId, dateRange.start, dateRange.end] });
+        
+        // Show success message
+        toast({
+          title: 'Entry Deleted',
+          description: 'The cashbook entry has been deleted successfully.',
+        });
       } catch (err) {
         console.error('Failed to delete entry:', err);
-        alert('Failed to delete entry. Please try again.');
+        
+        // Show error message
+        toast({
+          title: 'Error',
+          description: 'Failed to delete entry. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };

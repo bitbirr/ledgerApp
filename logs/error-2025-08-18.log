@@ -178,3 +178,183 @@ Error: connect ETIMEDOUT
     }
   ]
 }
+2025-08-18T13:10:17.656Z [ERROR]: unhandledRejection: read ECONNRESET
+Error: read ECONNRESET
+    at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+    at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+    at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  error: Error: read ECONNRESET
+      at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+      at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+      at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+      at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    code: 'ECONNRESET',
+    errno: -4077,
+    sql: undefined,
+    sqlState: undefined,
+    sqlMessage: undefined
+  },
+  stack: 'Error: read ECONNRESET\n' +
+    '    at PromisePool.query (C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js:36:22)\n' +
+    '    at MySql2PreparedQuery.execute (C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts:121:31)\n' +
+    '    at MySqlSelectBase.execute (C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts:1056:25)\n' +
+    '    at MySqlSelectBase.then (C:\\ledgerApp\\node_modules\\src\\query-promise.ts:31:15)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  rejection: true,
+  date: 'Mon Aug 18 2025 16:10:17 GMT+0300 (East Africa Time)',
+  process: {
+    pid: 12136,
+    uid: null,
+    gid: null,
+    cwd: 'C:\\ledgerApp',
+    execPath: 'C:\\Program Files\\nodejs\\node.exe',
+    version: 'v22.14.0',
+    argv: [
+      'C:\\Program Files\\nodejs\\node.exe',
+      'C:\\ledgerApp\\server\\index.ts'
+    ],
+    memoryUsage: {
+      rss: 215916544,
+      heapTotal: 136531968,
+      heapUsed: 111276096,
+      external: 11339772,
+      arrayBuffers: 778339
+    }
+  },
+  os: { loadavg: [ 0, 0, 0 ], uptime: 150956.359 },
+  trace: [
+    {
+      column: 22,
+      file: 'C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js',
+      function: 'PromisePool.query',
+      line: 36,
+      method: 'query',
+      native: false
+    },
+    {
+      column: 31,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts',
+      function: 'MySql2PreparedQuery.execute',
+      line: 121,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 25,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts',
+      function: 'MySqlSelectBase.execute',
+      line: 1056,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 15,
+      file: 'C:\\ledgerApp\\node_modules\\src\\query-promise.ts',
+      function: 'MySqlSelectBase.then',
+      line: 31,
+      method: 'then',
+      native: false
+    },
+    {
+      column: 5,
+      file: 'node:internal/process/task_queues',
+      function: 'process.processTicksAndRejections',
+      line: 105,
+      method: 'processTicksAndRejections',
+      native: false
+    }
+  ]
+}
+2025-08-18T13:44:42.469Z [ERROR]: unhandledRejection: connect EHOSTUNREACH 47.236.39.181:3306
+Error: connect EHOSTUNREACH 47.236.39.181:3306
+    at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+    at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+    at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  error: Error: connect EHOSTUNREACH 47.236.39.181:3306
+      at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+      at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+      at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+      at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    code: 'EHOSTUNREACH',
+    errno: -4073,
+    sql: undefined,
+    sqlState: undefined,
+    sqlMessage: undefined
+  },
+  stack: 'Error: connect EHOSTUNREACH 47.236.39.181:3306\n' +
+    '    at PromisePool.query (C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js:36:22)\n' +
+    '    at MySql2PreparedQuery.execute (C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts:121:31)\n' +
+    '    at MySqlSelectBase.execute (C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts:1056:25)\n' +
+    '    at MySqlSelectBase.then (C:\\ledgerApp\\node_modules\\src\\query-promise.ts:31:15)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  rejection: true,
+  date: 'Mon Aug 18 2025 16:44:42 GMT+0300 (East Africa Time)',
+  process: {
+    pid: 23724,
+    uid: null,
+    gid: null,
+    cwd: 'C:\\ledgerApp',
+    execPath: 'C:\\Program Files\\nodejs\\node.exe',
+    version: 'v22.14.0',
+    argv: [
+      'C:\\Program Files\\nodejs\\node.exe',
+      'C:\\ledgerApp\\server\\index.ts'
+    ],
+    memoryUsage: {
+      rss: 190095360,
+      heapTotal: 109268992,
+      heapUsed: 105110208,
+      external: 11203158,
+      arrayBuffers: 641725
+    }
+  },
+  os: { loadavg: [ 0, 0, 0 ], uptime: 153021.171 },
+  trace: [
+    {
+      column: 22,
+      file: 'C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js',
+      function: 'PromisePool.query',
+      line: 36,
+      method: 'query',
+      native: false
+    },
+    {
+      column: 31,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts',
+      function: 'MySql2PreparedQuery.execute',
+      line: 121,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 25,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts',
+      function: 'MySqlSelectBase.execute',
+      line: 1056,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 15,
+      file: 'C:\\ledgerApp\\node_modules\\src\\query-promise.ts',
+      function: 'MySqlSelectBase.then',
+      line: 31,
+      method: 'then',
+      native: false
+    },
+    {
+      column: 5,
+      file: 'node:internal/process/task_queues',
+      function: 'process.processTicksAndRejections',
+      line: 105,
+      method: 'processTicksAndRejections',
+      native: false
+    }
+  ]
+}

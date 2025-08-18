@@ -10,6 +10,8 @@ export const queryClient = new QueryClient({
       gcTime: 24 * 60 * 60 * 1000,
       retry: 1,
       refetchOnWindowFocus: false,
+      // Add a timeout to prevent hanging queries
+      retryDelay: 1000,
     },
   },
 });

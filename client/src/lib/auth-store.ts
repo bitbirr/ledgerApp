@@ -63,16 +63,52 @@ export const useAuthStore = create<AuthState>()(
       currentScreen: 'dashboard',
       
       // Actions
-      login: (userData) => set({
-        isAuthenticated: true,
-        user: userData.user,
-        role: userData.role,
-        businessId: userData.businessId || null,
-        branchId: userData.branchId || null,
-        token: userData.token,
-        refreshToken: userData.refreshToken,
-        tokenExpiry: userData.token ? new Date(Date.now() + 3600000) : null, // 1 hour expiry
-      }),
+      login: (userData) => {
+        // Validate that businessId is provided
+        if (!userData.businessId) {
+          throw new Error('Business ID is required for login');
+        }
+
+        // Normalize role to title case to avoid casing mismatches
+        const rawRole = (userData.role as any)?.toString?.() ?? '';
+        const roleLower = rawRole.toLowerCase();
+        const normalizedRole =
+          roleLower === 'superadmin' ? 'SuperAdmin' :
+          roleLower === 'admin' ? 'Admin' :
+          roleLower === 'staff' ? 'Staff' :
+          null;
+
+        if (!normalizedRole) {
+          console.warn('[AuthStore] Unknown role received from API:', rawRole);
+        }
+        
+        // Validate that branchId (if provided) belongs to the business
+        if (userData.branchId) {
+          // In a real implementation, we would verify the branch belongs to the business
+          // For now, we'll just ensure it's not an empty string
+          if (userData.branchId.trim() === '') {
+            throw new Error('Invalid branch ID');
+          }
+        }
+        
+        const newState = {
+          isAuthenticated: true,
+          user: userData.user,
+          role: (normalizedRole as 'SuperAdmin' | 'Admin' | 'Staff') ?? userData.role,
+          businessId: userData.businessId || null,
+          branchId: userData.branchId || null,
+          token: userData.token,
+          refreshToken: userData.refreshToken,
+          tokenExpiry: userData.token ? new Date(Date.now() + 3600000) : null, // 1 hour expiry
+        };
+        
+        set(newState);
+
+        // Diagnostics
+        try {
+          console.debug('[AuthStore] login state', newState);
+        } catch {}
+      },
       
       logout: () => set({
         isAuthenticated: false,

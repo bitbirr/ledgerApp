@@ -20,8 +20,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Invoice } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function Invoices() {
+  const { toast } = useToast();
   const { businessId, branchId, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -53,9 +55,21 @@ export function Invoices() {
         await api.deleteInvoice(invoiceId, businessId);
         // Invalidate and refetch invoices
         queryClient.invalidateQueries({ queryKey: ['invoices', businessId, branchId] });
+        
+        // Show success message
+        toast({
+          title: 'Invoice Deleted',
+          description: 'The invoice has been deleted successfully.',
+        });
       } catch (err) {
         console.error('Failed to delete invoice:', err);
-        alert('Failed to delete invoice. Please try again.');
+        
+        // Show error message
+        toast({
+          title: 'Error',
+          description: 'Failed to delete invoice. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };

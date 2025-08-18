@@ -119,6 +119,7 @@ export async function registerRoutes(app: Express): Promise<void> {
       .select({
         id: schema.branches.id,
         name: schema.branches.name,
+        businessId: schema.branches.businessId,
       })
       .from(schema.branches)
       .where(eq(schema.branches.businessId, businessId));

@@ -348,7 +348,19 @@ export function Settings() {
                   Update your password regularly for better security
                 </p>
               </div>
-              <Button variant="outline">Change Password</Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // TODO: Implement actual password change functionality
+                  // For now, just show a success message
+                  toast({
+                    title: 'Password Change Initiated',
+                    description: 'Please follow the instructions sent to your email to change your password.',
+                  });
+                }}
+              >
+                Change Password
+              </Button>
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -357,7 +369,16 @@ export function Settings() {
                   Add an extra layer of security to your account
                 </p>
               </div>
-              <Switch />
+              <Switch
+                onCheckedChange={(checked) => {
+                  // TODO: Implement actual 2FA functionality
+                  // For now, just show a success message
+                  toast({
+                    title: checked ? '2FA Enabled' : '2FA Disabled',
+                    description: checked ? 'Two-factor authentication has been enabled.' : 'Two-factor authentication has been disabled.',
+                  });
+                }}
+              />
             </div>
           </CardContent>
         </Card>

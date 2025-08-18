@@ -14,6 +14,11 @@
             "date": 1755464722438,
             "name": "C:\\ledgerApp\\logs\\application-2025-08-18.log",
             "hash": "a562543d6cee3f63fce2ab5dfd4ac11d9314618e81cd6aa0b29e48c97c3057fb"
+        },
+        {
+            "date": 1755551087253,
+            "name": "C:\\ledgerApp\\logs\\application-2025-08-19.log",
+            "hash": "33c1a8650d257048db352320d157695f9bf06e6f63528e88f9a22b46573da2fc"
         }
     ],
     "hashType": "sha256"

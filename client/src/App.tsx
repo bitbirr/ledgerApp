@@ -94,7 +94,9 @@ function SuperAdminApp() {
 function App() {
   const { isAuthenticated, role, token } = useAuthStore();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  // Persist hydration status to avoid race conditions where persisted state overrides fresh login
+  const [hydrated, setHydrated] = useState((useAuthStore as any).persist?.hasHydrated?.() ?? false);
 
   useEffect(() => {
     // Register service worker for PWA functionality
@@ -150,8 +152,61 @@ function App() {
     };
   }, []);
 
-  // Show login pages if not authenticated
-  if (!isAuthenticated || !token) {
+  // Ensure store hydration completes to prevent bounce due to stale persisted auth
+  useEffect(() => {
+    try {
+      const persistApi = (useAuthStore as any).persist;
+      if (persistApi?.hasHydrated?.()) {
+        setHydrated(true);
+        try { console.debug('[AuthNav] hydration already complete', useAuthStore.getState()); } catch {}
+      }
+      const unsub = persistApi?.onFinishHydration?.(() => {
+        setHydrated(true);
+        try { console.debug('[AuthNav] hydration complete', useAuthStore.getState()); } catch {}
+      });
+      return () => { if (typeof unsub === 'function') unsub(); };
+    } catch (e) {
+      // If persist API not available, assume hydrated
+      setHydrated(true);
+    }
+  }, []);
+
+  // Centralized post-login redirect and diagnostics
+  useEffect(() => {
+    try {
+      console.debug('[AuthNav] state', { isAuthenticated, hasToken: !!token, role, location, hydrated });
+      if (!hydrated) return; // Wait for hydration
+
+      if (isAuthenticated) {
+        const current = location || '/';
+        const roleLower = (role as any)?.toString?.().toLowerCase?.() || '';
+
+        if (roleLower === 'superadmin') {
+          if (!current.startsWith('/admin')) {
+            console.debug('[AuthNav] redirect -> /admin');
+            setLocation('/admin');
+          }
+        } else if (roleLower === 'admin' || roleLower === 'staff' || roleLower === '') {
+          // If at any login-like or root/admin paths, go to business dashboard
+          const isLoginLike = current.includes('login');
+          if (isLoginLike || current === '/admin' || current === '/' || current === '' || current.startsWith('/admin')) {
+            console.debug('[AuthNav] redirect -> /dashboard');
+            setLocation('/dashboard');
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[AuthNav] redirect effect error', e);
+    }
+  }, [hydrated, isAuthenticated, role, location, setLocation]);
+
+  // Wait until auth store is hydrated before deciding what to render
+  if (!hydrated) {
+    return null;
+  }
+
+  // Show login pages if not authenticated (do not gate on token to avoid race/falsy issues)
+  if (!isAuthenticated) {
     // Check if we're on an admin route
     if (location.startsWith('/admin')) {
       return <SuperAdminLogin />;
@@ -174,8 +229,8 @@ function App() {
     return <BusinessApp />;
   }
 
-  // Fallback - show login
-  return <BusinessLogin />;
+  // Fallback - unknown role but authenticated: default to Business app
+  return <BusinessApp />;
 }
 
 export default function AppWrapper() {

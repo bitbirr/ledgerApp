@@ -113,6 +113,7 @@ async function getAuthHeaders(businessId?: string, userId?: string) {
   // If token is expired and we have a refresh token, try to refresh
   if (isTokenExpired() && refreshToken) {
     try {
+      try { console.debug('[API] token expired; attempting refresh'); } catch {}
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         headers: {
@@ -127,36 +128,51 @@ async function getAuthHeaders(businessId?: string, userId?: string) {
         // Update token for this request
         useAuthStore.getState().token = newToken;
         useAuthStore.getState().refreshToken = newRefreshToken;
+        try { console.debug('[API] refresh succeeded'); } catch {}
       } else {
         // If refresh fails, logout the user
+        try { console.debug('[API] refresh failed with status', response.status); } catch {}
         useAuthStore.getState().logout();
         throw new Error('Session expired. Please log in again.');
       }
     } catch (error) {
       // If refresh fails, logout the user
+      try { console.debug('[API] refresh threw error', error); } catch {}
       useAuthStore.getState().logout();
       throw new Error('Session expired. Please log in again.');
     }
   }
   
-  const h: Record<string, string> = { 
+  const h: Record<string, string> = {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${token}`
   };
   
   if (businessId) h["business-id"] = businessId;
   if (userId) h["user-id"] = userId;
+
+  try {
+    const st = useAuthStore.getState();
+    console.debug('[API] getAuthHeaders', { hasToken: !!st.token, businessId: businessId ?? null, userId: userId ?? null });
+  } catch {}
+
   return h;
 }
 
 // Enhanced fetch function with error handling
 async function apiFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   try {
-    const response = await fetch(input, init);
+    // Always include credentials to send cookies for same-origin API
+    const finalInit: RequestInit = { credentials: 'include', ...(init || {}) };
+    const response = await fetch(input, finalInit);
     
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized without forcibly logging out
     if (response.status === 401) {
-      useAuthStore.getState().logout();
+      try {
+        const url = typeof input === 'string' ? input : (input as any)?.url ?? 'unknown';
+        console.debug('[API] 401 Unauthorized', { url, method: (finalInit as any).method || 'GET' });
+      } catch {}
+      // Do not auto-logout here to avoid bouncing back to login during initial load
       throw new Error('Unauthorized. Please log in again.');
     }
     
@@ -181,11 +197,25 @@ async function apiFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
 
 export const api = {
   // ---------- Auth ----------
-  async login(credentials: { username: string; password: string; businessId?: string; branchId?: string }) {
-    const response = await apiFetch<{ 
-      user: any; 
-      token: string; 
-      refreshToken: string; 
+  async login(credentials: { email: string; password: string; businessId?: string; branchId?: string }) {
+    // Validate that businessId is provided
+    if (!credentials.businessId) {
+      throw new Error('Business ID is required for login');
+    }
+    
+    // If branchId is provided, validate that it belongs to the business
+    if (credentials.branchId) {
+      const branches = await this.getBranches(credentials.businessId);
+      const branchExists = branches.some(branch => branch.id === credentials.branchId);
+      if (!branchExists) {
+        throw new Error('Invalid branch selection for the selected business');
+      }
+    }
+    
+    const response = await apiFetch<{
+      user: any;
+      token: string;
+      refreshToken: string;
       role: 'SuperAdmin' | 'Admin' | 'Staff';
       businessId?: string;
       branchId?: string;
@@ -194,6 +224,16 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
+    
+    // Validate that the returned businessId matches the requested one
+    if (response.businessId && response.businessId !== credentials.businessId) {
+      throw new Error('Invalid business context in response');
+    }
+    
+    // Validate that the returned branchId (if any) belongs to the business
+    if (response.branchId && credentials.branchId && response.branchId !== credentials.branchId) {
+      throw new Error('Invalid branch context in response');
+    }
     
     return response;
   },
@@ -480,7 +520,7 @@ export const api = {
 
   // ---------- Branches ----------
   async getBranches(businessId: ID): Promise<Branch[]> {
-    const headers = { 'Content-Type': 'application/json' };
+    const headers = await getAuthHeaders(businessId);
     return apiFetch<Branch[]>(`/api/branches?businessId=${encodeURIComponent(businessId)}`, { headers });
   },
 

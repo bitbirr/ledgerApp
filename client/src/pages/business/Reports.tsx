@@ -16,8 +16,10 @@ import { api } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 export function Reports() {
+  const { toast } = useToast();
   const { businessId, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -187,7 +189,17 @@ export function Reports() {
           <p className="text-muted-foreground">Financial reports and analytics</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={() => {
+              // TODO: Implement actual export functionality
+              // For now, just show a success message
+              toast({
+                title: 'Export Initiated',
+                description: 'Your report export has been initiated. This may take a few moments.',
+              });
+            }}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>

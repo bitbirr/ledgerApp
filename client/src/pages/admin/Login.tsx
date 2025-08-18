@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useTheme } from '@/lib/design-tokens';
 import { Sun, Moon, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 export function SuperAdminLogin() {
   const { login } = useAuthStore();
@@ -23,34 +24,30 @@ export function SuperAdminLogin() {
     setIsLoading(true);
     
     try {
-      // In a real implementation, this would call the API
-      // For now, we'll simulate a successful login
-      setTimeout(() => {
-        login({
-          user: {
-            id: 'superadmin-123',
-            email: 'admin@example.com',
-            name: username || 'Super Admin',
-            emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          token: 'fake-jwt-token',
-          refreshToken: 'fake-refresh-token',
-          role: 'SuperAdmin',
-        });
-        
-        toast({
-          title: "Login Successful",
-          description: "Welcome back, Super Admin!",
-        });
-        
-        setIsLoading(false);
-      }, 1000);
-    } catch (error) {
+      // Call the real API admin login function
+      const loginResponse = await api.adminLogin({
+        username,
+        password,
+      });
+      
+      // Login successful
+      login({
+        user: loginResponse.user,
+        token: loginResponse.token,
+        refreshToken: loginResponse.refreshToken,
+        role: loginResponse.role,
+      });
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back, Super Admin!",
+      });
+      
+      setIsLoading(false);
+    } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: "Invalid credentials. Please try again.",
+        description: error.message || "Invalid credentials. Please try again.",
         variant: "destructive",
       });
       setIsLoading(false);

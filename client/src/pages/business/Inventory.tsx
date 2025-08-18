@@ -21,8 +21,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Item } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function Inventory() {
+  const { toast } = useToast();
   const { businessId, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
@@ -50,9 +52,21 @@ export function Inventory() {
         await api.deleteItem(itemId, businessId);
         // Invalidate and refetch items
         queryClient.invalidateQueries({ queryKey: ['items', businessId] });
+        
+        // Show success message
+        toast({
+          title: 'Item Deleted',
+          description: 'The inventory item has been deleted successfully.',
+        });
       } catch (err) {
         console.error('Failed to delete item:', err);
-        alert('Failed to delete item. Please try again.');
+        
+        // Show error message
+        toast({
+          title: 'Error',
+          description: 'Failed to delete item. Please try again.',
+          variant: 'destructive',
+        });
       }
     }
   };
