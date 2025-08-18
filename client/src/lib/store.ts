@@ -4,6 +4,8 @@ import { Account, Transaction, CashbookEntry, Invoice, Preferences } from '@shar
 interface AppState {
   // UI State
   drawerOpen: boolean;
+  currentScreen: string;
+  selectedAccountId: string | null;
   sortBy: 'name-asc' | 'name-desc' | 'amount-asc' | 'amount-desc' | 'category' | 'last-transaction';
   timePeriod: 'all' | 'daily' | 'weekly' | 'monthly' | 'yearly';
   
@@ -23,6 +25,8 @@ interface AppState {
   
   // Actions
   setDrawerOpen: (open: boolean) => void;
+  setCurrentScreen: (screen: string) => void;
+  setSelectedAccountId: (id: string | null) => void;
   setSortBy: (sort: AppState['sortBy']) => void;
   setTimePeriod: (period: AppState['timePeriod']) => void;
   
@@ -42,6 +46,8 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   // Initial UI State
   drawerOpen: false,
+  currentScreen: 'dashboard',
+  selectedAccountId: null,
   sortBy: 'name-asc',
   timePeriod: 'all',
   
@@ -59,6 +65,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   
   // UI Actions
   setDrawerOpen: (open) => set({ drawerOpen: open }),
+  setCurrentScreen: (screen) => set({ currentScreen: screen }),
+  setSelectedAccountId: (id) => set({ selectedAccountId: id }),
   setSortBy: (sort) => set({ sortBy: sort }),
   setTimePeriod: (period) => set({ timePeriod: period }),
   
