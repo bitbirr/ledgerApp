@@ -439,7 +439,7 @@ export const api = {
 
   // ---------- Businesses ----------
   async getBusinesses(): Promise<Business[]> {
-    const headers = await getAuthHeaders();
+    const headers = { 'Content-Type': 'application/json' };
     return apiFetch<Business[]>("/api/businesses", { headers });
   },
 
@@ -480,7 +480,7 @@ export const api = {
 
   // ---------- Branches ----------
   async getBranches(businessId: ID): Promise<Branch[]> {
-    const headers = await getAuthHeaders(businessId);
+    const headers = { 'Content-Type': 'application/json' };
     return apiFetch<Branch[]>(`/api/branches?businessId=${encodeURIComponent(businessId)}`, { headers });
   },
 

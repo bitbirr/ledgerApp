@@ -7838,3 +7838,1723 @@ Error: connect ETIMEDOUT
   ip: '127.0.0.1',
   response: undefined
 }
+2025-08-18T12:05:09.366Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@vite/client',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:09.371Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:09.376Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/main.tsx?v=jTa2RaKQ-R01g-8twqsRR',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.108Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@react-refresh',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.112Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/vite/dist/client/env.mjs',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.141Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/App.tsx?v=jTa2RaKQ-R01g-8twqsRR',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.153Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?v=jTa2RaKQ-R01g-8twqsRR',
+  statusCode: 200,
+  duration: '6ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.158Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toaster.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.163Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/tooltip.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.169Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/BusinessAppShell.tsx',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.173Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.177Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/admin/Login.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.184Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Dashboard.tsx',
+  statusCode: 304,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.190Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Accounts.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.195Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Cashbook.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.202Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Invoices.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.206Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Inventory.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.211Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Reports.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.219Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/auth-store.ts',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.223Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/queryClient.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.226Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SuperAdminAppShell.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.234Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Settings.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.240Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/hooks/use-toast.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.245Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toast.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.255Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/utils.ts',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.261Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/AppHeader.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.271Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SidebarNav.tsx',
+  statusCode: 304,
+  duration: '6ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.277Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileNavDrawer.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.284Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileBottomNav.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.292Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/Breadcrumb.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.300Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/button.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.304Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/input.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.309Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/label.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.313Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/card.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.320Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/design-tokens.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.326Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/select.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.332Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/api.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.336Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/badge.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.340Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/skeleton.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.344Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/alert.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.352Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/switch.tsx',
+  statusCode: 304,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.486Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '32ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:12.526Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '24ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:05:14.118Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.620Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Dashboard.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.625Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Accounts.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.652Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Reports.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.657Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.762Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755518781288&v=pYMCEC7qhuy_ueFxaWtEX',
+  statusCode: 200,
+  duration: '145ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.767Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Inventory.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.770Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Settings.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.781Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Cashbook.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.784Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Invoices.tsx?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:21.787Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/api.ts?t=1755518781288',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:22.804Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '8ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.406Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755518793297&v=pYMCEC7qhuy_ueFxaWtEX',
+  statusCode: 200,
+  duration: '101ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.413Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Dashboard.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.418Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Accounts.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.425Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Reports.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.430Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.434Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Inventory.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.445Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Settings.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.451Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Cashbook.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.456Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Invoices.tsx?t=1755518793297',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.460Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/api.ts?t=1755518793297',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:06:33.798Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '9ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:30:07.654Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '11ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:30:07.665Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:30:07.669Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:03.532Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '621ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.180Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.223Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@vite/client',
+  statusCode: 200,
+  duration: '49ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.274Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/main.tsx?v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '91ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.679Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.683Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/react-dom_client.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.687Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/vite/dist/client/env.mjs',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.724Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/App.tsx?v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '34ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.738Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@react-refresh',
+  statusCode: 304,
+  duration: '64ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:04.746Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-3TFVT2CW.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '11ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.613Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '880ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.617Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-4MBMRILA.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.650Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-WERSD76P.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '32ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.666Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/manifest.json',
+  statusCode: 304,
+  duration: '6ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.690Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@tanstack_react-query.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '17ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.695Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/react.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '25ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:05.973Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/auth-store.ts',
+  statusCode: 200,
+  duration: '21ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.002Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/queryClient.ts',
+  statusCode: 200,
+  duration: '48ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.032Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SuperAdminAppShell.tsx',
+  statusCode: 200,
+  duration: '72ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.034Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toaster.tsx',
+  statusCode: 200,
+  duration: '358ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.036Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/tooltip.tsx',
+  statusCode: 200,
+  duration: '381ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.037Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/admin/Login.tsx',
+  statusCode: 200,
+  duration: '33ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.051Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx',
+  statusCode: 200,
+  duration: '75ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.070Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/BusinessAppShell.tsx',
+  statusCode: 200,
+  duration: '113ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.134Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/wouter.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.143Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Dashboard.tsx',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.147Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Accounts.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.151Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Cashbook.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.154Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Invoices.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.159Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Inventory.tsx',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.162Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Reports.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.166Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Settings.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.170Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/zustand.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.174Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/zustand_middleware.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.181Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-ZADDJO6S.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.184Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-S77I6LSE.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.192Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@tanstack_query-sync-storage-persister.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.195Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@tanstack_react-query-persist-client.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '9ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.352Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/AppHeader.tsx',
+  statusCode: 200,
+  duration: '177ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.389Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/Breadcrumb.tsx',
+  statusCode: 200,
+  duration: '48ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.391Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileBottomNav.tsx',
+  statusCode: 200,
+  duration: '53ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.392Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SidebarNav.tsx',
+  statusCode: 200,
+  duration: '216ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.403Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/hooks/use-toast.ts',
+  statusCode: 200,
+  duration: '61ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.431Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toast.tsx',
+  statusCode: 200,
+  duration: '52ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.433Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileNavDrawer.tsx',
+  statusCode: 200,
+  duration: '244ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.452Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.460Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/utils.ts',
+  statusCode: 200,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.464Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/button.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.467Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/input.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.470Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/label.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.478Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/lucide-react.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.482Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/design-tokens.ts',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.486Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/select.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.493Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/api.ts',
+  statusCode: 200,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.497Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/badge.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.505Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/card.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.512Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/skeleton.tsx',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.516Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/alert.tsx',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.519Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/switch.tsx',
+  statusCode: 200,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.523Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-HDJNK3LB.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.528Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-KPO4B3UQ.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.531Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-5SOOSTSW.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.535Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-5S42QOQO.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.544Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-7QY6MLOV.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.547Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-YJNCXJ7A.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.550Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-5BVWYEZM.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.558Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/clsx.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '22ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.560Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/class-variance-authority.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '20ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.564Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/tailwind-merge.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '12ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.569Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-toast.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '32ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.574Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-label.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '18ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.580Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-slot.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '26ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.584Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-select.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.587Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/@radix-ui_react-switch.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.595Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-QH7Y6EI7.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.598Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-U7P2NEEE.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '9ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.600Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/.vite/deps/chunk-4VZ6TOM4.js?v=c8f66d7b',
+  statusCode: 200,
+  duration: '8ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.714Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '19ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.725Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.782Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '43ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.784Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '40ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.785Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '45ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.793Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/main.tsx',
+  statusCode: 200,
+  duration: '48ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.798Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/App.tsx',
+  statusCode: 200,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.801Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css',
+  statusCode: 200,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:35:06.805Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/manifest.json',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.228Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@vite/client',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.234Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.242Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/main.tsx?v=QyylQaZUEI3AHOpcFg5JU',
+  statusCode: 200,
+  duration: '5ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.813Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@react-refresh',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.819Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/@fs/C:/ledgerApp/node_modules/vite/dist/client/env.mjs',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.860Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/App.tsx?v=QyylQaZUEI3AHOpcFg5JU',
+  statusCode: 200,
+  duration: '6ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.867Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?v=QyylQaZUEI3AHOpcFg5JU',
+  statusCode: 200,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.901Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toaster.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.905Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/tooltip.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.912Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/auth-store.ts',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.916Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/queryClient.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.924Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/BusinessAppShell.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.928Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SuperAdminAppShell.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.931Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.935Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/admin/Login.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.944Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Dashboard.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.948Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Cashbook.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.951Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Accounts.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.956Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Invoices.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.960Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Inventory.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.965Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Reports.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.968Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Settings.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.981Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/hooks/use-toast.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.984Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/toast.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:26.993Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/utils.ts',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.005Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/AppHeader.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.008Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/SidebarNav.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.013Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileNavDrawer.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.016Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/MobileBottomNav.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.023Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/layout/Breadcrumb.tsx',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.027Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/button.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.031Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/input.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.034Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/label.tsx',
+  statusCode: 304,
+  duration: '1ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.039Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/card.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.074Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/design-tokens.ts',
+  statusCode: 304,
+  duration: '9ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.090Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/lib/api.ts',
+  statusCode: 304,
+  duration: '8ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.095Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/select.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.109Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/badge.tsx',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.150Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/switch.tsx',
+  statusCode: 304,
+  duration: '35ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.193Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/skeleton.tsx',
+  statusCode: 304,
+  duration: '26ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.198Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/components/ui/alert.tsx',
+  statusCode: 304,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.361Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '34ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:27.401Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '25ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:38:29.813Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:05.819Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755520805429',
+  statusCode: 200,
+  duration: '59ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:05.950Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755520805429&v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '189ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:24.579Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755520824541',
+  statusCode: 200,
+  duration: '31ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:24.683Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755520824541&v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '102ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:41.914Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755520841882',
+  statusCode: 200,
+  duration: '25ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:41.994Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755520841882&v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '78ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:58.644Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/pages/business/Login.tsx?t=1755520858502',
+  statusCode: 200,
+  duration: '124ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:59.275Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/src/index.css?t=1755520858502&v=wE4i5PARcX2quDTIh8XqF',
+  statusCode: 200,
+  duration: '626ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:40:59.803Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '22ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:42:29.768Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:42:32.153Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '7ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:43:30.941Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '2ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:43:33.335Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:44:26.236Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '4ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:44:27.212Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: '17ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-18T12:44:28.837Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '3ms',
+  ip: '127.0.0.1',
+  response: undefined
+}

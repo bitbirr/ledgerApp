@@ -94,6 +94,37 @@ export async function registerRoutes(app: Express): Promise<void> {
     res.json({ branches });
   });
 
+  // Public endpoint for fetching all businesses (for login page)
+  app.get('/api/businesses', async (_req, res) => {
+    const dbc = await getDb();
+    const rows = await dbc
+      .select({
+        id: schema.businesses.id,
+        name: schema.businesses.name,
+      })
+      .from(schema.businesses);
+    res.json(rows);
+  });
+
+  // Public endpoint for fetching branches by business ID (for login page)
+  app.get('/api/branches', async (req, res) => {
+    const dbc = await getDb();
+    const businessId = req.query.businessId as string;
+    
+    if (!businessId) {
+      return res.status(400).json({ success: false, message: 'businessId is required' });
+    }
+    
+    const rows = await dbc
+      .select({
+        id: schema.branches.id,
+        name: schema.branches.name,
+      })
+      .from(schema.branches)
+      .where(eq(schema.branches.businessId, businessId));
+    res.json(rows);
+  });
+
   // -------- Accounts
   app.get('/api/accounts', async (req, res) => {
     const dbc = await getDb();

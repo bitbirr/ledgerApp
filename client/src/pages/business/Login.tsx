@@ -30,23 +30,24 @@ export function BusinessLogin() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
+  const [isFetchingBusinesses, setIsFetchingBusinesses] = useState(false);
+  const [isFetchingBranches, setIsFetchingBranches] = useState(false);
 
   // Fetch businesses on component mount
   useEffect(() => {
     const fetchBusinesses = async () => {
-      setIsFetching(true);
+      setIsFetchingBusinesses(true);
       try {
         const businessData = await api.getBusinesses();
         setBusinesses(businessData);
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Error",
-          description: "Failed to fetch businesses. Please try again.",
+          description: `Failed to fetch businesses: ${error.message || 'Please try again.'}`,
           variant: "destructive",
         });
       } finally {
-        setIsFetching(false);
+        setIsFetchingBusinesses(false);
       }
     };
 
@@ -57,20 +58,20 @@ export function BusinessLogin() {
   useEffect(() => {
     const fetchBranches = async () => {
       if (businessId) {
-        setIsFetching(true);
+        setIsFetchingBranches(true);
         try {
           const branchData = await api.getBranches(businessId);
           setBranches(branchData);
           // Reset branch selection when business changes
           setBranchId('');
-        } catch (error) {
+        } catch (error: any) {
           toast({
             title: "Error",
-            description: "Failed to fetch branches. Please try again.",
+            description: `Failed to fetch branches: ${error.message || 'Please try again.'}`,
             variant: "destructive",
           });
         } finally {
-          setIsFetching(false);
+          setIsFetchingBranches(false);
         }
       } else {
         setBranches([]);
@@ -142,7 +143,7 @@ export function BusinessLogin() {
               <Label htmlFor="business">Business</Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
-                <Select value={businessId} onValueChange={setBusinessId} disabled={isFetching}>
+                <Select value={businessId} onValueChange={setBusinessId} disabled={isFetchingBusinesses}>
                   <SelectTrigger className="pl-10">
                     <SelectValue placeholder="Select your business" />
                   </SelectTrigger>
@@ -161,8 +162,8 @@ export function BusinessLogin() {
               <Label htmlFor="branch">Branch</Label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
-                <Select value={branchId} onValueChange={setBranchId} disabled={isFetching || !businessId}>
-                  <SelectTrigger className="pl-10" disabled={isFetching || !businessId}>
+                <Select value={branchId} onValueChange={setBranchId} disabled={isFetchingBranches || !businessId}>
+                  <SelectTrigger className="pl-10" disabled={isFetchingBranches || !businessId}>
                     <SelectValue placeholder="Select your branch" />
                   </SelectTrigger>
                   <SelectContent>
