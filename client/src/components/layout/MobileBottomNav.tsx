@@ -1,15 +1,19 @@
-import { useAppStore } from '@/lib/store';
+import { useAuthStore } from '@/lib/auth-store';
 import { Button } from '@/components/ui/button';
 import { 
   Home, 
   Wallet, 
   Receipt, 
   Package, 
-  BarChart3
+  BarChart3,
+  Building2,
+  MapPin,
+  Users,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const navigationItems = [
+const businessNavigationItems = [
   { id: 'dashboard', label: 'Home', icon: Home },
   { id: 'cashbook', label: 'Cash', icon: Wallet },
   { id: 'invoices', label: 'Bills', icon: Receipt },
@@ -17,8 +21,19 @@ const navigationItems = [
   { id: 'reports', label: 'Reports', icon: BarChart3 },
 ];
 
+const superAdminNavigationItems = [
+  { id: 'businesses', label: 'Businesses', icon: Building2 },
+  { id: 'branches', label: 'Branches', icon: MapPin },
+  { id: 'users', label: 'Users', icon: Users },
+  { id: 'reports', label: 'Reports', icon: BarChart3 },
+  { id: 'settings', label: 'Settings', icon: Settings },
+];
+
 export function MobileBottomNav() {
-  const { setCurrentScreen, currentScreen } = useAppStore();
+  const { setCurrentScreen, currentScreen, role } = useAuthStore();
+  
+  // Determine which navigation items to use based on role
+  const navigationItems = role === 'SuperAdmin' ? superAdminNavigationItems : businessNavigationItems;
 
   const handleNavigation = (screenId: string) => {
     setCurrentScreen(screenId);

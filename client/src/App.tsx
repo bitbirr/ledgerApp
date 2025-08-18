@@ -1,34 +1,42 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
-import { useAppStore } from "@/lib/store";
+import { useAuthStore } from "@/lib/auth-store";
 
-// Pages
-import { Dashboard } from "@/pages/Dashboard";
-import { CustomerDetail } from "@/pages/CustomerDetail";
-import { CashBook } from "@/pages/CashBook";
-import { Invoices } from "@/pages/Invoices";
-import { Inventory } from "@/pages/Inventory";
-import { Reports } from "@/pages/Reports";
-import { Settings } from "@/pages/Settings";
-import NotFound from "@/pages/not-found";
+// Business App Pages
+import { BusinessLogin } from "@/pages/business/Login";
+import { Dashboard } from "@/pages/business/Dashboard";
+import { Accounts } from "@/pages/business/Accounts";
+import { Cashbook } from "@/pages/business/Cashbook";
+import { Invoices } from "@/pages/business/Invoices";
+import { Inventory } from "@/pages/business/Inventory";
+import { Reports } from "@/pages/business/Reports";
+import { Settings } from "@/pages/business/Settings";
 
-function AppRouter() {
-  const { currentScreen } = useAppStore();
+// SuperAdmin App Pages
+import { SuperAdminLogin } from "@/pages/admin/Login";
+import { SuperAdminDashboard } from "@/pages/admin/Dashboard";
+import { Businesses } from "@/pages/admin/Businesses";
 
+// Layout Components
+import { BusinessAppShell } from "@/components/layout/BusinessAppShell";
+import { SuperAdminAppShell } from "@/components/layout/SuperAdminAppShell";
+
+function BusinessApp() {
+  const { currentScreen } = useAuthStore();
+  
   // Simple screen-based routing using Zustand state
   const renderCurrentScreen = () => {
     switch (currentScreen) {
       case 'dashboard':
         return <Dashboard />;
-      case 'customer-detail':
-        return <CustomerDetail />;
+      case 'accounts':
+        return <Accounts />;
       case 'cashbook':
-        return <CashBook />;
+        return <Cashbook />;
       case 'invoices':
         return <Invoices />;
       case 'inventory':
@@ -43,14 +51,38 @@ function AppRouter() {
   };
 
   return (
-    <ResponsiveLayout>
+    <BusinessAppShell>
       {renderCurrentScreen()}
-    </ResponsiveLayout>
+    </BusinessAppShell>
+  );
+}
+
+function SuperAdminApp() {
+  const { currentScreen } = useAuthStore();
+  
+  // Simple screen-based routing for SuperAdmin
+  const renderCurrentScreen = () => {
+    switch (currentScreen) {
+      case 'dashboard':
+        return <SuperAdminDashboard />;
+      case 'businesses':
+        return <Businesses />;
+      // Add other SuperAdmin pages here
+      default:
+        return <SuperAdminDashboard />;
+    }
+  };
+
+  return (
+    <SuperAdminAppShell>
+      {renderCurrentScreen()}
+    </SuperAdminAppShell>
   );
 }
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const { isAuthenticated, role } = useAuthStore();
 
   useEffect(() => {
     // Register service worker for PWA functionality
@@ -115,7 +147,44 @@ function App() {
               You're currently offline. Some features may be limited.
             </div>
           )}
-          <AppRouter />
+          
+          <Switch>
+            {/* Public Routes */}
+            <Route path="/login" component={BusinessLogin} />
+            <Route path="/admin/login" component={SuperAdminLogin} />
+            
+            {/* Business App Routes (Protected) */}
+            <Route path="/" nest>
+              {isAuthenticated && role !== 'SuperAdmin' ? (
+                <BusinessApp />
+              ) : isAuthenticated && role === 'SuperAdmin' ? (
+                <Redirect to="/admin" />
+              ) : (
+                <Redirect to="/login" />
+              )}
+            </Route>
+            
+            {/* SuperAdmin App Routes (Protected) */}
+            <Route path="/admin" nest>
+              {isAuthenticated && role === 'SuperAdmin' ? (
+                <SuperAdminApp />
+              ) : isAuthenticated && role !== 'SuperAdmin' ? (
+                <Redirect to="/" />
+              ) : (
+                <Redirect to="/admin/login" />
+              )}
+            </Route>
+            
+            {/* Default Redirect */}
+            <Route>
+              {isAuthenticated ? (
+                role === 'SuperAdmin' ? <Redirect to="/admin" /> : <Redirect to="/" />
+              ) : (
+                <Redirect to="/login" />
+              )}
+            </Route>
+          </Switch>
+          
           <Toaster />
         </div>
       </TooltipProvider>
