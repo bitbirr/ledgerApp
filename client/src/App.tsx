@@ -1,13 +1,16 @@
-import { Switch, Route, Redirect } from "wouter";
 import { useEffect, useState } from "react";
-import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/lib/auth-store";
+import { queryClient } from "@/lib/queryClient";
+import { BusinessAppShell } from "@/components/layout/BusinessAppShell";
+import { SuperAdminAppShell } from "@/components/layout/SuperAdminAppShell";
+import { BusinessLogin } from "@/pages/business/Login";
+import { SuperAdminLogin } from "@/pages/admin/Login";
+import { useLocation, Route, Switch, Redirect } from "wouter";
 
 // Business App Pages
-import { BusinessLogin } from "@/pages/business/Login";
 import { Dashboard } from "@/pages/business/Dashboard";
 import { Accounts } from "@/pages/business/Accounts";
 import { Cashbook } from "@/pages/business/Cashbook";
@@ -16,73 +19,82 @@ import { Inventory } from "@/pages/business/Inventory";
 import { Reports } from "@/pages/business/Reports";
 import { Settings } from "@/pages/business/Settings";
 
-// SuperAdmin App Pages
-import { SuperAdminLogin } from "@/pages/admin/Login";
-import { SuperAdminDashboard } from "@/pages/admin/Dashboard";
-import { Businesses } from "@/pages/admin/Businesses";
-
-// Layout Components
-import { BusinessAppShell } from "@/components/layout/BusinessAppShell";
-import { SuperAdminAppShell } from "@/components/layout/SuperAdminAppShell";
+// Admin App Pages (using placeholders for now)
+const AdminDashboard = () => <div>Admin Dashboard</div>;
+const Businesses = () => <div>Businesses Management</div>;
+const Branches = () => <div>Branches Management</div>;
+const Users = () => <div>Users Management</div>;
+const AppSettings = () => <div>App Settings</div>;
+const Audit = () => <div>Audit Trail</div>;
+const Feedback = () => <div>Feedback Management</div>;
+const Diagnostics = () => <div>System Diagnostics</div>;
 
 function BusinessApp() {
-  const { currentScreen } = useAuthStore();
+  const [location] = useLocation();
   
-  // Simple screen-based routing using Zustand state
-  const renderCurrentScreen = () => {
-    switch (currentScreen) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'accounts':
-        return <Accounts />;
-      case 'cashbook':
-        return <Cashbook />;
-      case 'invoices':
-        return <Invoices />;
-      case 'inventory':
-        return <Inventory />;
-      case 'reports':
-        return <Reports />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
     <BusinessAppShell>
-      {renderCurrentScreen()}
+      <Switch location={location}>
+        <Route path="/" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/accounts" component={Accounts} />
+        <Route path="/cashbook" component={Cashbook} />
+        <Route path="/invoices" component={Invoices} />
+        <Route path="/inventory" component={Inventory} />
+        <Route path="/reports" component={Reports} />
+        <Route path="/settings" component={Settings} />
+        <Route>
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+            <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
+            <button 
+              className="text-primary hover:underline"
+              onClick={() => window.location.href = '/'}
+            >
+              Go back to dashboard
+            </button>
+          </div>
+        </Route>
+      </Switch>
     </BusinessAppShell>
   );
 }
 
 function SuperAdminApp() {
-  const { currentScreen } = useAuthStore();
+  const [location] = useLocation();
   
-  // Simple screen-based routing for SuperAdmin
-  const renderCurrentScreen = () => {
-    switch (currentScreen) {
-      case 'dashboard':
-        return <SuperAdminDashboard />;
-      case 'businesses':
-        return <Businesses />;
-      // Add other SuperAdmin pages here
-      default:
-        return <SuperAdminDashboard />;
-    }
-  };
-
   return (
     <SuperAdminAppShell>
-      {renderCurrentScreen()}
+      <Switch location={location}>
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/businesses" component={Businesses} />
+        <Route path="/admin/branches" component={Branches} />
+        <Route path="/admin/users" component={Users} />
+        <Route path="/admin/settings" component={AppSettings} />
+        <Route path="/admin/audit" component={Audit} />
+        <Route path="/admin/feedback" component={Feedback} />
+        <Route path="/admin/diagnostics" component={Diagnostics} />
+        <Route>
+          <div className="p-8 text-center">
+            <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
+            <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
+            <button 
+              className="text-primary hover:underline"
+              onClick={() => window.location.href = '/admin'}
+            >
+              Go back to dashboard
+            </button>
+          </div>
+        </Route>
+      </Switch>
     </SuperAdminAppShell>
   );
 }
 
 function App() {
+  const { isAuthenticated, role, token } = useAuthStore();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const { isAuthenticated, role } = useAuthStore();
+  const [location] = useLocation();
 
   useEffect(() => {
     // Register service worker for PWA functionality
@@ -138,58 +150,43 @@ function App() {
     };
   }, []);
 
+  // Show login pages if not authenticated
+  if (!isAuthenticated || !token) {
+    // Check if we're on an admin route
+    if (location.startsWith('/admin')) {
+      return <SuperAdminLogin />;
+    }
+    return <BusinessLogin />;
+  }
+
+  // Show appropriate app based on role
+  if (role === 'SuperAdmin') {
+    // Redirect to admin routes if on business routes
+    if (!location.startsWith('/admin')) {
+      return <Redirect to="/admin" />;
+    }
+    return <SuperAdminApp />;
+  } else if (role === 'Admin' || role === 'Staff') {
+    // Redirect to business routes if on admin routes
+    if (location.startsWith('/admin')) {
+      return <Redirect to="/" />;
+    }
+    return <BusinessApp />;
+  }
+
+  // Fallback - show login
+  return <BusinessLogin />;
+}
+
+export default function AppWrapper() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen bg-background text-foreground antialiased">
-          {!isOnline && (
-            <div className="bg-warning text-warning-foreground px-4 py-2 text-center text-sm font-medium">
-              You're currently offline. Some features may be limited.
-            </div>
-          )}
-          
-          <Switch>
-            {/* Public Routes */}
-            <Route path="/login" component={BusinessLogin} />
-            <Route path="/admin/login" component={SuperAdminLogin} />
-            
-            {/* Business App Routes (Protected) */}
-            <Route path="/" nest>
-              {isAuthenticated && role !== 'SuperAdmin' ? (
-                <BusinessApp />
-              ) : isAuthenticated && role === 'SuperAdmin' ? (
-                <Redirect to="/admin" />
-              ) : (
-                <Redirect to="/login" />
-              )}
-            </Route>
-            
-            {/* SuperAdmin App Routes (Protected) */}
-            <Route path="/admin" nest>
-              {isAuthenticated && role === 'SuperAdmin' ? (
-                <SuperAdminApp />
-              ) : isAuthenticated && role !== 'SuperAdmin' ? (
-                <Redirect to="/" />
-              ) : (
-                <Redirect to="/admin/login" />
-              )}
-            </Route>
-            
-            {/* Default Redirect */}
-            <Route>
-              {isAuthenticated ? (
-                role === 'SuperAdmin' ? <Redirect to="/admin" /> : <Redirect to="/" />
-              ) : (
-                <Redirect to="/login" />
-              )}
-            </Route>
-          </Switch>
-          
+          <App />
           <Toaster />
         </div>
       </TooltipProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;

@@ -1,4 +1,6 @@
 // client/src/lib/api.ts
+import { useAuthStore } from '@/lib/auth-store';
+
 export type ID = string;
 
 export type Account = {
@@ -62,62 +64,235 @@ export type Preferences = {
   // … your prefs fields
 };
 
-function headers(businessId?: string, userId?: string) {
-  const h: Record<string, string> = { "Content-Type": "application/json" };
+export type Business = {
+  id: ID;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Branch = {
+  id: ID;
+  name: string;
+  businessId: ID;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Invoice = {
+  id: ID;
+  businessId: ID;
+  branchId: ID;
+  customerId: ID;
+  invoiceNumber: string;
+  issueDate: string;
+  dueDate: string;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  subtotal: string;
+  tax: string;
+  total: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type InvoiceItem = {
+  id: ID;
+  invoiceId: ID;
+  itemId: ID;
+  description: string;
+  quantity: number;
+  rate: string;
+  amount: string;
+};
+
+// Enhanced headers function with token refresh support
+async function getAuthHeaders(businessId?: string, userId?: string) {
+  const { token, refreshToken, isTokenExpired, refreshSession } = useAuthStore.getState();
+  
+  // If token is expired and we have a refresh token, try to refresh
+  if (isTokenExpired() && refreshToken) {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+      
+      if (response.ok) {
+        const { token: newToken, refreshToken: newRefreshToken } = await response.json();
+        refreshSession(newToken, newRefreshToken);
+        // Update token for this request
+        useAuthStore.getState().token = newToken;
+        useAuthStore.getState().refreshToken = newRefreshToken;
+      } else {
+        // If refresh fails, logout the user
+        useAuthStore.getState().logout();
+        throw new Error('Session expired. Please log in again.');
+      }
+    } catch (error) {
+      // If refresh fails, logout the user
+      useAuthStore.getState().logout();
+      throw new Error('Session expired. Please log in again.');
+    }
+  }
+  
+  const h: Record<string, string> = { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`
+  };
+  
   if (businessId) h["business-id"] = businessId;
   if (userId) h["user-id"] = userId;
   return h;
 }
 
-async function getJSON<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, init);
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return (await res.json()) as T;
+// Enhanced fetch function with error handling
+async function apiFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(input, init);
+    
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      useAuthStore.getState().logout();
+      throw new Error('Unauthorized. Please log in again.');
+    }
+    
+    // Handle 403 Forbidden
+    if (response.status === 403) {
+      throw new Error('Access forbidden. You do not have permission to perform this action.');
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Network error. Please check your connection and try again.');
+    }
+    throw error;
+  }
 }
 
 export const api = {
-  // ---------- Items (you already had these) ----------
-  async getItems(): Promise<Item[]> {
-    // if you have a route for items, use it; else adapt/remove
-    return getJSON<Item[]>("/api/items");
+  // ---------- Auth ----------
+  async login(credentials: { username: string; password: string; businessId?: string; branchId?: string }) {
+    const response = await apiFetch<{ 
+      user: any; 
+      token: string; 
+      refreshToken: string; 
+      role: 'SuperAdmin' | 'Admin' | 'Staff';
+      businessId?: string;
+      branchId?: string;
+    }>('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    
+    return response;
   },
+  
+  async adminLogin(credentials: { username: string; password: string }) {
+    const response = await apiFetch<{ 
+      user: any; 
+      token: string; 
+      refreshToken: string; 
+      role: 'SuperAdmin';
+    }>('/api/auth/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    
+    return response;
+  },
+  
+  async logout() {
+    const { token } = useAuthStore.getState();
+    if (token) {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }).catch(() => {
+        // Ignore logout errors
+      });
+    }
+  },
+  
+  // ---------- Items ----------
+  async getItems(businessId: ID): Promise<Item[]> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Item[]>("/api/items", { headers });
+  },
+  
   async createItem(item: Omit<Item, "id">): Promise<Item> {
-    return getJSON<Item>("/api/items", {
+    const headers = await getAuthHeaders(item.businessId);
+    return apiFetch<Item>("/api/items", {
       method: "POST",
-      headers: headers(item.businessId),
+      headers,
       body: JSON.stringify(item),
     });
   },
-
-  // ---------- Preferences (you already had these) ----------
-  async getPreferences(id: number): Promise<Preferences> {
-    return getJSON<Preferences>(`/api/preferences/${id}`);
-  },
-  async updatePreferences(id: number, updates: Partial<Preferences>): Promise<void> {
-    await getJSON<void>(`/api/preferences/${id}`, {
+  
+  async updateItem(id: ID, updates: Partial<Omit<Item, "id" | "businessId">>, businessId: ID): Promise<Item> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Item>(`/api/items/${id}`, {
       method: "PUT",
-      headers: headers(updates.businessId as string | undefined),
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+  
+  async deleteItem(id: ID, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/items/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
+  // ---------- Preferences ----------
+  async getPreferences(id: number, businessId: ID): Promise<Preferences> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Preferences>(`/api/preferences/${id}`, { headers });
+  },
+  
+  async updatePreferences(id: number, updates: Partial<Preferences>, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/preferences/${id}`, {
+      method: "PUT",
+      headers,
       body: JSON.stringify(updates),
     });
   },
 
   // ---------- Accounts ----------
   async getAccounts(businessId: ID, userId: ID): Promise<Account[]> {
-    return getJSON<Account[]>("/api/accounts", { headers: headers(businessId, userId) });
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<Account[]>("/api/accounts", { headers });
   },
 
   async searchAccounts(query: string, businessId: ID, userId: ID): Promise<Account[]> {
-    const all = await this.getAccounts(businessId, userId);
-    const q = query.trim().toLowerCase();
-    return all.filter(a => a.name.toLowerCase().includes(q));
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<Account[]>(`/api/accounts?search=${encodeURIComponent(query)}`, { headers });
   },
 
   async createAccount(
     account: Omit<Account, "id" | "archived" | "createdAt">
   ): Promise<Account> {
-    return getJSON<Account>("/api/accounts", {
+    const headers = await getAuthHeaders(account.businessId, account.userId);
+    return apiFetch<Account>("/api/accounts", {
       method: "POST",
-      headers: headers(account.businessId, account.userId),
+      headers,
       body: JSON.stringify(account),
     });
   },
@@ -128,26 +303,35 @@ export const api = {
     businessId: ID,
     userId: ID
   ): Promise<Account> {
-    return getJSON<Account>(`/api/accounts/${id}`, {
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<Account>(`/api/accounts/${id}`, {
       method: "PUT",
-      headers: headers(businessId, userId),
+      headers,
       body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteAccount(id: ID, businessId: ID, userId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<void>(`/api/accounts/${id}`, {
+      method: "DELETE",
+      headers,
     });
   },
 
   // ---------- Transactions ----------
   async getTransactions(accountId: ID, userId: ID): Promise<Transaction[]> {
-    return getJSON<Transaction[]>(`/api/transactions/${accountId}`, {
-      headers: headers(undefined, userId),
-    });
+    const headers = await getAuthHeaders(undefined, userId);
+    return apiFetch<Transaction[]>(`/api/transactions/${accountId}`, { headers });
   },
 
   async createTransaction(
     t: Omit<Transaction, "id" | "deleted">
   ): Promise<Transaction> {
-    return getJSON<Transaction>("/api/transactions", {
+    const headers = await getAuthHeaders(t.businessId, t.userId);
+    return apiFetch<Transaction>("/api/transactions", {
       method: "POST",
-      headers: headers(t.businessId, t.userId),
+      headers,
       body: JSON.stringify(t),
     });
   },
@@ -158,39 +342,258 @@ export const api = {
     businessId: ID,
     userId: ID
   ): Promise<Transaction> {
-    return getJSON<Transaction>(`/api/transactions/${id}`, {
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<Transaction>(`/api/transactions/${id}`, {
       method: "PUT",
-      headers: headers(businessId, userId),
+      headers,
       body: JSON.stringify(updates),
     });
   },
 
+  async deleteTransaction(id: ID, businessId: ID, userId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId, userId);
+    return apiFetch<void>(`/api/transactions/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
   // ---------- Cashbook ----------
-  async getCashbookEntries(businessId: ID): Promise<CashbookEntry[]> {
-    return getJSON<CashbookEntry[]>("/api/cashbook", { headers: headers(businessId) });
+  async getCashbookEntries(businessId: ID, startDate?: string, endDate?: string): Promise<CashbookEntry[]> {
+    const headers = await getAuthHeaders(businessId);
+    let url = "/api/cashbook";
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    if (params.toString()) url += `?${params.toString()}`;
+    return apiFetch<CashbookEntry[]>(url, { headers });
   },
 
   async createCashbookEntry(
     entry: Omit<CashbookEntry, "id">
   ): Promise<CashbookEntry> {
-    return getJSON<CashbookEntry>("/api/cashbook", {
+    const headers = await getAuthHeaders(entry.businessId);
+    return apiFetch<CashbookEntry>("/api/cashbook", {
       method: "POST",
-      headers: headers(entry.businessId),
+      headers,
       body: JSON.stringify(entry),
+    });
+  },
+
+  async updateCashbookEntry(
+    id: ID,
+    updates: Partial<Omit<CashbookEntry, "id" | "businessId">>,
+    businessId: ID
+  ): Promise<CashbookEntry> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<CashbookEntry>(`/api/cashbook/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteCashbookEntry(id: ID, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/cashbook/${id}`, {
+      method: "DELETE",
+      headers,
     });
   },
 
   // ---------- Categories ----------
   async getCategories(businessId: ID): Promise<Category[]> {
-    // server can optionally filter by ?businessId=
-    return getJSON<Category[]>(`/api/categories?businessId=${encodeURIComponent(businessId)}`);
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Category[]>(`/api/categories?businessId=${encodeURIComponent(businessId)}`);
   },
 
   async createCategory(input: { name: string; color: string; businessId: ID }): Promise<Category> {
-    return getJSON<Category>("/api/categories", {
+    const headers = await getAuthHeaders(input.businessId);
+    return apiFetch<Category>("/api/categories", {
       method: "POST",
-      headers: headers(input.businessId),
+      headers,
       body: JSON.stringify(input),
+    });
+  },
+
+  async updateCategory(
+    id: ID,
+    updates: Partial<Omit<Category, "id" | "businessId">>,
+    businessId: ID
+  ): Promise<Category> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Category>(`/api/categories/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteCategory(id: ID, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/categories/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
+  // ---------- Businesses ----------
+  async getBusinesses(): Promise<Business[]> {
+    const headers = await getAuthHeaders();
+    return apiFetch<Business[]>("/api/businesses", { headers });
+  },
+
+  async getBusiness(id: ID): Promise<Business> {
+    const headers = await getAuthHeaders();
+    return apiFetch<Business>(`/api/businesses/${id}`, { headers });
+  },
+
+  async createBusiness(business: Omit<Business, "id" | "createdAt" | "updatedAt">): Promise<Business> {
+    const headers = await getAuthHeaders();
+    return apiFetch<Business>("/api/businesses", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(business),
+    });
+  },
+
+  async updateBusiness(
+    id: ID,
+    updates: Partial<Omit<Business, "id" | "createdAt" | "updatedAt">>,
+    businessId: ID
+  ): Promise<Business> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Business>(`/api/businesses/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteBusiness(id: ID): Promise<void> {
+    const headers = await getAuthHeaders();
+    return apiFetch<void>(`/api/businesses/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
+  // ---------- Branches ----------
+  async getBranches(businessId: ID): Promise<Branch[]> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Branch[]>(`/api/branches?businessId=${encodeURIComponent(businessId)}`, { headers });
+  },
+
+  async getBranch(id: ID): Promise<Branch> {
+    const headers = await getAuthHeaders();
+    return apiFetch<Branch>(`/api/branches/${id}`, { headers });
+  },
+
+  async createBranch(branch: Omit<Branch, "id" | "createdAt" | "updatedAt">): Promise<Branch> {
+    const headers = await getAuthHeaders(branch.businessId);
+    return apiFetch<Branch>("/api/branches", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(branch),
+    });
+  },
+
+  async updateBranch(
+    id: ID,
+    updates: Partial<Omit<Branch, "id" | "businessId" | "createdAt" | "updatedAt">>,
+    businessId: ID
+  ): Promise<Branch> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Branch>(`/api/branches/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteBranch(id: ID, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/branches/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
+  // ---------- Invoices ----------
+  async getInvoices(businessId: ID, branchId?: ID): Promise<Invoice[]> {
+    const headers = await getAuthHeaders(businessId);
+    let url = `/api/invoices?businessId=${encodeURIComponent(businessId)}`;
+    if (branchId) url += `&branchId=${encodeURIComponent(branchId)}`;
+    return apiFetch<Invoice[]>(url, { headers });
+  },
+
+  async getInvoice(id: ID): Promise<Invoice> {
+    const headers = await getAuthHeaders();
+    return apiFetch<Invoice>(`/api/invoices/${id}`, { headers });
+  },
+
+  async createInvoice(invoice: Omit<Invoice, "id" | "createdAt" | "updatedAt">): Promise<Invoice> {
+    const headers = await getAuthHeaders(invoice.businessId);
+    return apiFetch<Invoice>("/api/invoices", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(invoice),
+    });
+  },
+
+  async updateInvoice(
+    id: ID,
+    updates: Partial<Omit<Invoice, "id" | "businessId" | "createdAt" | "updatedAt">>,
+    businessId: ID
+  ): Promise<Invoice> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<Invoice>(`/api/invoices/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteInvoice(id: ID, businessId: ID): Promise<void> {
+    const headers = await getAuthHeaders(businessId);
+    return apiFetch<void>(`/api/invoices/${id}`, {
+      method: "DELETE",
+      headers,
+    });
+  },
+
+  // ---------- Invoice Items ----------
+  async getInvoiceItems(invoiceId: ID): Promise<InvoiceItem[]> {
+    const headers = await getAuthHeaders();
+    return apiFetch<InvoiceItem[]>(`/api/invoice-items?invoiceId=${encodeURIComponent(invoiceId)}`, { headers });
+  },
+
+  async createInvoiceItem(item: Omit<InvoiceItem, "id">): Promise<InvoiceItem> {
+    const headers = await getAuthHeaders();
+    return apiFetch<InvoiceItem>("/api/invoice-items", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(item),
+    });
+  },
+
+  async updateInvoiceItem(
+    id: ID,
+    updates: Partial<Omit<InvoiceItem, "id" | "invoiceId">>
+  ): Promise<InvoiceItem> {
+    const headers = await getAuthHeaders();
+    return apiFetch<InvoiceItem>(`/api/invoice-items/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(updates),
+    });
+  },
+
+  async deleteInvoiceItem(id: ID): Promise<void> {
+    const headers = await getAuthHeaders();
+    return apiFetch<void>(`/api/invoice-items/${id}`, {
+      method: "DELETE",
+      headers,
     });
   },
 

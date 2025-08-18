@@ -2,35 +2,181 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { 
   Search, 
   Filter, 
+  Download, 
   BarChart3,
-  Download,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAuthStore } from '@/lib/auth-store';
+import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export function Reports() {
-  const { role } = useAuthStore();
-  const [dateRange, setDateRange] = useState('last30');
+  const { businessId, user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
   
-  // Mock report data
-  const reports = [
-    { id: 1, name: 'Trial Balance', description: 'Summary of all account balances', lastGenerated: '2023-06-15', format: 'PDF' },
-    { id: 2, name: 'Profit & Loss', description: 'Income and expense summary', lastGenerated: '2023-06-15', format: 'Excel' },
-    { id: 3, name: 'Balance Sheet', description: 'Financial position statement', lastGenerated: '2023-06-15', format: 'PDF' },
-    { id: 4, name: 'Cash Flow', description: 'Cash movement report', lastGenerated: '2023-06-15', format: 'Excel' },
-    { id: 5, name: 'Accounts Receivable', description: 'Customer account summary', lastGenerated: '2023-06-10', format: 'PDF' },
-    { id: 6, name: 'Accounts Payable', description: 'Supplier account summary', lastGenerated: '2023-06-10', format: 'Excel' },
-  ];
+  // Fetch report data with TanStack Query
+  const { data: reportData, isLoading, isError, error } = useQuery({
+    queryKey: ['reports', businessId, dateRange.start, dateRange.end],
+    queryFn: async () => {
+      if (!businessId || !user?.id) {
+        throw new Error('Missing business or user ID');
+      }
+      
+      // Fetch all required data for reports
+      const [accountSummary, accounts] = await Promise.all([
+        api.getAccountSummary(businessId, user.id),
+        api.getAccounts(businessId, user.id)
+      ]);
+      
+      return {
+        accountSummary,
+        accounts
+      };
+    },
+    enabled: !!businessId && !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
-  const filteredReports = reports.filter(report => 
-    report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    report.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter accounts based on search term
+  const filteredAccounts = reportData?.accounts.filter(account => 
+    account.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  // Calculate net balance
+  const netBalance = reportData?.accountSummary 
+    ? reportData.accountSummary.totalDebit - reportData.accountSummary.totalCredit 
+    : 0;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <Skeleton className="h-8 w-40 mb-2" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Skeleton className="h-10 w-full pl-10" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Report Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 flex items-center justify-center">
+                <Skeleton className="h-32 w-32 rounded-full" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[...Array(5)].map((_, index) => (
+                  <div key={index} className="flex justify-between">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Trial Balance Table */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 border-b text-sm font-medium text-foreground">
+                <div className="col-span-6">Account</div>
+                <div className="col-span-3 text-right">Debit</div>
+                <div className="col-span-3 text-right">Credit</div>
+              </div>
+              {[...Array(5)].map((_, index) => (
+                <div key={index} className="grid grid-cols-12 gap-4 p-4 border-b">
+                  <div className="col-span-6">
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                  <div className="col-span-3 text-right">
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <div className="col-span-3 text-right">
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Reports</h1>
+            <p className="text-muted-foreground">Financial reports and analytics</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </div>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load report data: {error instanceof Error ? error.message : 'Unknown error'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -38,121 +184,88 @@ export function Reports() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Reports</h1>
-          <p className="text-muted-foreground">Generate and view financial reports</p>
+          <p className="text-muted-foreground">Financial reports and analytics</p>
         </div>
         <div className="flex gap-2">
-          <Button>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Generate Report
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export
           </Button>
         </div>
       </div>
 
-      {/* Date Range and Filters */}
+      {/* Filters and Search */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex gap-2">
-              <Button 
-                variant={dateRange === 'last7' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setDateRange('last7')}
-              >
-                Last 7 Days
-              </Button>
-              <Button 
-                variant={dateRange === 'last30' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setDateRange('last30')}
-              >
-                Last 30 Days
-              </Button>
-              <Button 
-                variant={dateRange === 'last90' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setDateRange('last90')}
-              >
-                Last 90 Days
-              </Button>
-            </div>
-            <div className="relative flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search reports..."
+                placeholder="Search accounts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Button variant="outline">
-              <Filter className="h-4 w-4 mr-2" />
-              Advanced Filters
-            </Button>
+            <Input
+              type="date"
+              value={dateRange.start}
+              onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
+              placeholder="Start date"
+            />
+            <Input
+              type="date"
+              value={dateRange.end}
+              onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
+              placeholder="End date"
+            />
           </div>
         </CardContent>
       </Card>
 
-      {/* Reports Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredReports.map((report) => (
-          <Card key={report.id} className="flex flex-col">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                  {report.name}
-                </CardTitle>
-                <Button variant="ghost" size="icon">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </div>
-              <CardDescription>
-                {report.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Last Generated</span>
-                  <span>{report.lastGenerated}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Format</span>
-                  <Badge variant="secondary">{report.format}</Badge>
-                </div>
-              </div>
-            </CardContent>
-            <CardContent className="pt-0">
-              <Button className="w-full">
-                <BarChart3 className="h-4 w-4 mr-2" />
-                View Report
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-        {filteredReports.length === 0 && (
-          <Card className="col-span-full">
-            <CardContent className="p-8 text-center">
-              <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-medium mb-2">No reports found</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Try adjusting your search or filter to find what you're looking for.
-              </p>
-              <Button>
-                <BarChart3 className="h-4 w-4 mr-2" />
-                Generate Report
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Debit</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ETB {reportData?.accountSummary?.totalDebit.toLocaleString() || '0.00'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Credit</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ETB {reportData?.accountSummary?.totalCredit.toLocaleString() || '0.00'}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ETB {netBalance.toLocaleString() || '0.00'}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Trial Balance Table Example */}
+      {/* Trial Balance Table */}
       <Card>
         <CardHeader>
           <CardTitle>Trial Balance</CardTitle>
           <CardDescription>
-            Summary of all account balances as of today
+            Summary of all account balances
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,58 +275,40 @@ export function Reports() {
               <div className="col-span-3 text-right">Debit</div>
               <div className="col-span-3 text-right">Credit</div>
             </div>
-            <div className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-muted/30 transition-colors">
-              <div className="col-span-6 font-medium text-foreground">
-                Cash
+            {filteredAccounts.map((account) => (
+              <div 
+                key={account.id} 
+                className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-muted/30 transition-colors"
+              >
+                <div className="col-span-6 font-medium text-foreground">
+                  {account.name}
+                </div>
+                <div className="col-span-3 text-right">
+                  {account.type === 'customer' ? 'ETB 0.00' : '-'}
+                </div>
+                <div className="col-span-3 text-right">
+                  {account.type === 'supplier' ? 'ETB 0.00' : '-'}
+                </div>
               </div>
-              <div className="col-span-3 text-right text-foreground">
-                125,430.00
+            ))}
+            {filteredAccounts.length === 0 && (
+              <div className="p-8 text-center text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="text-lg font-medium mb-2">No accounts found</h3>
+                <p className="mb-4">Try adjusting your search or filter to find what you're looking for.</p>
               </div>
-              <div className="col-span-3 text-right text-muted-foreground">
-                0.00
+            )}
+            <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 border-t text-sm font-medium text-foreground">
+              <div className="col-span-6 font-medium">Total</div>
+              <div className="col-span-3 text-right font-medium">
+                ETB {reportData?.accountSummary?.totalDebit.toLocaleString() || '0.00'}
               </div>
-            </div>
-            <div className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-muted/30 transition-colors">
-              <div className="col-span-6 font-medium text-foreground">
-                Accounts Receivable
-              </div>
-              <div className="col-span-3 text-right text-foreground">
-                45,230.00
-              </div>
-              <div className="col-span-3 text-right text-muted-foreground">
-                0.00
-              </div>
-            </div>
-            <div className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-muted/30 transition-colors">
-              <div className="col-span-6 font-medium text-foreground">
-                Accounts Payable
-              </div>
-              <div className="col-span-3 text-right text-muted-foreground">
-                0.00
-              </div>
-              <div className="col-span-3 text-right text-foreground">
-                32,150.00
-              </div>
-            </div>
-            <div className="grid grid-cols-12 gap-4 p-4 bg-muted/20 font-medium">
-              <div className="col-span-6 text-foreground">
-                Total
-              </div>
-              <div className="col-span-3 text-right text-foreground">
-                170,660.00
-              </div>
-              <div className="col-span-3 text-right text-foreground">
-                32,150.00
+              <div className="col-span-3 text-right font-medium">
+                ETB {reportData?.accountSummary?.totalCredit.toLocaleString() || '0.00'}
               </div>
             </div>
           </div>
         </CardContent>
-        <div className="p-6 pt-0 flex justify-end">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export to Excel
-          </Button>
-        </div>
       </Card>
     </div>
   );

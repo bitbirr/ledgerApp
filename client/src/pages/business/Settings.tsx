@@ -4,52 +4,163 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Save, 
-  Globe, 
+  User, 
   Bell, 
-  Lock, 
-  User,
-  Palette
+  Palette,
+  Globe,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
-import { useTheme } from '@/lib/design-tokens';
+import { api } from '@/lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Preferences } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 export function Settings() {
-  const { user, role } = useAuthStore();
-  const { theme, toggleTheme } = useTheme();
+  const { businessId, user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  // Form states
-  const [profile, setProfile] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
+  // Fetch preferences with TanStack Query
+  const { data: preferences, isLoading, isError, error } = useQuery<Preferences, Error>({
+    queryKey: ['preferences', businessId],
+    queryFn: () => api.getPreferences(1, businessId!), // Assuming ID 1 for now
+    enabled: !!businessId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
-  
-  const [preferences, setPreferences] = useState({
+
+  // Form state
+  const [formData, setFormData] = useState({
     currency: 'ETB',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '24h',
-    darkMode: theme === 'dark',
+    timezone: 'Africa/Addis_Ababa',
+    dateFormat: 'dd/MM/yyyy',
+    theme: 'system',
     notifications: true,
   });
 
-  const handleSaveProfile = () => {
-    // In a real implementation, this would call the API
-    console.log('Saving profile:', profile);
-  };
-
-  const handleSavePreferences = () => {
-    // In a real implementation, this would call the API
-    console.log('Saving preferences:', preferences);
-  };
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-    setPreferences(prev => ({
+  // Handle form changes
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({
       ...prev,
-      darkMode: !prev.darkMode
+      [field]: value
     }));
   };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!businessId) return;
+    
+    try {
+      // In a real implementation, we would update the preferences
+      // For now, we'll just show a success message
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated successfully.",
+      });
+      
+      // Invalidate and refetch preferences
+      queryClient.invalidateQueries({ queryKey: ['preferences', businessId] });
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div>
+          <Skeleton className="h-8 w-40 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+
+        {/* Profile Settings */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-32 mt-4" />
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <Skeleton className="h-6 w-12 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground">Manage your account settings and preferences</p>
+        </div>
+        
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>
+            Failed to load settings: {error instanceof Error ? error.message : 'Unknown error'}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,211 +170,205 @@ export function Settings() {
         <p className="text-muted-foreground">Manage your account settings and preferences</p>
       </div>
 
-      {/* Profile Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profile Settings
-          </CardTitle>
-          <CardDescription>
-            Update your personal information
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={profile.name}
-              onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profile.email}
-              onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-            />
-          </div>
-          <div className="flex justify-end">
-            <Button onClick={handleSaveProfile}>
+      <form onSubmit={handleSubmit}>
+        {/* Profile Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Settings
+            </CardTitle>
+            <CardDescription>
+              Update your profile information and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                defaultValue={user?.name || ''}
+                placeholder="Enter your full name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                defaultValue={user?.email || ''}
+                placeholder="Enter your email"
+              />
+            </div>
+            <Button type="submit">
               <Save className="h-4 w-4 mr-2" />
               Save Profile
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Preferences */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Preferences
-          </CardTitle>
-          <CardDescription>
-            Customize your application experience
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Theme</Label>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-muted-foreground" />
-                  <span>Dark Mode</span>
-                </div>
-                <Switch
-                  checked={preferences.darkMode}
-                  onCheckedChange={handleThemeToggle}
-                />
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notification Settings
+            </CardTitle>
+            <CardDescription>
+              Configure how you receive notifications
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive email notifications for important updates
+                </p>
               </div>
+              <Switch
+                id="notifications"
+                checked={formData.notifications}
+                onCheckedChange={(checked) => handleInputChange('notifications', checked)}
+              />
             </div>
-            
+          </CardContent>
+        </Card>
+
+        {/* Appearance Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5" />
+              Appearance
+            </CardTitle>
+            <CardDescription>
+              Customize the look and feel of the application
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme">Theme</Label>
+              <Select 
+                value={formData.theme} 
+                onValueChange={(value) => handleInputChange('theme', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Regional Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Regional Settings
+            </CardTitle>
+            <CardDescription>
+              Set your preferred language and regional formats
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <select
-                  id="currency"
-                  value={preferences.currency}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, currency: e.target.value }))}
-                  className="w-full p-2 border border-input bg-background rounded-md"
-                >
-                  <option value="ETB">ETB - Ethiopian Birr</option>
-                  <option value="USD">USD - US Dollar</option>
-                  <option value="EUR">EUR - Euro</option>
-                </select>
-              </div>
+              <Select 
+                value={formData.currency} 
+                onValueChange={(value) => handleInputChange('currency', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ETB">ETB - Ethiopian Birr</SelectItem>
+                  <SelectItem value="USD">USD - US Dollar</SelectItem>
+                  <SelectItem value="EUR">EUR - Euro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
+            <div className="space-y-2">
+              <Label htmlFor="timezone">Timezone</Label>
+              <Select 
+                value={formData.timezone} 
+                onValueChange={(value) => handleInputChange('timezone', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Africa/Addis_Ababa">Africa/Addis_Ababa</SelectItem>
+                  <SelectItem value="UTC">UTC</SelectItem>
+                  <SelectItem value="America/New_York">America/New_York</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="dateFormat">Date Format</Label>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <select
-                  id="dateFormat"
-                  value={preferences.dateFormat}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, dateFormat: e.target.value }))}
-                  className="w-full p-2 border border-input bg-background rounded-md"
-                >
-                  <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                  <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                  <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                </select>
-              </div>
+              <Select 
+                value={formData.dateFormat} 
+                onValueChange={(value) => handleInputChange('dateFormat', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select date format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dd/MM/yyyy">dd/MM/yyyy</SelectItem>
+                  <SelectItem value="MM/dd/yyyy">MM/dd/yyyy</SelectItem>
+                  <SelectItem value="yyyy-MM-dd">yyyy-MM-dd</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="timeFormat">Time Format</Label>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <select
-                  id="timeFormat"
-                  value={preferences.timeFormat}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, timeFormat: e.target.value }))}
-                  className="w-full p-2 border border-input bg-background rounded-md"
-                >
-                  <option value="12h">12 Hour</option>
-                  <option value="24h">24 Hour</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-end">
-            <Button onClick={handleSavePreferences}>
-              <Save className="h-4 w-4 mr-2" />
-              Save Preferences
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </CardTitle>
-          <CardDescription>
-            Configure how you receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Email Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive notifications via email
-              </p>
+        {/* Security Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Security
+            </CardTitle>
+            <CardDescription>
+              Manage your account security settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Change Password</Label>
+                <p className="text-sm text-muted-foreground">
+                  Update your password regularly for better security
+                </p>
+              </div>
+              <Button variant="outline">Change Password</Button>
             </div>
-            <Switch
-              checked={preferences.notifications}
-              onCheckedChange={(checked) => setPreferences(prev => ({ ...prev, notifications: checked }))}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Push Notifications</Label>
-              <p className="text-sm text-muted-foreground">
-                Receive push notifications on your device
-              </p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label>Two-Factor Authentication</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add an extra layer of security to your account
+                </p>
+              </div>
+              <Switch />
             </div>
-            <Switch disabled />
-          </div>
-          
-          <div className="flex justify-end">
-            <Button>
-              <Save className="h-4 w-4 mr-2" />
-              Save Notification Settings
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Security */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Security
-          </CardTitle>
-          <CardDescription>
-            Manage your account security settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Current Role</Label>
-            <div className="p-3 bg-muted/50 rounded-md">
-              <span className="font-medium capitalize">{role?.toLowerCase() || 'user'}</span>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Change Password</Label>
-            <p className="text-sm text-muted-foreground">
-              Update your password to keep your account secure
-            </p>
-            <Button variant="outline">Change Password</Button>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Two-Factor Authentication</Label>
-            <p className="text-sm text-muted-foreground">
-              Add an extra layer of security to your account
-            </p>
-            <Button variant="outline" disabled>Enable 2FA</Button>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex justify-end">
+          <Button type="submit">
+            <Save className="h-4 w-4 mr-2" />
+            Save All Settings
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
