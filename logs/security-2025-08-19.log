@@ -226,3 +226,27 @@ Error: read ECONNRESET
   ip: 'unknown',
   userAgent: undefined
 }
+2025-08-19T13:08:26.944Z [SECURITY]: Successful login {
+  email: 'admin@system.com',
+  userId: 'user_admin',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-19T13:11:25.482Z [SECURITY]: Successful login {
+  email: 'admin@system.com',
+  userId: 'user_admin',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-19T14:13:43.121Z [SECURITY]: Successful login {
+  email: 'admin@system.com',
+  userId: 'user_admin',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-19T14:14:53.925Z [SECURITY]: Successful login {
+  email: 'admin@system.com',
+  userId: 'user_admin',
+  ip: 'unknown',
+  userAgent: undefined
+}

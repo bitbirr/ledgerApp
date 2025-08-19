@@ -64,8 +64,8 @@ export const useAuthStore = create<AuthState>()(
       
       // Actions
       login: (userData) => {
-        // Validate that businessId is provided
-        if (!userData.businessId) {
+        // Validate that businessId is provided (unless user is SuperAdmin)
+        if (!userData.businessId && userData.role !== 'SuperAdmin') {
           throw new Error('Business ID is required for login');
         }
 

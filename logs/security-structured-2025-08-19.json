@@ -8,3 +8,7 @@
 {"level":"security","message":"Failed login","metadata":{"email":"najib@hajielec.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-19T09:40:00.380Z"}
 {"level":"security","message":"Failed login","metadata":{"email":"najib@hajielec.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-19T09:41:36.840Z"}
 {"level":"security","message":"Failed login","metadata":{"email":"najib@hajielec.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-19T12:20:03.472Z"}
+{"level":"security","message":"Successful login","metadata":{"email":"admin@system.com","ip":"unknown","userId":"user_admin"},"timestamp":"2025-08-19T13:08:26.944Z"}
+{"level":"security","message":"Successful login","metadata":{"email":"admin@system.com","ip":"unknown","userId":"user_admin"},"timestamp":"2025-08-19T13:11:25.482Z"}
+{"level":"security","message":"Successful login","metadata":{"email":"admin@system.com","ip":"unknown","userId":"user_admin"},"timestamp":"2025-08-19T14:13:43.122Z"}
+{"level":"security","message":"Successful login","metadata":{"email":"admin@system.com","ip":"unknown","userId":"user_admin"},"timestamp":"2025-08-19T14:14:53.926Z"}

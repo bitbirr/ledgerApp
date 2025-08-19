@@ -5,6 +5,8 @@ import { and, eq, gte, lte, like, sql, inArray } from 'drizzle-orm';
 import { seedAll } from './seed.ts';
 import { httpLogger } from './services/logger.ts';
 import { authenticateUser, authenticateSuperAdmin, getUserBusinesses, getUserBranches, verifyToken } from './services/auth.ts';
+import { authenticateToken, requireRole, requireBranchAccess, applyDataFilter } from './middleware/auth.ts';
+import { createBranch, getBranchesByBusiness, getBranchById, updateBranch, deleteBranch } from './services/branchService.ts';
 
 const getDb = async () => await dbPromise;
 
@@ -486,5 +488,103 @@ export async function registerRoutes(app: Express): Promise<void> {
     });
     const [created] = await dbc.select().from(schema.transactions).where(eq(schema.transactions.id, id));
     res.status(201).json(created);
+  });
+
+  // -------- Branches ----------
+
+  // Get all branches for a business
+  app.get('/api/branches/business/:businessId', authenticateToken, applyDataFilter(), async (req, res) => {
+    try {
+      const { businessId } = req.params;
+      const branches = await getBranchesByBusiness(businessId);
+      res.json(branches);
+    } catch (error) {
+      console.error('Error fetching branches:', error);
+      res.status(500).json({ message: 'Failed to fetch branches' });
+    }
+  });
+
+  // Get a specific branch by ID
+  app.get('/api/branches/:id', authenticateToken, requireBranchAccess(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const branch = await getBranchById(id);
+      
+      if (!branch) {
+        return res.status(404).json({ message: 'Branch not found' });
+      }
+      
+      res.json(branch);
+    } catch (error) {
+      console.error('Error fetching branch:', error);
+      res.status(500).json({ message: 'Failed to fetch branch' });
+    }
+  });
+
+  // Create a new branch
+  app.post('/api/branches', authenticateToken, requireRole(['SuperAdmin', 'Admin']), async (req, res) => {
+    try {
+      const { businessId, name, address, phone, email } = req.body;
+      const userId = (req as any).user?.userId; // Get user ID from auth middleware
+      
+      // Validate required fields
+      if (!businessId || !name) {
+        return res.status(400).json({ message: 'Business ID and name are required' });
+      }
+      
+      const branch = await createBranch(businessId, name, address, phone, email, userId);
+      res.status(201).json(branch);
+    } catch (error) {
+      console.error('Error creating branch:', error);
+      res.status(500).json({ message: 'Failed to create branch' });
+    }
+  });
+
+  // Update a branch
+  app.put('/api/branches/:id', authenticateToken, requireBranchAccess(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { name, address, phone, email, isActive } = req.body;
+      const userId = (req as any).user?.userId; // Get user ID from auth middleware
+      
+      // Validate required fields
+      if (!name) {
+        return res.status(400).json({ message: 'Name is required' });
+      }
+      
+      const branch = await updateBranch(id, { name, address, phone, email, isActive }, userId);
+      
+      if (!branch) {
+        return res.status(404).json({ message: 'Branch not found' });
+      }
+      
+      res.json(branch);
+    } catch (error) {
+      console.error('Error updating branch:', error);
+      res.status(500).json({ message: 'Failed to update branch' });
+    }
+  });
+
+  // Delete a branch
+  app.delete('/api/branches/:id', authenticateToken, requireRole(['SuperAdmin', 'Admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = (req as any).user?.userId; // Get user ID from auth middleware
+      
+      const result = await deleteBranch(id, userId);
+      
+      if (!result) {
+        return res.status(404).json({ message: 'Branch not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error: any) {
+      if (error.message === 'Cannot delete branch with associated users') {
+        return res.status(400).json({ message: error.message });
+      }
+      
+      console.error('Error deleting branch:', error);
+      res.status(500).json({ message: 'Failed to delete branch' });
+    }
   });
 }

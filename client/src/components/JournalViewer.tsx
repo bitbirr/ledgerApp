@@ -4,29 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { TableSkeleton, TableEmpty } from '@/components/ui/loading';
-import { BookOpen, Search, Download } from 'lucide-react';
+import { Calendar, Filter, BookOpen, Search, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { TableSkeleton, TableEmpty } from '@/components/ui/loading';
 import type { GLJournalEntry, GLJournalLine, GLAccount } from '@shared/schema';
 
+interface JournalLineWithAccount extends GLJournalLine {
+  accountCode?: string;
+  description?: string;
+  debitAmount?: number;
+  creditAmount?: number;
+}
+
 interface JournalEntryWithLines extends GLJournalEntry {
-  lines: GLJournalLine[];
+  lines: JournalLineWithAccount[];
 }
 
 export function JournalViewer() {
@@ -42,12 +36,13 @@ export function JournalViewer() {
       const response = await fetch('/api/gl-accounts', {
         headers: {
           'business-id': 'default-business',
-          'user-id': 'default-user',
-        },
+          'user-id': 'default-user'
+        }
       });
       const data = (await response.json()) as GLAccount[];
       return data;
-    },
+      /* return response.json() as GLAccount[];*/
+    }
   });
 
   const { data: journalEntries, isLoading } = useQuery({
@@ -59,55 +54,46 @@ export function JournalViewer() {
       if (accountFilter) params.append('accountId', accountFilter);
       if (sourceFilter) params.append('sourceModule', sourceFilter);
       if (searchTerm) params.append('search', searchTerm);
-
+      
       const response = await fetch(`/api/journal-entries?${params}`, {
         headers: {
           'business-id': 'default-business',
-          'user-id': 'default-user',
-        },
+          'user-id': 'default-user'
+        }
       });
       if (!response.ok) throw new Error('Failed to fetch journal entries');
       const data = (await response.json()) as JournalEntryWithLines[];
       return data;
-    },
+      /* return response.json() as JournalEntryWithLines[];*/
+    }
   });
 
   const getAccountName = (accountId: string) => {
-    const account = glAccounts?.find((acc) => acc.id === accountId);
+    const account = glAccounts?.find(acc => acc.id === accountId);
     return account ? `${account.code} - ${account.name}` : accountId;
   };
 
   const exportToCSV = () => {
     if (!journalEntries) return;
-
-    const csvData = journalEntries.flatMap((entry) =>
-      entry.lines.map((line) => ({
+    
+    const csvData = journalEntries.flatMap(entry => 
+      entry.lines.map(line => ({
         'Entry Date': entry.entryDate,
         'Entry ID': entry.id,
-        Source: entry.sourceModule,
-        Memo: entry.memo || '',
-        Account: getAccountName(line.accountId),
-        Debit: line.debit || 0,
-        Credit: line.credit || 0,
-        Notes: line.notes || '',
-      })),
+        'Source': entry.sourceModule,
+        'Memo': entry.memo || '',
+        'Account': getAccountName(line.accountId),
+        'Debit': line.debit || 0,
+        'Credit': line.credit || 0,
+        'Notes': line.notes || ''
+      }))
     );
-
-    if (csvData.length === 0) return;
-
+    
     const csv = [
       Object.keys(csvData[0]).join(','),
-      ...csvData.map((row) =>
-        Object.values(row)
-          // basic CSV escaping for commas/quotes/newlines
-          .map((v) => {
-            const s = String(v ?? '');
-            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-          })
-          .join(','),
-      ),
+      ...csvData.map(row => Object.values(row).join(','))
     ].join('\n');
-
+    
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -145,7 +131,12 @@ export function JournalViewer() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="dateTo">To Date</Label>
-            <Input id="dateTo" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            <Input
+              id="dateTo"
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="account">Account</Label>
@@ -155,7 +146,7 @@ export function JournalViewer() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">All accounts</SelectItem>
-                {glAccounts?.map((account) => (
+                {glAccounts?.map(account => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.code} - {account.name}
                   </SelectItem>
@@ -185,7 +176,7 @@ export function JournalViewer() {
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search memo or notes..."
             value={searchTerm}
@@ -199,7 +190,7 @@ export function JournalViewer() {
           <TableSkeleton rows={6} cols={4} />
         ) : journalEntries && journalEntries.length > 0 ? (
           <div className="space-y-4">
-            {journalEntries.map((entry) => (
+            {journalEntries.map(entry => (
               <Card key={entry.id} className="border-l-4 border-l-primary">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -210,8 +201,12 @@ export function JournalViewer() {
                           {new Date(entry.entryDate).toLocaleDateString()}
                         </div>
                       </div>
-                      <Badge variant="outline">{entry.sourceModule.toUpperCase()}</Badge>
-                      {entry.locked && <Badge variant="secondary">Locked</Badge>}
+                      <Badge variant="outline">
+                        {entry.sourceModule.toUpperCase()}
+                      </Badge>
+                      {entry.locked && (
+                        <Badge variant="secondary">Locked</Badge>
+                      )}
                     </div>
                     <div className="table-actions">
                       <Button variant="ghost" size="sm" className="btn-action">
@@ -219,10 +214,12 @@ export function JournalViewer() {
                       </Button>
                     </div>
                   </div>
-                  {entry.memo && <p className="text-sm text-muted-foreground mt-2">{entry.memo}</p>}
+                  {entry.memo && (
+                    <p className="text-sm text-muted-foreground mt-2">{entry.memo}</p>
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <Table className="text-xs">
+                  <Table financial responsive className="text-xs">
                     <TableHeader>
                       <TableRow>
                         <TableHead>Account</TableHead>
@@ -232,16 +229,18 @@ export function JournalViewer() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {entry.lines.map((line) => (
+                      {entry.lines.map(line => (
                         <TableRow key={line.id}>
                           <TableCell className="font-mono text-xs">
-                            {getAccountName(line.accountId)}
+                            {line.accountId ? getAccountName(line.accountId) : 'N/A'}
                           </TableCell>
-                          <TableCell className="text-xs">{line.notes || '-'}</TableCell>
-                          <TableCell className="amount-cell">
+                          <TableCell className="text-xs">
+                            {line.notes || '-'}
+                          </TableCell>
+                          <TableCell amount positive={line.debit > 0}>
                             {line.debit > 0 ? formatCurrency(line.debit) : '-'}
                           </TableCell>
-                          <TableCell className="amount-cell">
+                          <TableCell amount positive={line.credit > 0}>
                             {line.credit > 0 ? formatCurrency(line.credit) : '-'}
                           </TableCell>
                         </TableRow>
@@ -253,7 +252,8 @@ export function JournalViewer() {
             ))}
           </div>
         ) : (
-          <TableEmpty
+          <TableEmpty 
+            icon={BookOpen}
             title="No journal entries found"
             description="No entries match your current filters"
           />

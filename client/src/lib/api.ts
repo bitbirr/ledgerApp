@@ -73,8 +73,12 @@ export type Business = {
 
 export type Branch = {
   id: ID;
-  name: string;
   businessId: ID;
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -521,7 +525,7 @@ export const api = {
   // ---------- Branches ----------
   async getBranches(businessId: ID): Promise<Branch[]> {
     const headers = await getAuthHeaders(businessId);
-    return apiFetch<Branch[]>(`/api/branches?businessId=${encodeURIComponent(businessId)}`, { headers });
+    return apiFetch<Branch[]>(`/api/branches/business/${encodeURIComponent(businessId)}`, { headers });
   },
 
   async getBranch(id: ID): Promise<Branch> {

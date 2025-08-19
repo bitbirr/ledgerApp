@@ -35,7 +35,9 @@ export function SuperAdminLogin() {
         user: loginResponse.user,
         token: loginResponse.token,
         refreshToken: loginResponse.refreshToken,
-        role: loginResponse.role,
+        role: loginResponse.user.role,
+        businessId: undefined,
+        branchId: undefined,
       });
       
       toast({
