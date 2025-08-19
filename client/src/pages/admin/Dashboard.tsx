@@ -70,7 +70,7 @@ export function SuperAdminDashboard() {
         {kpiData.map((kpi, index) => {
           const Icon = kpi.icon;
           return (
-            <Card key={index}>
+            <Card key={index} className="rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {kpi.title}
@@ -91,9 +91,9 @@ export function SuperAdminDashboard() {
       {/* Charts and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* System Status */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
+        <Card className="lg:col-span-2 rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">System Status</CardTitle>
             <CardDescription>
               Current system health and performance
             </CardDescription>
@@ -121,9 +121,9 @@ export function SuperAdminDashboard() {
         </Card>
 
         {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+        <Card className="rounded-2xl">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Recent Activity</CardTitle>
             <CardDescription>
               Latest system events and changes
             </CardDescription>
@@ -154,9 +154,9 @@ export function SuperAdminDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+      <Card className="rounded-2xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Quick Actions</CardTitle>
           <CardDescription>
             Common administrative tasks
           </CardDescription>
@@ -184,9 +184,9 @@ export function SuperAdminDashboard() {
       </Card>
 
       {/* Audit Trail Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Audit Trail</CardTitle>
+      <Card className="rounded-2xl">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Audit Trail</CardTitle>
           <CardDescription>
             Recent system changes and user actions
           </CardDescription>

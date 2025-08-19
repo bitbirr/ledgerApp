@@ -118,3 +118,105 @@ Error: Table 'ledger.preferences' doesn't exist
     }
   ]
 }
+2025-08-19T07:15:50.686Z [ERROR]: unhandledRejection: read ECONNRESET
+Error: read ECONNRESET
+    at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+    at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+    at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  error: Error: read ECONNRESET
+      at PromisePool.query (C:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+      at MySql2PreparedQuery.execute (C:\ledgerApp\node_modules\src\mysql2\session.ts:121:31)
+      at MySqlSelectBase.execute (C:\ledgerApp\node_modules\src\mysql-core\query-builders\select.ts:1056:25)
+      at MySqlSelectBase.then (C:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    code: 'ECONNRESET',
+    errno: -4077,
+    sql: undefined,
+    sqlState: undefined,
+    sqlMessage: undefined
+  },
+  stack: 'Error: read ECONNRESET\n' +
+    '    at PromisePool.query (C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js:36:22)\n' +
+    '    at MySql2PreparedQuery.execute (C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts:121:31)\n' +
+    '    at MySqlSelectBase.execute (C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts:1056:25)\n' +
+    '    at MySqlSelectBase.then (C:\\ledgerApp\\node_modules\\src\\query-promise.ts:31:15)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  rejection: true,
+  date: 'Tue Aug 19 2025 10:15:50 GMT+0300 (East Africa Time)',
+  process: {
+    pid: 28596,
+    uid: null,
+    gid: null,
+    cwd: 'C:\\ledgerApp',
+    execPath: 'C:\\Program Files\\nodejs\\node.exe',
+    version: 'v22.14.0',
+    argv: [
+      'C:\\Program Files\\nodejs\\node.exe',
+      'C:\\ledgerApp\\server\\index.ts'
+    ],
+    memoryUsage: {
+      rss: 164335616,
+      heapTotal: 160505856,
+      heapUsed: 134311208,
+      external: 11748633,
+      arrayBuffers: 1177937
+    }
+  },
+  os: { loadavg: [ 0, 0, 0 ], uptime: 216089.375 },
+  trace: [
+    {
+      column: 22,
+      file: 'C:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js',
+      function: 'PromisePool.query',
+      line: 36,
+      method: 'query',
+      native: false
+    },
+    {
+      column: 31,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts',
+      function: 'MySql2PreparedQuery.execute',
+      line: 121,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 25,
+      file: 'C:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\select.ts',
+      function: 'MySqlSelectBase.execute',
+      line: 1056,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 15,
+      file: 'C:\\ledgerApp\\node_modules\\src\\query-promise.ts',
+      function: 'MySqlSelectBase.then',
+      line: 31,
+      method: 'then',
+      native: false
+    },
+    {
+      column: 5,
+      file: 'node:internal/process/task_queues',
+      function: 'process.processTicksAndRejections',
+      line: 105,
+      method: 'processTicksAndRejections',
+      native: false
+    }
+  ]
+}
+2025-08-19T09:40:00.380Z [SECURITY]: Failed login {
+  email: 'najib@hajielec.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-19T09:41:36.840Z [SECURITY]: Failed login {
+  email: 'najib@hajielec.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}

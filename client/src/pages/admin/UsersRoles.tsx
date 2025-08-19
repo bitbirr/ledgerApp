@@ -6,26 +6,29 @@ import {
   Search, 
   Plus, 
   Filter, 
-  Building2,
-  MoreHorizontal
+  Users,
+  MoreHorizontal,
+  Shield
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export function Businesses() {
+export function UsersRoles() {
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Mock business data
-  const businesses = [
-    { id: 1, name: 'ABC Corporation', industry: 'Manufacturing', status: 'active', branches: 3, users: 12, createdAt: '2023-01-15' },
-    { id: 2, name: 'XYZ Ltd', industry: 'Retail', status: 'active', branches: 1, users: 5, createdAt: '2023-02-20' },
-    { id: 3, name: 'Tech Solutions', industry: 'Technology', status: 'pending', branches: 0, users: 0, createdAt: '2023-03-10' },
-    { id: 4, name: 'Global Trading', industry: 'Wholesale', status: 'active', branches: 5, users: 22, createdAt: '2023-04-05' },
-    { id: 5, name: 'Office Supplies Inc', industry: 'Retail', status: 'suspended', branches: 2, users: 8, createdAt: '2023-05-12' },
+  // Mock user data
+  const users = [
+    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'SuperAdmin', business: 'System Admin', status: 'active', lastActive: '2023-06-15' },
+    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Admin', business: 'ABC Corporation', status: 'active', lastActive: '2023-06-14' },
+    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Staff', business: 'XYZ Ltd', status: 'pending', lastActive: '2023-06-10' },
+    { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'Admin', business: 'Global Trading', status: 'active', lastActive: '2023-06-12' },
+    { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', role: 'Staff', business: 'ABC Corporation', status: 'suspended', lastActive: '2023-05-28' },
   ];
 
-  const filteredBusinesses = businesses.filter(business => 
-    business.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    business.industry.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.business.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusVariant = (status: string) => {
@@ -37,18 +40,27 @@ export function Businesses() {
     }
   };
 
+  const getRoleVariant = (role: string) => {
+    switch (role) {
+      case 'SuperAdmin': return 'default';
+      case 'Admin': return 'secondary';
+      case 'Staff': return 'outline';
+      default: return 'secondary';
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Businesses</h1>
-          <p className="text-muted-foreground">Manage business accounts and subscriptions</p>
+          <h1 className="text-2xl font-bold text-foreground">Users & Roles</h1>
+          <p className="text-muted-foreground">Manage user accounts and permissions</p>
         </div>
         <div className="flex gap-2">
           <Button className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Business
+            Add User
           </Button>
         </div>
       </div>
@@ -60,7 +72,7 @@ export function Businesses() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search businesses..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -78,43 +90,46 @@ export function Businesses() {
       <div className="hidden md:block">
         <Card className="rounded-2xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Business List</CardTitle>
+            <CardTitle className="text-base">User List</CardTitle>
             <CardDescription>
-              {filteredBusinesses.length} businesses found
+              {filteredUsers.length} users found
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="rounded-xl border">
               <div className="grid grid-cols-12 gap-4 p-4 bg-muted/50 border-b text-sm font-medium text-foreground">
-                <div className="col-span-3">Business Name</div>
-                <div className="col-span-2">Industry</div>
-                <div className="col-span-2">Status</div>
-                <div className="col-span-2">Branches</div>
-                <div className="col-span-2">Users</div>
+                <div className="col-span-3">User</div>
+                <div className="col-span-3">Email</div>
+                <div className="col-span-2">Role</div>
+                <div className="col-span-2">Business</div>
+                <div className="col-span-1">Status</div>
                 <div className="col-span-1">Actions</div>
               </div>
-              {filteredBusinesses.map((business) => (
+              {filteredUsers.map((user) => (
                 <div
-                  key={business.id}
+                  key={user.id}
                   className="grid grid-cols-12 gap-4 p-4 border-b hover:bg-teal-50/40 transition-colors"
                 >
                   <div className="col-span-3 font-medium text-foreground flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    {business.name}
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    {user.name}
                   </div>
-                  <div className="col-span-2 text-foreground">
-                    {business.industry}
+                  <div className="col-span-3 text-foreground">
+                    {user.email}
                   </div>
                   <div className="col-span-2">
-                    <Badge variant={getStatusVariant(business.status)}>
-                      {business.status}
+                    <Badge variant={getRoleVariant(user.role)}>
+                      <Shield className="h-3 w-3 mr-1" />
+                      {user.role}
                     </Badge>
                   </div>
                   <div className="col-span-2 text-foreground">
-                    {business.branches}
+                    {user.business}
                   </div>
-                  <div className="col-span-2 text-foreground">
-                    {business.users}
+                  <div className="col-span-1">
+                    <Badge variant={getStatusVariant(user.status)}>
+                      {user.status}
+                    </Badge>
                   </div>
                   <div className="col-span-1">
                     <Button variant="ghost" size="icon">
@@ -123,14 +138,14 @@ export function Businesses() {
                   </div>
                 </div>
               ))}
-              {filteredBusinesses.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <div className="p-8 text-center text-muted-foreground">
-                  <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-lg font-medium mb-2">No businesses found</h3>
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                  <h3 className="text-lg font-medium mb-2">No users found</h3>
                   <p className="mb-4">Try adjusting your search or filter to find what you're looking for.</p>
                   <Button className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Add Business
+                    Add User
                   </Button>
                 </div>
               )}
@@ -141,52 +156,55 @@ export function Businesses() {
 
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
-        {filteredBusinesses.map((business) => (
-          <Card key={business.id} className="rounded-2xl">
+        {filteredUsers.map((user) => (
+          <Card key={user.id} className="rounded-2xl">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-muted-foreground" />
-                  {business.name}
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  {user.name}
                 </CardTitle>
-                <Badge variant={getStatusVariant(business.status)}>
-                  {business.status}
+                <Badge variant={getStatusVariant(user.status)}>
+                  {user.status}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Industry</span>
-                  <span className="font-medium text-foreground">{business.industry}</span>
+                  <span className="text-muted-foreground">Email</span>
+                  <span className="font-medium text-foreground">{user.email}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Branches</span>
-                  <span>{business.branches}</span>
+                  <span className="text-muted-foreground">Role</span>
+                  <Badge variant={getRoleVariant(user.role)}>
+                    <Shield className="h-3 w-3 mr-1" />
+                    {user.role}
+                  </Badge>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Users</span>
-                  <span>{business.users}</span>
+                  <span className="text-muted-foreground">Business</span>
+                  <span>{user.business}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created</span>
-                  <span>{business.createdAt}</span>
+                  <span className="text-muted-foreground">Last Active</span>
+                  <span>{user.lastActive}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
-        {filteredBusinesses.length === 0 && (
+        {filteredUsers.length === 0 && (
           <Card className="rounded-2xl">
             <CardContent className="p-8 text-center">
-              <Building2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-medium mb-2">No businesses found</h3>
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-medium mb-2">No users found</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Try adjusting your search or filter to find what you're looking for.
               </p>
               <Button className="w-full gap-2">
                 <Plus className="h-4 w-4" />
-                Add Business
+                Add User
               </Button>
             </CardContent>
           </Card>

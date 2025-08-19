@@ -8,7 +8,7 @@ import { BusinessAppShell } from "@/components/layout/BusinessAppShell";
 import { SuperAdminAppShell } from "@/components/layout/SuperAdminAppShell";
 import { BusinessLogin } from "@/pages/business/Login";
 import { SuperAdminLogin } from "@/pages/admin/Login";
-import { useLocation, Route, Switch, Redirect } from "wouter";
+import { useLocation, Redirect } from "wouter";
 
 // Business App Pages
 import { Dashboard } from "@/pages/business/Dashboard";
@@ -19,74 +19,61 @@ import { Inventory } from "@/pages/business/Inventory";
 import { Reports } from "@/pages/business/Reports";
 import { Settings } from "@/pages/business/Settings";
 
-// Admin App Pages (using placeholders for now)
-const AdminDashboard = () => <div>Admin Dashboard</div>;
-const Businesses = () => <div>Businesses Management</div>;
-const Branches = () => <div>Branches Management</div>;
-const Users = () => <div>Users Management</div>;
-const AppSettings = () => <div>App Settings</div>;
-const Audit = () => <div>Audit Trail</div>;
-const Feedback = () => <div>Feedback Management</div>;
-const Diagnostics = () => <div>System Diagnostics</div>;
+// Admin App Pages
+import { SuperAdminDashboard as AdminDashboard } from "@/pages/admin/Dashboard";
+import { Businesses } from "@/pages/admin/Businesses";
+import { Branches } from "@/pages/admin/Branches";
+import { UsersRoles as Users } from "@/pages/admin/UsersRoles";
+import { AppSettings } from "@/pages/admin/AppSettings";
+import { Audit } from "@/pages/admin/Audit";
+import { Feedback } from "@/pages/admin/Feedback";
+import { Diagnostics } from "@/pages/admin/Diagnostics";
 
 function BusinessApp() {
-  const [location] = useLocation();
+  const { currentScreen } = useAuthStore();
+  
+  // Map screen IDs to components
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'accounts': return <Accounts />;
+      case 'cashbook': return <Cashbook />;
+      case 'invoices': return <Invoices />;
+      case 'inventory': return <Inventory />;
+      case 'reports': return <Reports />;
+      case 'settings': return <Settings />;
+      case 'dashboard':
+      default: return <Dashboard />;
+    }
+  };
   
   return (
     <BusinessAppShell>
-      <Switch location={location}>
-        <Route path="/" component={Dashboard} />
-        <Route path="/dashboard" component={Dashboard} />
-        <Route path="/accounts" component={Accounts} />
-        <Route path="/cashbook" component={Cashbook} />
-        <Route path="/invoices" component={Invoices} />
-        <Route path="/inventory" component={Inventory} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/settings" component={Settings} />
-        <Route>
-          <div className="p-8 text-center">
-            <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
-            <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
-            <button 
-              className="text-primary hover:underline"
-              onClick={() => window.location.href = '/'}
-            >
-              Go back to dashboard
-            </button>
-          </div>
-        </Route>
-      </Switch>
+      {renderScreen()}
     </BusinessAppShell>
   );
 }
 
 function SuperAdminApp() {
-  const [location] = useLocation();
+  const { currentScreen } = useAuthStore();
+  
+  // Map screen IDs to components
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'businesses': return <Businesses />;
+      case 'branches': return <Branches />;
+      case 'users': return <Users />;
+      case 'settings': return <AppSettings />;
+      case 'audit': return <Audit />;
+      case 'feedback': return <Feedback />;
+      case 'diagnostics': return <Diagnostics />;
+      case 'dashboard':
+      default: return <AdminDashboard />;
+    }
+  };
   
   return (
     <SuperAdminAppShell>
-      <Switch location={location}>
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/businesses" component={Businesses} />
-        <Route path="/admin/branches" component={Branches} />
-        <Route path="/admin/users" component={Users} />
-        <Route path="/admin/settings" component={AppSettings} />
-        <Route path="/admin/audit" component={Audit} />
-        <Route path="/admin/feedback" component={Feedback} />
-        <Route path="/admin/diagnostics" component={Diagnostics} />
-        <Route>
-          <div className="p-8 text-center">
-            <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
-            <p className="text-muted-foreground mb-4">The page you're looking for doesn't exist.</p>
-            <button 
-              className="text-primary hover:underline"
-              onClick={() => window.location.href = '/admin'}
-            >
-              Go back to dashboard
-            </button>
-          </div>
-        </Route>
-      </Switch>
+      {renderScreen()}
     </SuperAdminAppShell>
   );
 }

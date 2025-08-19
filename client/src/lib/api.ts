@@ -238,7 +238,7 @@ export const api = {
     return response;
   },
   
-  async adminLogin(credentials: { username: string; password: string }) {
+  async adminLogin(credentials: { email: string; password: string }) {
     const response = await apiFetch<{ 
       user: any; 
       token: string; 

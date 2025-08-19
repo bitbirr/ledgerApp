@@ -14,8 +14,8 @@ export function SuperAdminLogin() {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,9 +26,9 @@ export function SuperAdminLogin() {
     try {
       // Call the real API admin login function
       const loginResponse = await api.adminLogin({
-        username,
-        password,
-      });
+              email,
+              password,
+            });
       
       // Login successful
       login({
@@ -71,14 +71,15 @@ export function SuperAdminLogin() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="Enter your admin username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
+                          <Label htmlFor="email">Email</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="Enter your admin email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                          />
             </div>
             
             <div className="space-y-2">
