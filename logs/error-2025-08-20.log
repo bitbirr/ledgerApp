@@ -1,0 +1,90 @@
+2025-08-20T08:23:47.030Z [ERROR]: unhandledRejection: Table 'ledger.transactions' doesn't exist
+Error: Table 'ledger.transactions' doesn't exist
+    at PromisePool.query (c:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at MySql2PreparedQuery.execute (c:\ledgerApp\node_modules\src\mysql2\session.ts:92:29)
+    at QueryPromise.execute (c:\ledgerApp\node_modules\src\mysql-core\query-builders\delete.ts:192:25)
+    at QueryPromise.then (c:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  error: Error: Table 'ledger.transactions' doesn't exist
+      at PromisePool.query (c:\ledgerApp\node_modules\mysql2\lib\promise\pool.js:36:22)
+      at MySql2PreparedQuery.execute (c:\ledgerApp\node_modules\src\mysql2\session.ts:92:29)
+      at QueryPromise.execute (c:\ledgerApp\node_modules\src\mysql-core\query-builders\delete.ts:192:25)
+      at QueryPromise.then (c:\ledgerApp\node_modules\src\query-promise.ts:31:15)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+    code: 'ER_NO_SUCH_TABLE',
+    errno: 1146,
+    sql: 'delete from `transactions`',
+    sqlState: '42S02',
+    sqlMessage: "Table 'ledger.transactions' doesn't exist"
+  },
+  stack: "Error: Table 'ledger.transactions' doesn't exist\n" +
+    '    at PromisePool.query (c:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js:36:22)\n' +
+    '    at MySql2PreparedQuery.execute (c:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts:92:29)\n' +
+    '    at QueryPromise.execute (c:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\delete.ts:192:25)\n' +
+    '    at QueryPromise.then (c:\\ledgerApp\\node_modules\\src\\query-promise.ts:31:15)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  rejection: true,
+  date: 'Wed Aug 20 2025 11:23:47 GMT+0300 (East Africa Time)',
+  process: {
+    pid: 16644,
+    uid: null,
+    gid: null,
+    cwd: 'c:\\ledgerApp',
+    execPath: 'C:\\Program Files\\nodejs\\node.exe',
+    version: 'v22.14.0',
+    argv: [
+      'C:\\Program Files\\nodejs\\node.exe',
+      'c:\\ledgerApp\\server\\index.ts'
+    ],
+    memoryUsage: {
+      rss: 197656576,
+      heapTotal: 113479680,
+      heapUsed: 107172040,
+      external: 12775106,
+      arrayBuffers: 2205882
+    }
+  },
+  os: { loadavg: [ 0, 0, 0 ], uptime: 306565.734 },
+  trace: [
+    {
+      column: 22,
+      file: 'c:\\ledgerApp\\node_modules\\mysql2\\lib\\promise\\pool.js',
+      function: 'PromisePool.query',
+      line: 36,
+      method: 'query',
+      native: false
+    },
+    {
+      column: 29,
+      file: 'c:\\ledgerApp\\node_modules\\src\\mysql2\\session.ts',
+      function: 'MySql2PreparedQuery.execute',
+      line: 92,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 25,
+      file: 'c:\\ledgerApp\\node_modules\\src\\mysql-core\\query-builders\\delete.ts',
+      function: 'QueryPromise.execute',
+      line: 192,
+      method: 'execute',
+      native: false
+    },
+    {
+      column: 15,
+      file: 'c:\\ledgerApp\\node_modules\\src\\query-promise.ts',
+      function: 'QueryPromise.then',
+      line: 31,
+      method: 'then',
+      native: false
+    },
+    {
+      column: 5,
+      file: 'node:internal/process/task_queues',
+      function: 'process.processTicksAndRejections',
+      line: 105,
+      method: 'processTicksAndRejections',
+      native: false
+    }
+  ]
+}
