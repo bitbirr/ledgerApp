@@ -2,3 +2,5 @@
 {"level":"security","message":"Failed login","metadata":{"email":"ismail@eng-ict.com","ip":"unknown","reason":"Invalid password"},"timestamp":"2025-08-20T09:50:20.337Z"}
 {"level":"security","message":"Successful login","metadata":{"email":"hana@hajjelec.com","ip":"unknown","userId":"user_6sald2ys1"},"timestamp":"2025-08-20T09:51:14.338Z"}
 {"level":"security","message":"Successful login","metadata":{"email":"admin@system.com","ip":"unknown","userId":"user_admin"},"timestamp":"2025-08-20T09:55:02.624Z"}
+{"level":"security","message":"Successful login","metadata":{"email":"hana@hajjelec.com","ip":"unknown","userId":"user_s5mutnm2q"},"timestamp":"2025-08-20T18:02:30.868Z"}
+{"level":"security","message":"Failed login","metadata":{"email":"admin@system.com","ip":"unknown","reason":"User not found"},"timestamp":"2025-08-20T18:05:37.515Z"}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, type Screen } from '@/lib/auth-store';
 import { Button } from '@/components/ui/button';
 import { 
   Home, 
@@ -24,7 +24,15 @@ interface SidebarNavProps {
   onCollapseToggle: () => void;
 }
 
-const businessNavigationItems = [
+// Define a unified navigation item type
+type NavigationItem = {
+  id: Screen;
+  label: string;
+  icon: any;
+  roles: Array<'Admin' | 'Staff' | 'SuperAdmin'>;
+};
+
+const businessNavigationItems: NavigationItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, roles: ['Admin', 'Staff'] },
   { id: 'accounts', label: 'Accounts', icon: Users, roles: ['Admin', 'Staff'] },
   { id: 'cashbook', label: 'Cashbook', icon: Wallet, roles: ['Admin', 'Staff'] },
@@ -34,7 +42,7 @@ const businessNavigationItems = [
   { id: 'settings', label: 'Settings', icon: Settings, roles: ['Admin', 'Staff'] },
 ];
 
-const superAdminNavigationItems = [
+const superAdminNavigationItems: NavigationItem[] = [
   { id: 'businesses', label: 'Businesses', icon: Building2, roles: ['SuperAdmin'] },
   { id: 'branches', label: 'Branches', icon: MapPin, roles: ['SuperAdmin'] },
   { id: 'users', label: 'Users & Roles', icon: Users, roles: ['SuperAdmin'] },
@@ -52,10 +60,10 @@ export function SidebarNav({ isCollapsed, onCollapseToggle }: SidebarNavProps) {
   
   // Filter navigation items based on user role
   const filteredNavigationItems = navigationItems.filter(item => 
-    item.roles.includes(role as 'SuperAdmin' | 'Admin' | 'Staff')
+    role && item.roles.includes(role as 'SuperAdmin' | 'Admin' | 'Staff')
   );
 
-  const handleNavigation = (screenId: string) => {
+  const handleNavigation = (screenId: Screen) => {
     setCurrentScreen(screenId);
   };
 

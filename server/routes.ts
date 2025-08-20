@@ -7,6 +7,9 @@ import { httpLogger } from './services/logger.ts';
 import { authenticateUser, authenticateSuperAdmin, getUserBusinesses, getUserBranches, verifyToken } from './services/auth.ts';
 import { authenticateToken, requireRole, requireBranchAccess, applyDataFilter } from './middleware/auth.ts';
 import { createBranch, getBranchesByBusiness, getBranchById, updateBranch, deleteBranch } from './services/branchService.ts';
+import jwt from 'jsonwebtoken';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 const getDb = async () => await dbPromise;
 
@@ -43,6 +46,139 @@ export async function registerRoutes(app: Express): Promise<void> {
   });
   
   // -------- Authentication
+  // New login start endpoint for business selection
+  app.post('/api/auth/login/start', async (_req, res) => {
+    try {
+      // Generate a temporary token for pre-login steps
+      const tempToken = jwt.sign(
+        { purpose: 'pre-login' },
+        JWT_SECRET,
+        { expiresIn: '15m' } // Short expiry for security
+      );
+      
+      // Get all businesses for selection
+      const dbc = await getDb();
+      const businesses = await dbc
+        .select({
+          id: schema.businesses.id,
+          name: schema.businesses.name,
+        })
+        .from(schema.businesses);
+      
+      res.json({
+        token: tempToken,
+        businesses
+      });
+    } catch (error) {
+      console.error('Login start error:', error);
+      res.status(500).json({ message: 'Failed to initialize login' });
+    }
+  });
+  
+  // Select business endpoint
+  app.post('/api/auth/login/select-business', async (req, res) => {
+    try {
+      const { businessId } = req.body;
+      
+      if (!businessId) {
+        return res.status(400).json({ message: 'Business ID is required' });
+      }
+      
+      // Verify the temporary token
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization token required' });
+      }
+      
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      try {
+        jwt.verify(token, JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ message: 'Invalid or expired token' });
+      }
+      
+      // Get branches for the selected business
+      const dbc = await getDb();
+      const branches = await dbc
+        .select({
+          id: schema.branches.id,
+          name: schema.branches.name,
+        })
+        .from(schema.branches)
+        .where(eq(schema.branches.businessId, businessId));
+      
+      // Generate a new token for the next step
+      const newToken = jwt.sign(
+        { businessId, purpose: 'select-branch' },
+        JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      
+      res.json({
+        token: newToken,
+        branches
+      });
+    } catch (error) {
+      console.error('Select business error:', error);
+      res.status(500).json({ message: 'Failed to select business' });
+    }
+  });
+  
+  // Select branch endpoint
+  app.post('/api/auth/login/select-branch', async (req, res) => {
+    try {
+      const { branchId } = req.body;
+      
+      if (!branchId) {
+        return res.status(400).json({ message: 'Branch ID is required' });
+      }
+      
+      // Verify the temporary token
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization token required' });
+      }
+      
+      const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+      let decoded;
+      try {
+        decoded = jwt.verify(token, JWT_SECRET) as any;
+      } catch (err) {
+        return res.status(401).json({ message: 'Invalid or expired token' });
+      }
+      
+      const businessId = decoded.businessId;
+      if (!businessId) {
+        return res.status(400).json({ message: 'Business ID not found in token' });
+      }
+      
+      // Generate final token for login
+      const finalToken = jwt.sign(
+        { businessId, branchId, purpose: 'login-complete' },
+        JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      
+      // For now, we'll return a mock user
+      // In a real implementation, you would authenticate the user here
+      const user = {
+        id: 'user',
+        name: 'Business User',
+        email: 'user@example.com',
+        role: 'Admin'
+      };
+      
+      res.json({
+        token: finalToken,
+        user,
+        expiresIn: 15 * 60 // 15 minutes in seconds
+      });
+    } catch (error) {
+      console.error('Select branch error:', error);
+      res.status(500).json({ message: 'Failed to select branch' });
+    }
+  });
+  
   app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     

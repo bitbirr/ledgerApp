@@ -1,48 +1,84 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User, Business, BusinessUser } from '@shared/schema';
+
+// Define User type inline since we don't have a separate types file
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type Role = 'SuperAdmin' | 'Admin' | 'Staff' | null;
+
+export type Screen = 
+  // shared 
+  | 'login' | 'chooseBusiness' | 'chooseBranch' | 'dashboard' 
+  // business app 
+  | 'accounts' | 'cashbook' | 'invoices' | 'inventory' | 'reports' | 'settings' 
+  // superadmin app 
+  | 'businesses' | 'branches' | 'users' | 'audit' | 'feedback' | 'diagnostics' | 'settings';
 
 interface AuthState {
-  // Authentication status
   isAuthenticated: boolean;
   user: User | null;
-  
-  // RBAC information
-  role: 'SuperAdmin' | 'Admin' | 'Staff' | null;
+  role: Role;
   businessId: string | null;
   branchId: string | null;
   permissions: string[];
-  
-  // Session management
   token: string | null;
-  tokenExpiry: Date | null;
+  tokenExpiry: number | null; // Unix timestamp
   refreshToken: string | null;
   
-  // Business context
-  currentBusiness: Business | null;
-  businessUsers: BusinessUser[];
+  // New properties for multi-step auth flow
+  preloginToken: string | null;
+  businesses: Array<{ id: string; name: string }> | null;
+  branches: Array<{ id: string; name: string }> | null;
+  selectedBusinessId: string | null;
+  selectedBranchId: string | null;
   
-  // UI State
-  currentScreen: string;
+  // UI state for auth flow
+  currentScreen: Screen;
   
   // Actions
-  login: (userData: {
+  login: (data: {
     user: User;
     token: string;
     refreshToken: string;
-    role: 'SuperAdmin' | 'Admin' | 'Staff';
+    role: Role;
     businessId?: string;
     branchId?: string;
+    expiresIn?: number;
+  }) => void;
+  
+  // New actions for multi-step auth flow
+  setPreloginData: (data: { token: string; businesses: Array<{ id: string; name: string }> }) => void;
+  setSelectedBusiness: (businessId: string) => void;
+  setSelectedBranch: (branchId: string) => void;
+  setBusinessBranchData: (data: { 
+    token: string; 
+    branches: Array<{ id: string; name: string }> 
+  }) => void;
+  completeLogin: (data: {
+    token: string;
+    refreshToken: string;
+    user: User;
+    role: Role;
+    expiresIn?: number;
+    businessId: string;
+    branchId: string;
   }) => void;
   
   logout: () => void;
-  setRole: (role: 'SuperAdmin' | 'Admin' | 'Staff') => void;
-  setBusinessContext: (businessId: string, branchId?: string) => void;
+  refreshSession: (newToken: string, newRefreshToken: string) => void;
+  setRole: (role: Role) => void;
+  setBusinessContext: (businessId: string, branchId: string) => void;
   hasPermission: (permission: string) => boolean;
   isAuthorizedForBranch: (branchId: string) => boolean;
   isTokenExpired: () => boolean;
-  refreshSession: (newToken: string, newRefreshToken: string) => void;
-  setCurrentScreen: (screen: string) => void;
+  setCurrentScreen: (screen: Screen) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -58,57 +94,70 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       tokenExpiry: null,
       refreshToken: null,
-      currentBusiness: null,
-      businessUsers: [],
-      currentScreen: 'dashboard',
+      
+      // New properties for multi-step auth flow
+      preloginToken: null,
+      businesses: null,
+      branches: null,
+      selectedBusinessId: null,
+      selectedBranchId: null,
+      
+      // UI state for auth flow
+      currentScreen: 'login',
       
       // Actions
-      login: (userData) => {
-        // Validate that businessId is provided (unless user is SuperAdmin)
-        if (!userData.businessId && userData.role !== 'SuperAdmin') {
-          throw new Error('Business ID is required for login');
-        }
-
-        // Normalize role to title case to avoid casing mismatches
-        const rawRole = (userData.role as any)?.toString?.() ?? '';
-        const roleLower = rawRole.toLowerCase();
-        const normalizedRole =
-          roleLower === 'superadmin' ? 'SuperAdmin' :
-          roleLower === 'admin' ? 'Admin' :
-          roleLower === 'staff' ? 'Staff' :
-          null;
-
-        if (!normalizedRole) {
-          console.warn('[AuthStore] Unknown role received from API:', rawRole);
-        }
-        
-        // Validate that branchId (if provided) belongs to the business
-        if (userData.branchId) {
-          // In a real implementation, we would verify the branch belongs to the business
-          // For now, we'll just ensure it's not an empty string
-          if (userData.branchId.trim() === '') {
-            throw new Error('Invalid branch ID');
-          }
-        }
-        
-        const newState = {
-          isAuthenticated: true,
-          user: userData.user,
-          role: (normalizedRole as 'SuperAdmin' | 'Admin' | 'Staff') ?? userData.role,
-          businessId: userData.businessId || null,
-          branchId: userData.branchId || null,
-          token: userData.token,
-          refreshToken: userData.refreshToken,
-          tokenExpiry: userData.token ? new Date(Date.now() + 3600000) : null, // 1 hour expiry
-        };
-        
-        set(newState);
-
-        // Diagnostics
-        try {
-          console.debug('[AuthStore] login state', newState);
-        } catch {}
-      },
+      login: (data) => set({
+        isAuthenticated: true,
+        user: data.user,
+        token: data.token,
+        refreshToken: data.refreshToken,
+        role: data.role,
+        businessId: data.businessId || null,
+        branchId: data.branchId || null,
+        tokenExpiry: data.expiresIn ? Date.now() + data.expiresIn * 1000 : null,
+      }),
+      
+      // New actions for multi-step auth flow
+      setPreloginData: (data) => set({
+        preloginToken: data.token,
+        businesses: data.businesses,
+        branches: null,
+        selectedBusinessId: null,
+        selectedBranchId: null,
+      }),
+      
+      setSelectedBusiness: (businessId) => set({
+        selectedBusinessId: businessId,
+        branches: null,
+        selectedBranchId: null,
+      }),
+      
+      setBusinessBranchData: (data) => set({
+        preloginToken: data.token,
+        branches: data.branches,
+      }),
+      
+      setSelectedBranch: (branchId) => set({
+        selectedBranchId: branchId,
+      }),
+      
+      completeLogin: (data) => set({
+        isAuthenticated: true,
+        user: data.user,
+        token: data.token,
+        refreshToken: data.refreshToken,
+        role: data.role,
+        businessId: data.businessId,
+        branchId: data.branchId,
+        tokenExpiry: data.expiresIn ? Date.now() + data.expiresIn * 1000 : null,
+        // Clear prelogin data
+        preloginToken: null,
+        businesses: null,
+        branches: null,
+        selectedBusinessId: null,
+        selectedBranchId: null,
+        currentScreen: 'dashboard',
+      }),
       
       logout: () => set({
         isAuthenticated: false,
@@ -120,47 +169,38 @@ export const useAuthStore = create<AuthState>()(
         token: null,
         tokenExpiry: null,
         refreshToken: null,
-        currentBusiness: null,
-        businessUsers: [],
-        currentScreen: 'dashboard',
+        // Clear prelogin data
+        preloginToken: null,
+        businesses: null,
+        branches: null,
+        selectedBusinessId: null,
+        selectedBranchId: null,
+        currentScreen: 'login',
+      }),
+      
+      refreshSession: (newToken: string, newRefreshToken: string) => set((state) => {
+        // Calculate new expiry (assuming 1 hour like the original)
+        const newExpiry = Date.now() + 60 * 60 * 1000;
+        return {
+          token: newToken,
+          refreshToken: newRefreshToken,
+          tokenExpiry: newExpiry,
+        };
       }),
       
       setRole: (role) => set({ role }),
       
-      setBusinessContext: (businessId, branchId) => set({ 
-        businessId, 
-        branchId: branchId || null 
-      }),
+      setBusinessContext: (businessId, branchId) => set({ businessId, branchId }),
       
-      hasPermission: (permission) => {
-        const { permissions } = get();
-        return permissions.includes(permission);
-      },
+      hasPermission: (permission) => get().permissions.includes(permission),
       
-      isAuthorizedForBranch: (branchId) => {
-        const { role, branchId: userBranchId } = get();
-        // SuperAdmin can access any branch
-        if (role === 'SuperAdmin') return true;
-        // Staff can only access their assigned branch
-        if (role === 'Staff' && userBranchId) {
-          return userBranchId === branchId;
-        }
-        // Admin can access all branches within their business
-        if (role === 'Admin') return true;
-        return false;
-      },
+      isAuthorizedForBranch: (branchId) => get().branchId === branchId,
       
       isTokenExpired: () => {
         const { tokenExpiry } = get();
         if (!tokenExpiry) return true;
-        return new Date() > tokenExpiry;
+        return Date.now() >= tokenExpiry;
       },
-      
-      refreshSession: (newToken, newRefreshToken) => set({
-        token: newToken,
-        refreshToken: newRefreshToken,
-        tokenExpiry: new Date(Date.now() + 3600000), // 1 hour expiry
-      }),
       
       setCurrentScreen: (screen) => set({ currentScreen: screen }),
     }),
@@ -173,8 +213,8 @@ export const useAuthStore = create<AuthState>()(
         businessId: state.businessId,
         branchId: state.branchId,
         token: state.token,
-        refreshToken: state.refreshToken,
         tokenExpiry: state.tokenExpiry,
+        refreshToken: state.refreshToken,
         currentScreen: state.currentScreen,
       }),
     }

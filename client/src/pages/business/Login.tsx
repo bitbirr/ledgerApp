@@ -18,10 +18,17 @@ import { api } from '@/lib/api';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLocation } from 'wouter';
- 
 
 export function BusinessLogin() {
-  const { login } = useAuthStore();
+  const { 
+    login, 
+    setPreloginData, 
+    setSelectedBusiness, 
+    setBusinessBranchData,
+    setSelectedBranch,
+    completeLogin 
+  } = useAuthStore();
+  
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -70,8 +77,13 @@ export function BusinessLogin() {
     const fetchBusinesses = async () => {
       setIsFetchingBusinesses(true);
       try {
-        const businessData = await api.getBusinesses();
-        setBusinesses(businessData);
+        // Use the new loginStart API endpoint
+        const response = await api.loginStart();
+        setPreloginData({
+          token: response.token,
+          businesses: response.businesses
+        });
+        setBusinesses(response.businesses);
       } catch (error: any) {
         toast({
           title: "Error",
@@ -85,14 +97,24 @@ export function BusinessLogin() {
 
     fetchBusinesses();
   }, []);
-
+  
   // Fetch branches when business is selected
   useEffect(() => {
     const fetchBranches = async () => {
       if (businessId) {
         setIsFetchingBranches(true);
         try {
-          const branchData = await api.getBranchesPublic(businessId);
+          // Use the new selectBusiness API endpoint
+          const { token, branches: branchData } = await api.selectBusiness(
+            useAuthStore.getState().preloginToken || '',
+            businessId
+          );
+          
+          setBusinessBranchData({
+            token,
+            branches: branchData
+          });
+          
           // Ensure each branch has the businessId property
           const branchesWithBusinessId = branchData.map(branch => ({
             ...branch,
@@ -116,9 +138,9 @@ export function BusinessLogin() {
       }
     };
 
-    fetchBranches(); // Add this line to actually call the function
+    fetchBranches();
   }, [businessId]);
-
+  
   // Validate form fields
   const validateBusinessStep = () => {
     let isValid = true;
@@ -134,7 +156,7 @@ export function BusinessLogin() {
     
     return isValid;
   };
-
+  
   const validateBranchStep = () => {
     let isValid = true;
     
@@ -149,7 +171,7 @@ export function BusinessLogin() {
     
     return isValid;
   };
-
+  
   const validateCredentialsStep = () => {
     let isValid = true;
     
@@ -171,19 +193,21 @@ export function BusinessLogin() {
     
     return isValid;
   };
-
+  
   const handleNextFromBusiness = () => {
     if (validateBusinessStep()) {
+      setSelectedBusiness(businessId);
       setStep(1);
     }
   };
-
+  
   const handleNextFromBranch = () => {
     if (validateBranchStep()) {
+      setSelectedBranch(branchId);
       setStep(2);
     }
   };
-
+  
   const handleSubmitCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -198,22 +222,21 @@ export function BusinessLogin() {
     setIsLoading(true);
     
     try {
-      // Call the real API login function
-      const loginResponse = await api.login({
-        email,
-        password,
-        businessId,
-        branchId: branchId || undefined
-      });
+      // Use the new selectBranch API endpoint instead of the old login
+      const response = await api.selectBranch(
+        useAuthStore.getState().preloginToken || '',
+        branchId
+      );
       
-      // Login successful
-      login({
-        user: loginResponse.user,
-        token: loginResponse.token,
-        refreshToken: loginResponse.refreshToken,
-        role: loginResponse.role,
-        businessId: loginResponse.businessId || businessId,
-        branchId: loginResponse.branchId || branchId,
+      // Complete login with the new auth store method
+      completeLogin({
+        token: response.token,
+        refreshToken: '', // Not provided in the new API, will need to be handled differently
+        user: response.user,
+        role: response.user.role || 'Admin', // Default to Admin if not provided
+        expiresIn: response.expiresIn,
+        businessId: businessId,
+        branchId: branchId,
       });
       
       toast({
@@ -237,7 +260,7 @@ export function BusinessLogin() {
       setIsLoading(false);
     }
   };
-
+  
   const resetForm = () => {
     setStep(0);
     setBusinessId('');
@@ -246,7 +269,7 @@ export function BusinessLogin() {
     setPassword('');
     setServerError('');
   };
-
+  
   // Handle keyboard navigation for business selection
   const handleBusinessKeyDown = (e: React.KeyboardEvent, bizId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -254,7 +277,7 @@ export function BusinessLogin() {
       setBusinessId(bizId);
     }
   };
-
+  
   // Handle keyboard navigation for branch selection
   const handleBranchKeyDown = (e: React.KeyboardEvent, branchId: string) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -262,7 +285,7 @@ export function BusinessLogin() {
       setBranchId(branchId);
     }
   };
-
+  
   // Step 0: Business Selection
   if (step === 0) {
     return (
@@ -345,7 +368,7 @@ export function BusinessLogin() {
       </div>
     );
   }
-
+  
   // Step 1: Branch Selection
   if (step === 1) {
     return (
@@ -438,7 +461,7 @@ export function BusinessLogin() {
       </div>
     );
   }
-
+  
   // Step 2: Credentials
   if (step === 2) {
     return (
@@ -552,7 +575,7 @@ export function BusinessLogin() {
       </div>
     );
   }
-
+  
   // Step 3: Success
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-4">

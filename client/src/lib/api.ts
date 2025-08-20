@@ -201,43 +201,47 @@ async function apiFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
 
 export const api = {
   // ---------- Auth ----------
-  async login(credentials: { email: string; password: string; businessId?: string; branchId?: string }) {
-    // Validate that businessId is provided
-    if (!credentials.businessId) {
-      throw new Error('Business ID is required for login');
-    }
-    
-    // If branchId is provided, validate that it belongs to the business
-    if (credentials.branchId) {
-      const branches = await this.getBranches(credentials.businessId);
-      const branchExists = branches.some(branch => branch.id === credentials.branchId);
-      if (!branchExists) {
-        throw new Error('Invalid branch selection for the selected business');
-      }
-    }
-    
+  async loginStart() {
     const response = await apiFetch<{
-      user: any;
       token: string;
-      refreshToken: string;
-      role: 'SuperAdmin' | 'Admin' | 'Staff';
-      businessId?: string;
-      branchId?: string;
-    }>('/api/auth/login', {
+      businesses: Business[];
+    }>('/api/auth/login/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
     });
     
-    // Validate that the returned businessId matches the requested one
-    if (response.businessId && response.businessId !== credentials.businessId) {
-      throw new Error('Invalid business context in response');
-    }
+    return response;
+  },
+  
+  async selectBusiness(token: string, businessId: string) {
+    const response = await apiFetch<{
+      token: string;
+      branches: Branch[];
+    }>('/api/auth/login/select-business', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ businessId }),
+    });
     
-    // Validate that the returned branchId (if any) belongs to the business
-    if (response.branchId && credentials.branchId && response.branchId !== credentials.branchId) {
-      throw new Error('Invalid branch context in response');
-    }
+    return response;
+  },
+  
+  async selectBranch(token: string, branchId: string) {
+    const response = await apiFetch<{
+      token: string;
+      user: any;
+      expiresIn: number;
+    }>('/api/auth/login/select-branch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ branchId }),
+    });
     
     return response;
   },

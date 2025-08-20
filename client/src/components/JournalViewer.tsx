@@ -179,7 +179,7 @@ export function JournalViewer() {
 
         {/* Journal Entries Table */}
         {isLoading ? (
-          <TableSkeleton rows={6} cols={4} />
+          <div className="p-4 text-sm text-muted-foreground">Loading journal entries…</div>
         ) : journalEntries && journalEntries.length > 0 ? (
           <div className="space-y-4">
             {journalEntries.map(entry => (
@@ -224,16 +224,16 @@ export function JournalViewer() {
                       {entry.lines.map(line => (
                         <TableRow key={line.id}>
                           <TableCell className="font-mono text-xs">
-                            {line.accountCode}
+                            {getAccountName(line.accountId)}
                           </TableCell>
                           <TableCell className="text-xs">
-                            {line.description || '-'}
+                            {line.notes || '-'}
                           </TableCell>
-                          <TableCell amount positive={line.debitAmount > 0}>
-                            {line.debitAmount > 0 ? formatCurrency(line.debitAmount) : '-'}
+                          <TableCell amount positive={line.debit > 0}>
+                            {line.debit > 0 ? formatCurrency(line.debit) : '-'}
                           </TableCell>
-                          <TableCell amount positive={line.creditAmount > 0}>
-                            {line.creditAmount > 0 ? formatCurrency(line.creditAmount) : '-'}
+                          <TableCell amount positive={line.credit > 0}>
+                            {line.credit > 0 ? formatCurrency(line.credit) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -244,11 +244,10 @@ export function JournalViewer() {
             ))}
           </div>
         ) : (
-          <TableEmpty 
-            icon={BookOpen}
-            title="No journal entries found"
-            description="No entries match your current filters"
-          />
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            <div className="font-medium mb-1">No journal entries found</div>
+            <div>No entries match your current filters</div>
+          </div>
         )}
       </CardContent>
     </Card>

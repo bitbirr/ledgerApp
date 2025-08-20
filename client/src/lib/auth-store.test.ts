@@ -14,6 +14,7 @@ describe('Auth Store', () => {
       token: null,
       tokenExpiry: null,
       refreshToken: null,
+      currentScreen: 'login',
       login: useAuthStore.getState().login,
       logout: useAuthStore.getState().logout,
       refreshSession: useAuthStore.getState().refreshSession,
@@ -21,7 +22,13 @@ describe('Auth Store', () => {
       setBusinessContext: useAuthStore.getState().setBusinessContext,
       hasPermission: useAuthStore.getState().hasPermission,
       isAuthorizedForBranch: useAuthStore.getState().isAuthorizedForBranch,
-      isTokenExpired: useAuthStore.getState().isTokenExpired
+      isTokenExpired: useAuthStore.getState().isTokenExpired,
+      setCurrentScreen: useAuthStore.getState().setCurrentScreen,
+      setPreloginData: useAuthStore.getState().setPreloginData,
+      setSelectedBusiness: useAuthStore.getState().setSelectedBusiness,
+      setSelectedBranch: useAuthStore.getState().setSelectedBranch,
+      setBusinessBranchData: useAuthStore.getState().setBusinessBranchData,
+      completeLogin: useAuthStore.getState().completeLogin,
     });
   });
 
@@ -30,6 +37,7 @@ describe('Auth Store', () => {
     expect(state.isAuthenticated).toBe(false);
     expect(state.user).toBeNull();
     expect(state.role).toBeNull();
+    expect(state.currentScreen).toBe('login');
   });
 
   it('should login a user', () => {
@@ -83,5 +91,37 @@ describe('Auth Store', () => {
     expect(newState.isAuthenticated).toBe(false);
     expect(newState.user).toBeNull();
     expect(newState.role).toBeNull();
+    expect(newState.currentScreen).toBe('login');
+  });
+
+  it('should set current screen', () => {
+    const state = useAuthStore.getState();
+    state.setCurrentScreen('chooseBusiness');
+
+    const newState = useAuthStore.getState();
+    expect(newState.currentScreen).toBe('chooseBusiness');
+  });
+
+  it('should complete login and set current screen to dashboard', () => {
+    const state = useAuthStore.getState();
+    state.completeLogin({
+      token: 'fake-token',
+      refreshToken: 'fake-refresh-token',
+      user: {
+        id: 'user-123',
+        email: 'test@example.com',
+        name: 'Test User',
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      role: 'Admin',
+      businessId: 'business-123',
+      branchId: 'branch-123',
+    });
+
+    const newState = useAuthStore.getState();
+    expect(newState.isAuthenticated).toBe(true);
+    expect(newState.currentScreen).toBe('dashboard');
   });
 });

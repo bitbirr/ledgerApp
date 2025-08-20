@@ -4,6 +4,7 @@ import { eq, and, inArray } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import logger, { securityLogger } from './logger.ts';
+const toUndef = <T>(v: T | null | undefined): T | undefined => (v ?? undefined);
 
 interface UserSession {
   userId: string;
@@ -17,6 +18,8 @@ interface UserSession {
 interface LoginRequest {
   email: string;
   password: string;
+  businessId?: string;
+  branchId?: string;
 }
 
 interface LoginResponse {
@@ -64,7 +67,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   }
 }
 
-export async function authenticateUser(request: LoginRequest): Promise<LoginResponse> {
+export async function authenticateUser(request: LoginRequest & { businessId?: string; branchId?: string }): Promise<LoginResponse> {
   try {
     // Find user by email
     const [user] = await db.select().from(users).where(eq(users.email, request.email));
@@ -74,27 +77,51 @@ export async function authenticateUser(request: LoginRequest): Promise<LoginResp
     }
 
     // Verify password
-    console.log('Verifying password for SuperAdmin:', user.email);
-    console.log('Provided password:', request.password);
-    console.log('Stored hash:', user.passwordHash);
-    
     const isValid = await verifyPassword(request.password, user.passwordHash);
-    console.log('Password validation result:', isValid);
-    
     if (!isValid) {
       securityLogger.loginFailure(request.email, 'Invalid password', 'unknown');
       return { success: false, message: 'Invalid email or password' };
     }
-
-    // Check if user is SuperAdmin
-    // This would require a separate table or check for SuperAdmin users
-    // For now, we'll assume SuperAdmins use a different login endpoint
 
     // Get user's business associations
     const userBusinesses = await db.select().from(businessUsers).where(eq(businessUsers.userId, user.id));
 
     if (userBusinesses.length === 0) {
       return { success: false, message: 'User has no business associations' };
+    }
+
+    // If businessId and branchId are provided, validate and use them
+    if (request.businessId && request.branchId) {
+      const businessUser = userBusinesses.find(bu => bu.businessId === request.businessId && bu.branchId === request.branchId);
+      
+      if (!businessUser) {
+        return { success: false, message: 'Access denied to this business/branch combination' };
+      }
+
+      // Generate JWT token with specific business/branch context
+      const token = jwt.sign({
+        userId: user.id,
+        email: user.email,
+        role: businessUser.role,
+        businessId: businessUser.businessId,
+        branchId: businessUser.branchId,
+      }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
+      securityLogger.loginSuccess(user.email, user.id, 'unknown');
+
+      return {
+        success: true,
+        token,
+        user: {
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          role: businessUser.role as 'SuperAdmin' | 'Admin' | 'Staff',
+          businessId: businessUser.businessId,
+          branchId: businessUser.branchId ?? undefined,
+        },
+        expiresIn: 24 * 60 * 60
+      };
     }
 
     // If user has only one business, return that business
@@ -114,6 +141,16 @@ export async function authenticateUser(request: LoginRequest): Promise<LoginResp
       // Log successful login
       securityLogger.loginSuccess(user.email, user.id, 'unknown');
 
+      const userSession: UserSession = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: businessUser.role as 'SuperAdmin' | 'Admin' | 'Staff',
+        //businessId: businessUser.businessId ?? undefined,
+        //branchId: businessUser.branchId ?? undefined,
+        businessId: businessUser.businessId,
+        branchId: toUndef(businessUser.branchId),
+      };
       return {
         success: true,
         token,

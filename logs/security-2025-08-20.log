@@ -106,3 +106,15 @@ Error: Table 'ledger.transactions' doesn't exist
   ip: 'unknown',
   userAgent: undefined
 }
+2025-08-20T18:02:30.867Z [SECURITY]: Successful login {
+  email: 'hana@hajjelec.com',
+  userId: 'user_s5mutnm2q',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-20T18:05:37.515Z [SECURITY]: Failed login {
+  email: 'admin@system.com',
+  reason: 'User not found',
+  ip: 'unknown',
+  userAgent: undefined
+}
