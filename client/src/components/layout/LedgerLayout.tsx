@@ -182,16 +182,25 @@ export function LedgerLayout({ children }: LedgerLayoutProps) {
     let ignore = false;
 
     (async () => {
-          try {
-            setLoadingAccounts(true);
-            const apiAccounts = await api.getAccounts(businessId, sessionUserId);
-            if (!ignore) setAccounts(apiAccounts.map(transformAccount) || []);
-          } catch (e: any) {
-            if (!ignore) setErr(e?.message || "Failed to load accounts");
-          } finally {
-            if (!ignore) setLoadingAccounts(false);
+      try {
+        setLoadingAccounts(true);
+        // Only call API if we have a valid sessionUserId
+        if (sessionUserId) {
+          const apiAccounts = await api.getAccounts(businessId, sessionUserId);
+          if (!ignore) setAccounts(apiAccounts.map(transformAccount) || []);
+        } else {
+          // Handle case when user ID is not available
+          if (!ignore) {
+            setAccounts([]);
+            setErr("User session not available");
           }
-        })();
+        }
+      } catch (e: any) {
+        if (!ignore) setErr(e?.message || "Failed to load accounts");
+      } finally {
+        if (!ignore) setLoadingAccounts(false);
+      }
+    })();
     
         (async () => {
           try {
