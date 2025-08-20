@@ -1073,3 +1073,6 @@
 {"level":"info","message":"Request completed","metadata":{"duration":"489ms","ip":"127.0.0.1","method":"GET","statusCode":404,"url":"/api/branches/biz_rmdbi4ukd"},"timestamp":"2025-08-20T09:57:36.666Z"}
 {"level":"info","message":"Request completed","metadata":{"duration":"187ms","ip":"127.0.0.1","method":"GET","statusCode":200,"url":"/api/branches/branch_9giwu5xjl"},"timestamp":"2025-08-20T09:59:55.890Z"}
 {"level":"info","message":"Request completed","metadata":{"duration":"41ms","ip":"127.0.0.1","method":"GET","statusCode":200,"url":"/"},"timestamp":"2025-08-20T10:00:26.885Z"}
+{"level":"info","message":"Request completed","metadata":{"duration":"7ms","ip":"127.0.0.1","method":"GET","statusCode":404,"url":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":"2025-08-20T11:18:04.453Z"}
+{"level":"info","message":"Request completed","metadata":{"duration":"728ms","ip":"127.0.0.1","method":"GET","statusCode":200,"url":"/api/businesses"},"timestamp":"2025-08-20T11:18:07.427Z"}
+{"level":"info","message":"Request completed","metadata":{"duration":"10ms","ip":"127.0.0.1","method":"GET","statusCode":304,"url":"/sw.js"},"timestamp":"2025-08-20T11:18:08.389Z"}

@@ -8674,3 +8674,27 @@ Error: Table 'ledger.transactions' doesn't exist
   ip: '127.0.0.1',
   response: undefined
 }
+2025-08-20T11:18:04.452Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/.well-known/appspecific/com.chrome.devtools.json',
+  statusCode: 404,
+  duration: '7ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-20T11:18:07.426Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/api/businesses',
+  statusCode: 200,
+  duration: '728ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
+2025-08-20T11:18:08.388Z [INFO]: Request completed {
+  method: 'GET',
+  url: '/sw.js',
+  statusCode: 304,
+  duration: '10ms',
+  ip: '127.0.0.1',
+  response: undefined
+}
