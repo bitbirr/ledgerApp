@@ -1,13 +1,4 @@
-import { LedgerLayout } from './LedgerLayout';
-
-interface BusinessAppShellProps {
-  children: React.ReactNode;
-}
-
-export function BusinessAppShell({ children }: BusinessAppShellProps) {
-  return (
-    <LedgerLayout>
-      {children}
-    </LedgerLayout>
-  );
+import LedgerLayout from "./LedgerLayout";
+export default function BusinessAppShell({ children }: { children: React.ReactNode }) {
+  return <LedgerLayout>{children}</LedgerLayout>;
 }
