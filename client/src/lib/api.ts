@@ -111,7 +111,7 @@ export type InvoiceItem = {
 };
 
 // Enhanced headers function with token refresh support
-async function getAuthHeaders(businessId?: string, userId?: string) {
+async function getAuthHeaders(businessId?: string, userId?: string, branchId?: string) {
   const { token, refreshToken, isTokenExpired, refreshSession } = useAuthStore.getState();
   
   // If token is expired and we have a refresh token, try to refresh
@@ -147,56 +147,108 @@ async function getAuthHeaders(businessId?: string, userId?: string) {
     }
   }
   
-  const h: Record<string, string> = {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
+  const headers: Record<string, string> = {
+    "Accept": "application/json",
+    "Content-Type": "application/json"
   };
   
-  if (businessId) h["business-id"] = businessId;
-  if (userId) h["user-id"] = userId;
+  // Only add headers with truthy values
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  if (businessId) headers["X-Business-Id"] = businessId;
+  if (userId) headers["X-User-Id"] = userId;
+  if (branchId) headers["X-Branch-Id"] = branchId;
 
   try {
-    const st = useAuthStore.getState();
-    console.debug('[API] getAuthHeaders', { hasToken: !!st.token, businessId: businessId ?? null, userId: userId ?? null });
+    console.debug('[API] getAuthHeaders', { 
+      hasToken: !!token, 
+      businessId, 
+      userId, 
+      branchId 
+    });
   } catch {}
 
-  return h;
+  return headers;
 }
 
+// Safe JSON fetch that handles HTML/error pages and 204 No Content
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
+  constructor(status: number, message: string, data?: unknown) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
+const BASE_URL = ""; // e.g. "" when your nginx proxies /api to backend. Or set "https://api.yourdomain.com"
+type ApiInit = RequestInit & { skipJson?: boolean };
+
 // Enhanced fetch function with error handling
-async function apiFetch<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  try {
-    // Always include credentials to send cookies for same-origin API
-    const finalInit: RequestInit = { credentials: 'include', ...(init || {}) };
-    const response = await fetch(input, finalInit);
+async function apiFetch<T>(path: string, init: ApiInit = {}): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    // Important: don't blow away headers passed in; ensure JSON default
+    headers: {
+      Accept: "application/json",
+      "Content-Type": init?.body ? "application/json" : "application/json",
+      ...(init.headers || {}),
+    },
+    cache: "no-store",
+    redirect: "follow",
+    credentials: 'include', // Keep existing credentials behavior
+    ...init,
+  });
+
+  // 204 No Content or headless responses
+  if (res.status === 204) return undefined as unknown as T;
+
+  const contentType = res.headers.get("content-type") || "";
+  const raw = await res.text(); // read once
+
+  // If not OK, try to parse JSON error; else surface HTML/text
+  if (!res.ok) {
+    let payload: any = undefined;
+    if (contentType.includes("application/json")) {
+      try { payload = JSON.parse(raw); } catch {}
+    }
     
     // Handle 401 Unauthorized without forcibly logging out
-    if (response.status === 401) {
+    if (res.status === 401) {
       try {
-        const url = typeof input === 'string' ? input : (input as any)?.url ?? 'unknown';
-        console.debug('[API] 401 Unauthorized', { url, method: (finalInit as any).method || 'GET' });
+        const url = path;
+        console.debug('[API] 401 Unauthorized', { url, method: init.method || 'GET' });
       } catch {}
       // Do not auto-logout here to avoid bouncing back to login during initial load
-      throw new Error('Unauthorized. Please log in again.');
+      throw new ApiError(res.status, 'Unauthorized. Please log in again.', payload ?? raw);
     }
     
     // Handle 403 Forbidden
-    if (response.status === 403) {
-      throw new Error('Access forbidden. You do not have permission to perform this action.');
+    if (res.status === 403) {
+      throw new ApiError(res.status, 'Access forbidden. You do not have permission to perform this action.', payload ?? raw);
     }
     
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Network error. Please check your connection and try again.');
-    }
-    throw error;
+    // Try to extract message or use statusText/raw fallback
+    const message = payload?.message || payload?.error || res.statusText || raw?.slice(0, 200) || "Request failed";
+    throw new ApiError(res.status, message, payload ?? raw);
   }
+
+  // Allow callers to opt out of JSON parsing
+  if (init.skipJson) return raw as unknown as T;
+
+  // Happy path: JSON response
+  if (contentType.includes("application/json")) {
+    try { return JSON.parse(raw) as T; } catch (e) {
+      throw new ApiError(res.status, "Invalid JSON from server", raw);
+    }
+  }
+
+  // If backend accidentally returned HTML (e.g., SPA index.html or an error page)
+  if (raw.trim().startsWith("<!doctype") || raw.trim().startsWith("<html")) {
+    throw new ApiError(res.status, "Server returned HTML instead of JSON", raw);
+  }
+
+  // Fallback: return raw text
+  return raw as unknown as T;
 }
 
 export const api = {
