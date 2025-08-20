@@ -115,6 +115,8 @@ export function BusinessLogin() {
         setBranchId('');
       }
     };
+
+    fetchBranches(); // Add this line to actually call the function
   }, [businessId]);
 
   // Validate form fields
