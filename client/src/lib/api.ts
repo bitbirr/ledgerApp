@@ -563,6 +563,11 @@ export const api = {
     });
   },
 
+  // Add the public branches endpoint for login page
+  async getBranchesPublic(businessId: ID): Promise<Branch[]> {
+    return apiFetch<Branch[]>(`/api/branches?businessId=${encodeURIComponent(businessId)}`);
+  },
+
   // ---------- Invoices ----------
   async getInvoices(businessId: ID, branchId?: ID): Promise<Invoice[]> {
     const headers = await getAuthHeaders(businessId);

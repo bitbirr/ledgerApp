@@ -110,13 +110,13 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   // Public endpoint for fetching branches by business ID (for login page)
   app.get('/api/branches', async (req, res) => {
-    const dbc = await getDb();
     const businessId = req.query.businessId as string;
     
     if (!businessId) {
       return res.status(400).json({ success: false, message: 'businessId is required' });
     }
     
+    const dbc = await getDb();
     const rows = await dbc
       .select({
         id: schema.branches.id,

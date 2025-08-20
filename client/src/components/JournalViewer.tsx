@@ -9,18 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Filter, BookOpen, Search, Download } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { TableSkeleton, TableEmpty } from '@/components/ui/loading';
 import type { GLJournalEntry, GLJournalLine, GLAccount } from '@shared/schema';
 
-interface JournalLineWithAccount extends GLJournalLine {
-  accountCode?: string;
-  description?: string;
-  debitAmount?: number;
-  creditAmount?: number;
-}
-
 interface JournalEntryWithLines extends GLJournalEntry {
-  lines: JournalLineWithAccount[];
+  lines: GLJournalLine[];
 }
 
 export function JournalViewer() {
@@ -232,16 +224,16 @@ export function JournalViewer() {
                       {entry.lines.map(line => (
                         <TableRow key={line.id}>
                           <TableCell className="font-mono text-xs">
-                            {line.accountId ? getAccountName(line.accountId) : 'N/A'}
+                            {line.accountCode}
                           </TableCell>
                           <TableCell className="text-xs">
-                            {line.notes || '-'}
+                            {line.description || '-'}
                           </TableCell>
-                          <TableCell amount positive={line.debit > 0}>
-                            {line.debit > 0 ? formatCurrency(line.debit) : '-'}
+                          <TableCell amount positive={line.debitAmount > 0}>
+                            {line.debitAmount > 0 ? formatCurrency(line.debitAmount) : '-'}
                           </TableCell>
-                          <TableCell amount positive={line.credit > 0}>
-                            {line.credit > 0 ? formatCurrency(line.credit) : '-'}
+                          <TableCell amount positive={line.creditAmount > 0}>
+                            {line.creditAmount > 0 ? formatCurrency(line.creditAmount) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}

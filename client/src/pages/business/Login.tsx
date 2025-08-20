@@ -92,7 +92,7 @@ export function BusinessLogin() {
       if (businessId) {
         setIsFetchingBranches(true);
         try {
-          const branchData = await api.getBranches(businessId);
+          const branchData = await api.getBranchesPublic(businessId);
           // Ensure each branch has the businessId property
           const branchesWithBusinessId = branchData.map(branch => ({
             ...branch,
@@ -115,8 +115,6 @@ export function BusinessLogin() {
         setBranchId('');
       }
     };
-
-    fetchBranches();
   }, [businessId]);
 
   // Validate form fields

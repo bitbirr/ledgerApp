@@ -88,3 +88,21 @@ Error: Table 'ledger.transactions' doesn't exist
     }
   ]
 }
+2025-08-20T09:50:20.337Z [SECURITY]: Failed login {
+  email: 'ismail@eng-ict.com',
+  reason: 'Invalid password',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-20T09:51:14.338Z [SECURITY]: Successful login {
+  email: 'hana@hajjelec.com',
+  userId: 'user_6sald2ys1',
+  ip: 'unknown',
+  userAgent: undefined
+}
+2025-08-20T09:55:02.624Z [SECURITY]: Successful login {
+  email: 'admin@system.com',
+  userId: 'user_admin',
+  ip: 'unknown',
+  userAgent: undefined
+}
