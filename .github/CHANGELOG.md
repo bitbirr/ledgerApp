@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed branch fetching in login component
 - Corrected RBAC middleware for proper access control
 - Addressed database connection and schema validation issues
+- Fixed "unexpected token '<'" error in business login by implementing missing API endpoints
 
 ### Security
 - Implemented secure password hashing with bcrypt
